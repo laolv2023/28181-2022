@@ -1,0 +1,410 @@
+package com.genersoft.iot.vmp.gb28181.transmit.cmd.impl;
+
+import com.genersoft.iot.vmp.gb28181.bean.Device;
+import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
+import com.genersoft.iot.vmp.gb28181.utils.SipCharsetHelper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
+
+/**
+ * SIPCommander GB/T 28181-2022 升级改造 —— XML 构造与 SIP 下发方法实现
+ *
+ * <p>依据: 《WVP前端UI改造方案》D4修复、《WVP合规性升级改造开发方案》改造项7~15</p>
+ * <p>说明: 本文件包含 10 个新增方法的 XML 构造逻辑骨架。</p>
+ * <p>集成方式: 将本文件中的方法复制到 {@code SIPCommander.java} 中，或通过组合方式注入。</p>
+ *
+ * <p>XML 元素名大小写严格遵循 GB/T 28181-2022 规范原文:</p>
+ * <ul>
+ *   <li>PTzPrecisectrl — P大写、T大写、z小写</li>
+ *   <li>Tilt — T大写（PTZ精准控制中的垂直角元素）</li>
+ *   <li>Devicecontrol — D大写、c小写</li>
+ *   <li>HomepositionQuery — H大写、p小写</li>
+ *   <li>cruiseTrackQuery — 全小写c开头</li>
+ *   <li>pTZposition — p小写、TZ大写</li>
+ *   <li>SDcardStatus — S大写、D大写、c小写</li>
+ *   <li>Deviceupgrade — D大写、u小写</li>
+ * </ul>
+ *
+ * @author wvp-upgrade
+ * @since 2026-06-29
+ */
+@Slf4j
+public class SIPCommander2022Supplement {
+
+    // SN 序号（简单递增，生产环境应考虑线程安全和持久化）
+    private static int snCounter = 0;
+    private static synchronized int nextSn() {
+        return ++snCounter;
+    }
+
+    // 固件上传目录（可配置化）
+    private static final String FIRMWARE_UPLOAD_DIR = "/tmp/wvp/firmware";
+
+    // ========================================================================
+    // 一、PTZ 精准控制（改造项7，A.2.3.1.11）
+    // ========================================================================
+
+    /**
+     * 构造并发送 PTZ 精准控制命令 XML
+     *
+     * <p>XML 结构:</p>
+     * <pre>
+     * &lt;Control&gt;
+     *   &lt;CmdType&gt;DeviceControl&lt;/CmdType&gt;
+     *   &lt;SN&gt;{sn}&lt;/SN&gt;
+     *   &lt;DeviceID&gt;{deviceId}&lt;/DeviceID&gt;
+     *   &lt;PTzPrecisectrl&gt;
+     *     &lt;pan&gt;{pan}&lt;/pan&gt;
+     *     &lt;Tilt&gt;{tilt}&lt;/Tilt&gt;
+     *     &lt;zoom&gt;{zoom}&lt;/zoom&gt;
+     *   &lt;/PTzPrecisectrl&gt;
+     * &lt;/Control&gt;
+     * </pre>
+     *
+     * 来源: 后端改造项7, 设计文档第10.1节, 2022版A.2.3.1.11
+     * 注意: Tilt 元素名中 T 大写（规范原文 spec_2022.txt 行2890）
+     */
+    public void ptzPreciseCmdImpl(Device device, String channelId, double pan, double tilt, double zoom) {
+        int sn = nextSn();
+        String deviceId = device.getDeviceId();
+
+        StringBuilder xml = new StringBuilder(512);
+        xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
+        xml.append("<Control>\r\n");
+        xml.append("<CmdType>DeviceControl</CmdType>\r\n");
+        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
+        xml.append("<PTzPrecisectrl>\r\n");
+        xml.append("<pan>").append(String.format("%.2f", pan)).append("</pan>\r\n");
+        xml.append("<Tilt>").append(String.format("%.2f", tilt)).append("</Tilt>\r\n");
+        xml.append("<zoom>").append(String.format("%.1f", zoom)).append("</zoom>\r\n");
+        xml.append("</PTzPrecisectrl>\r\n");
+        xml.append("</Control>\r\n");
+
+        String xmlStr = xml.toString();
+        log.info("[SIP-PTZ精准控制] sn={}, deviceId={}, xml={}", sn, deviceId, xmlStr);
+        sendSipMessage(device, channelId, xmlStr);
+    }
+
+    // ========================================================================
+    // 二、存储卡格式化（改造项8，A.2.3.1.13）
+    // ========================================================================
+
+    /**
+     * 存储卡格式化命令
+     *
+     * <p>XML 元素名: FormatSdcard，F大写、S大写、d小写（来源 spec_2022.txt 行2161）</p>
+     *
+     * 来源: 后端改造项8, 设计文档第10.1节, 2022版A.2.3.1.13
+     */
+    public void formatSdcardCmdImpl(Device device, String channelId) {
+        int sn = nextSn();
+        String deviceId = device.getDeviceId();
+
+        StringBuilder xml = new StringBuilder(256);
+        xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
+        xml.append("<Control>\r\n");
+        xml.append("<CmdType>DeviceControl</CmdType>\r\n");
+        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
+        xml.append("<FormatSdcard/>\r\n");
+        xml.append("</Control>\r\n");
+
+        String xmlStr = xml.toString();
+        log.info("[SIP-存储卡格式化] sn={}, deviceId={}", sn, deviceId);
+        sendSipMessage(device, channelId, xmlStr);
+    }
+
+    // ========================================================================
+    // 三、目标跟踪（改造项9，A.2.3.1.14）
+    // ========================================================================
+
+    /**
+     * 目标跟踪命令
+     *
+     * <p>XML 元素名: TargetTrack，action 取值 Auto/Manual（来源 spec_2022.txt 行2178-2179）</p>
+     *
+     * 来源: 后端改造项9, 设计文档第10.1节, 2022版A.2.3.1.14
+     */
+    public void targetTrackCmdImpl(Device device, String channelId, String action) {
+        int sn = nextSn();
+        String deviceId = device.getDeviceId();
+
+        StringBuilder xml = new StringBuilder(256);
+        xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
+        xml.append("<Control>\r\n");
+        xml.append("<CmdType>DeviceControl</CmdType>\r\n");
+        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
+        xml.append("<TargetTrack>").append(escapeXml(action)).append("</TargetTrack>\r\n");
+        xml.append("</Control>\r\n");
+
+        String xmlStr = xml.toString();
+        log.info("[SIP-目标跟踪] sn={}, deviceId={}, action={}", sn, deviceId, action);
+        sendSipMessage(device, channelId, xmlStr);
+    }
+
+    // ========================================================================
+    // 四、设备软件升级（改造项10，A.2.3.1.12）
+    // ========================================================================
+
+    /**
+     * 设备软件升级命令
+     *
+     * <p>XML 元素名: Deviceupgrade（D大写、u小写，来源 spec_2022.txt 行2551）</p>
+     * <p>字段大小写: FirmWare(W大写)、FileuRL(u小写)、sessionID(s小写)</p>
+     *
+     * 来源: 后端改造项10, 设计文档第10.1节, 2022版A.2.3.1.12
+     */
+    public void deviceUpgradeCmdImpl(Device device, String channelId, String firmware,
+            String fileUrl, String manufacturer, String sessionId) {
+        int sn = nextSn();
+        String deviceId = device.getDeviceId();
+
+        StringBuilder xml = new StringBuilder(512);
+        xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
+        xml.append("<Control>\r\n");
+        xml.append("<CmdType>DeviceControl</CmdType>\r\n");
+        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
+        xml.append("<Deviceupgrade>\r\n");
+        xml.append("<FirmWare>").append(escapeXml(firmware)).append("</FirmWare>\r\n");
+        xml.append("<FileuRL>").append(escapeXml(fileUrl)).append("</FileuRL>\r\n");
+        xml.append("<manufacturer>").append(escapeXml(manufacturer)).append("</manufacturer>\r\n");
+        xml.append("<sessionID>").append(escapeXml(sessionId)).append("</sessionID>\r\n");
+        xml.append("</Deviceupgrade>\r\n");
+        xml.append("</Control>\r\n");
+
+        String xmlStr = xml.toString();
+        log.info("[SIP-设备升级] sn={}, deviceId={}, firmware={}, sessionId={}",
+                sn, deviceId, firmware, sessionId);
+        sendSipMessage(device, channelId, xmlStr);
+    }
+
+    /**
+     * 固件文件上传处理
+     *
+     * 来源: 后端改造项10配套, 设计文档第10.1节
+     */
+    public String uploadFirmwareFileImpl(String deviceId, MultipartFile file) throws IOException {
+        // 确保上传目录存在
+        Path uploadDir = Paths.get(FIRMWARE_UPLOAD_DIR, deviceId);
+        Files.createDirectories(uploadDir);
+
+        // 生成唯一文件名（保留原始扩展名）
+        String originalName = file.getOriginalFilename();
+        String ext = "";
+        if (originalName != null && originalName.contains(".")) {
+            ext = originalName.substring(originalName.lastIndexOf("."));
+        }
+        String savedName = UUID.randomUUID().toString() + ext;
+        Path targetPath = uploadDir.resolve(savedName);
+
+        // 保存文件
+        Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+
+        // 返回文件访问 URL（实际项目应返回可通过 HTTP 访问的完整 URL）
+        String fileUrl = "/firmware/" + deviceId + "/" + savedName;
+        log.info("[固件上传] deviceId={}, originalName={}, savedAs={}, fileUrl={}",
+                deviceId, originalName, savedName, fileUrl);
+        return fileUrl;
+    }
+
+    // ========================================================================
+    // 五、2022版新增查询（改造项11~14）
+    // ========================================================================
+
+    /**
+     * 看守位信息查询
+     *
+     * <p>CmdType: HomepositionQuery（H大写、p小写，来源 design_doc.md 行1112）</p>
+     *
+     * 来源: 后端改造项11, 设计文档第11.1节, 2022版A.2.4.10
+     */
+    public void homePositionQueryCmdImpl(Device device, String channelId) {
+        int sn = nextSn();
+        String deviceId = device.getDeviceId();
+
+        StringBuilder xml = new StringBuilder(256);
+        xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
+        xml.append("<Query>\r\n");
+        xml.append("<CmdType>HomepositionQuery</CmdType>\r\n");
+        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
+        xml.append("</Query>\r\n");
+
+        String xmlStr = xml.toString();
+        log.info("[SIP-看守位查询] sn={}, deviceId={}", sn, deviceId);
+        sendSipMessage(device, channelId, xmlStr);
+    }
+
+    /**
+     * 巡航轨迹查询
+     *
+     * <p>CmdType: cruiseTrackQuery（全小写c开头，来源 design_doc.md 行1159）</p>
+     *
+     * 来源: 后端改造项12, 设计文档第11.1节, 2022版A.2.4.11
+     */
+    public void cruiseTrackQueryCmdImpl(Device device, String channelId, Integer trackListId) {
+        int sn = nextSn();
+        String deviceId = device.getDeviceId();
+
+        StringBuilder xml = new StringBuilder(256);
+        xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
+        xml.append("<Query>\r\n");
+        xml.append("<CmdType>cruiseTrackQuery</CmdType>\r\n");
+        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
+        if (trackListId != null) {
+            xml.append("<CruiseTrackListID>").append(trackListId).append("</CruiseTrackListID>\r\n");
+        }
+        xml.append("</Query>\r\n");
+
+        String xmlStr = xml.toString();
+        log.info("[SIP-巡航轨迹查询] sn={}, deviceId={}, trackListId={}", sn, deviceId, trackListId);
+        sendSipMessage(device, channelId, xmlStr);
+    }
+
+    /**
+     * PTZ 精准状态查询
+     *
+     * <p>CmdType: pTZposition（p小写、TZ大写，来源 design_doc.md 行1189）</p>
+     *
+     * 来源: 后端改造项13, 设计文档第11.1节, 2022版A.2.4.13
+     */
+    public void ptzPreciseStatusQueryCmdImpl(Device device, String channelId) {
+        int sn = nextSn();
+        String deviceId = device.getDeviceId();
+
+        StringBuilder xml = new StringBuilder(256);
+        xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
+        xml.append("<Query>\r\n");
+        xml.append("<CmdType>pTZposition</CmdType>\r\n");
+        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
+        xml.append("</Query>\r\n");
+
+        String xmlStr = xml.toString();
+        log.info("[SIP-PTZ精准状态查询] sn={}, deviceId={}", sn, deviceId);
+        sendSipMessage(device, channelId, xmlStr);
+    }
+
+    /**
+     * 存储卡状态查询
+     *
+     * <p>CmdType: SDcardStatus（S大写、D大写、c小写，来源 design_doc.md 行1216）</p>
+     *
+     * 来源: 后端改造项14, 设计文档第11.1节, 2022版A.2.4.14
+     */
+    public void storageCardStatusQueryCmdImpl(Device device, String channelId) {
+        int sn = nextSn();
+        String deviceId = device.getDeviceId();
+
+        StringBuilder xml = new StringBuilder(256);
+        xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
+        xml.append("<Query>\r\n");
+        xml.append("<CmdType>SDcardStatus</CmdType>\r\n");
+        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
+        xml.append("</Query>\r\n");
+
+        String xmlStr = xml.toString();
+        log.info("[SIP-存储卡状态查询] sn={}, deviceId={}", sn, deviceId);
+        sendSipMessage(device, channelId, xmlStr);
+    }
+
+    // ========================================================================
+    // 六、图像抓拍配置（改造项15，2022版9.14）
+    // ========================================================================
+
+    /**
+     * 图像抓拍配置命令
+     *
+     * <p>XML 字段: snapNum(小写n), Interval(I大写), uploaduRL(u小写), sessionID(s小写)</p>
+     * <p>注: Resolution 字段为后端扩展（前端传入），规范中无此字段，但已在实际 Handler 中实现</p>
+     *
+     * 来源: 后端改造项15, 设计文档第12.2节, 2022版9.14
+     */
+    public void snapshotConfigCmdImpl(Device device, String channelId, int resolution,
+            int snapNum, int interval, String uploadUrl, String sessionId) {
+        int sn = nextSn();
+        String deviceId = device.getDeviceId();
+
+        StringBuilder xml = new StringBuilder(512);
+        xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
+        xml.append("<Control>\r\n");
+        xml.append("<CmdType>DeviceControl</CmdType>\r\n");
+        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
+        xml.append("<SnapConfig>\r\n");
+        xml.append("<Resolution>").append(resolution).append("</Resolution>\r\n");
+        xml.append("<snapNum>").append(snapNum).append("</snapNum>\r\n");
+        xml.append("<Interval>").append(interval).append("</Interval>\r\n");
+        xml.append("<uploaduRL>").append(escapeXml(uploadUrl != null ? uploadUrl : "")).append("</uploaduRL>\r\n");
+        xml.append("<sessionID>").append(escapeXml(sessionId)).append("</sessionID>\r\n");
+        xml.append("</SnapConfig>\r\n");
+        xml.append("</Control>\r\n");
+
+        String xmlStr = xml.toString();
+        log.info("[SIP-图像抓拍配置] sn={}, deviceId={}, resolution={}, snapNum={}",
+                sn, deviceId, resolution, snapNum);
+        sendSipMessage(device, channelId, xmlStr);
+    }
+
+    // ========================================================================
+    // 工具方法
+    // ========================================================================
+
+    /**
+     * XML 特殊字符转义（防注入）
+     * 转义规则: & → &amp;  < → &lt;  > → &gt;  " → &quot;  ' → &apos;
+     *
+     * @param value 原始字符串
+     * @return 转义后的字符串
+     */
+    private static String escapeXml(String value) {
+        if (value == null) return "";
+        StringBuilder sb = new StringBuilder(value.length() + 20);
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            switch (ch) {
+                case '&':  sb.append("&amp;");  break;
+                case '<':  sb.append("&lt;");   break;
+                case '>':  sb.append("&gt;");   break;
+                case '"':  sb.append("&quot;"); break;
+                case '\'': sb.append("&apos;"); break;
+                default:   sb.append(ch);
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 通过 JAIN-SIP 发送 MESSAGE 到设备
+     *
+     * <p>实际实现需调用 WVP 现有的 SIP 消息发送基础设施（如 {@code SipSender}），
+     * 此处为骨架方法，集成时将 xml 字符串作为 MESSAGE body 发送</p>
+     *
+     * @param device    目标设备
+     * @param channelId 通道编码
+     * @param xml       GB/T 28181 格式的 XML 消息体
+     */
+    private void sendSipMessage(Device device, String channelId, String xml) {
+        // 实际集成代码:
+        //   SIPRequest request = messageFactory.createRequest(...);
+        //   ContentTypeHeader contentType = headerFactory.createContentTypeHeader("Application", "MANSCDP+xml");
+        //   request.setContent(xml, contentType);
+        //   sipSender.transmitRequest(device.getIp(), request);
+        //
+        // 来源: WVP 现有 SIPCommander.java 中的 sendMessage/sendControlMessage 模式
+        log.debug("[SIP发送] device={}, channel={}, xml={}", device.getDeviceId(), channelId, xml);
+    }
+}
