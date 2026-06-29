@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B8-08                                                   -->
+<!-- 测试名称: u字段下载类型                                           -->
+<!-- 来源: 改造项23, 设计文档第7节                                     -->
+<!-- 测试场景: 验证SDP中u字段(下载类型)格式                            -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. INVITE SDP体含u=字段                                         -->
+<!--   2. u字段格式: u=deviceId:downloadType                          -->
+<!--   3. downloadType: 0=历史文件下载,1=录像文件下载等               -->
+<!--   4. 2022版新增属性,用于区分下载来源                             -->
+<!--   5. 设备返回 200 OK                                             -->
+<!-- ================================================================ -->
+
+<scenario name="sdp_u_field_download">
+
+  <!-- 步骤1: WVP发送INVITE,SDP含u=字段(下载类型) -->
+  <send retrans="500">
+    <![CDATA[
+      INVITE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB808[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] INVITE
+      Contact: <sip:34020000002000000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B808
+      Subject: U-Field Download Test
+      Content-Type: application/sdp
+      Content-Length: [len]
+
+      v=0
+      o=34020000002000000001 0 0 IN IP4 [local_ip]
+      s=DoWnload
+      u=34020000001320000001:0
+      c=IN IP4 [local_ip]
+      t=0 0
+      m=video 6000 RTP/AVP 100
+      a=rtpmap:100 H265/90000
+      a=recvonly
+      a=doWnloadspeed:1
+      a=filesize:1024000
+      y=0000000008
+      f=v/2/1920x1080/25/1/4096a/2/4096/1
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收 100 Trying -->
+  <recv response="100" optional="true">
+  </recv>
+
+  <!-- 步骤3: 接收 200 OK,验证u字段 -->
+  <recv response="200" rtd="true">
+    <action>
+      <ereg regexp="u=[0-9]{20}:[0-9]+" search_in="body" assign_to="u_field_check" />
+      <ereg regexp="u=34020000001320000001:0" search_in="body" assign_to="u_field_value" />
+    </action>
+  </recv>
+
+  <!-- 步骤4: WVP发送ACK确认 -->
+  <send>
+    <![CDATA[
+      ACK sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB808[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>[peer_tag_param]
+      Call-ID: [call_id]
+      CSeq: [cseq] ACK
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- 步骤5: WVP发送BYE结束会话 -->
+  <send retrans="500">
+    <![CDATA[
+      BYE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB808[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>[peer_tag_param]
+      Call-ID: [call_id]
+      CSeq: [cseq] BYE
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- 步骤6: 接收 200 OK -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
