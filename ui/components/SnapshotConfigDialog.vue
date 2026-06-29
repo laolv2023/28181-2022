@@ -238,11 +238,9 @@ export default {
      * @returns {string} UUID v4 字符串（如 "a1b2c3d4-..."）
      */
     generateUUID() {
-      // 优先使用浏览器原生 crypto.randomUUID()
-      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      if (typeof crypto !== 'undefined' && crypto !== null && typeof crypto.randomUUID === 'function') {
         return crypto.randomUUID()
       }
-      // 回退：手动构造 UUID v4
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
         const r = (Math.random() * 16) | 0
         const v = c === 'x' ? r : (r & 0x3) | 0x8
