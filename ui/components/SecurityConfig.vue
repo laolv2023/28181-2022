@@ -173,6 +173,34 @@ export default {
     }
   },
 
+  // ========== Lifecycle ==========
+
+  /**
+   * 路由离开守卫：检测未保存的配置变更
+   * 来源: 改造项2/3/26/30/35, 防止用户误操作丢失配置
+   */
+  beforeRouteLeave(to, from, next) {
+    const defaultConfig = {
+      sm3DigestEnabled: true,
+      sipTlsEnabled: false,
+      sipCharset: 'gb18030',
+      registerRedirectEnabled: true,
+      tcpReconnectEnabled: false
+    }
+    const isModified = Object.keys(defaultConfig).some(
+      key => this.config[key] !== defaultConfig[key]
+    )
+    if (isModified) {
+      this.$confirm('当前配置尚未保存，确定离开吗？', '未保存的更改', {
+        confirmButtonText: '确定离开',
+        cancelButtonText: '留在此页',
+        type: 'warning'
+      }).then(() => next()).catch(() => next(false))
+    } else {
+      next()
+    }
+  },
+
   // ========== Methods ==========
   methods: {
     /**
