@@ -311,7 +311,8 @@ export default {
      *   2. 下发升级命令 → 传入 firmware / fileUrl / manufacturer / sessionId
      */
     async handleUpgrade() {
-      // 表单验证
+      // 表单验证（防御性检查 $refs 存在性）
+      if (!this.$refs.upgradeForm) return
       const valid = await this.$refs.upgradeForm.validate().catch(() => false)
       if (!valid) return
 
