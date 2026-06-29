@@ -212,8 +212,8 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Response>\r\n");
         xml.append("<CmdType>").append(cmdType).append("</CmdType>\r\n");
-        xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : sn).append("</SN>\r\n");
-        xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : deviceId).append("</DeviceID>\r\n");
+        xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : SipCharsetHelper.escapeXml(sn)).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<Result>").append(result).append("</Result>\r\n");
         // Pan/Tilt/Zoom 保留两位小数
         xml.append("<Pan>").append(String.format("%.2f", pan)).append("</Pan>\r\n");
