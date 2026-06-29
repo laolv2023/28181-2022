@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 测试用例: A2.1-01                                          -->
+<!-- 来源: 设计文档第13.9节, 2022版附录I                          -->
+<!-- 测试场景: 注册响应携带X-GB-ver版本标识头域                    -->
+<!-- 预期结果: 200 OK 响应中包含 X-GB-ver: 2.0 头域              -->
+<!-- 模式: 下联（模拟设备注册到WVP）                               -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<scenario name="reg_xgbver">
+
+  <!-- 步骤1: 发送初始REGISTER（携带X-GB-ver头域） -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:3402000000@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag01[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-SIPp
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401 Challenge -->
+  <recv response="401" auth="true" rtd="true">
+  </recv>
+
+  <!-- 步骤3: 发送带认证信息的REGISTER（携带X-GB-ver头域） -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:3402000000@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag01[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=test12345]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-SIPp
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收200 OK，验证X-GB-ver头域存在 -->
+  <recv response="200" rtd="true">
+    <action>
+      <!-- 提取X-GB-ver头域值 -->
+      <ereg regexp="X-GB-ver:\s*2\.0" search_in="hdr" assign_to="xgbver_header" ignore_case="false"/>
+    </action>
+    <test param="xgbver_header" criteria="X-GB-ver:" assign_to="xgbver_result"/>
+  </recv>
+
+  <!-- 定时器定义 -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
