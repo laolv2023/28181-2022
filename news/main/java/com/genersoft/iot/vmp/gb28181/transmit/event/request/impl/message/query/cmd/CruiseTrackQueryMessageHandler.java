@@ -244,8 +244,8 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Response>\r\n");
         xml.append("<CmdType>").append(cmdType).append("</CmdType>\r\n");
-        xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : sn).append("</SN>\r\n");
-        xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : deviceId).append("</DeviceID>\r\n");
+        xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : SipCharsetHelper.escapeXml(sn)).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<Result>").append(RESULT_OK).append("</Result>\r\n");
         // 列表 ID：若请求中携带则回填，否则默认 1
         xml.append("<CruiseTrackListID>").append(ObjectUtils.isEmpty(cruiseTrackListId) ? "1" : cruiseTrackListId).append("</CruiseTrackListID>\r\n");
@@ -253,7 +253,7 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
         for (CruiseTrack track : tracks) {
             xml.append("<CruiseTrack>\r\n");
             xml.append("<ID>").append(track.id).append("</ID>\r\n");
-            xml.append("<Name>").append(nullSafe(track.name)).append("</Name>\r\n");
+            xml.append("<Name>").append(SipCharsetHelper.escapeXml(nullSafe(track.name))).append("</Name>\r\n");
             xml.append("</CruiseTrack>\r\n");
         }
         xml.append("</CruiseTrackList>\r\n");
@@ -284,8 +284,8 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Response>\r\n");
         xml.append("<CmdType>").append(cmdType).append("</CmdType>\r\n");
-        xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : sn).append("</SN>\r\n");
-        xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : deviceId).append("</DeviceID>\r\n");
+        xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : SipCharsetHelper.escapeXml(sn)).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<Result>").append(RESULT_OK).append("</Result>\r\n");
         xml.append("<CruiseTrack>\r\n");
         xml.append("<ID>").append(cruiseTrackId).append("</ID>\r\n");
