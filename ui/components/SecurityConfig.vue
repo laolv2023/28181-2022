@@ -246,7 +246,7 @@ export default {
         this.saveResult = null
         this.$message.info('已恢复默认配置，请点击保存生效')
       }).catch(() => {
-        // 用户取消
+        // 用户取消操作，无需处理
       })
     }
   }
