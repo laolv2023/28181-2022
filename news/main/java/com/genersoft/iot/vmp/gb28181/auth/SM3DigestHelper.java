@@ -201,4 +201,46 @@ public final class SM3DigestHelper {
         }
         return new String(chars);
     }
+
+    /**
+     * MD5 摘要计算（兼容 2016 版设备）
+     * <p>
+     * 来源: 改造项2 兼容性要求 — 当 SM3 不可用时回退到 MD5
+     * </p>
+     *
+     * @param data 原始数据
+     * @return 32 位十六进制字符串
+     */
+    public static String digestMd5(byte[] data) {
+        if (data == null) {
+            return null;
+        }
+        try {
+            java.security.MessageDigest md5 = java.security.MessageDigest.getInstance("MD5");
+            return bytesToHex(md5.digest(data));
+        } catch (java.security.NoSuchAlgorithmException e) {
+            logger.error("[SM3] MD5算法不可用", e);
+            return null;
+        }
+    }
+
+    /**
+     * 自动选择算法的摘要计算（优先 SM3，回退 MD5）
+     * <p>
+     * 来源: 改造项2 — SM3 优先, MD5 兼容
+     * </p>
+     *
+     * @param data 原始数据
+     * @return 摘要十六进制字符串（SM3 为 64 字符, MD5 为 32 字符）
+     */
+    public static String digestWithFallback(byte[] data) {
+        if (data == null) {
+            return null;
+        }
+        if (isSm3Available()) {
+            return digest(data);
+        }
+        logger.warn("[SM3] SM3不可用, 回退到MD5");
+        return digestMd5(data);
+    }
 }
