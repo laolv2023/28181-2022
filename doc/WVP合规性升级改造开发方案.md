@@ -737,6 +737,60 @@ TARGET_TRACK("TargetTrack", "目标跟踪"),
  * 规范原文: XML元素名Deviceupgrade(小写u, 来源spec_2022.txt行2140)
  */
 DEVICE_UPGRADE("Deviceupgrade", "设备软件升级"),
+
+// === 改造项10补充: 设备软件升级命令XML结构 ===
+// 来源: 设计文档第12.1.3节(第1011~1021行), 2022版A.2.3.1.12
+// 规范XML字段: cmdType=Devicecontrol, FirmWare, FileuRL, Manufacturer, sessionID
+/**
+ * 构建设备软件升级命令XML
+ * 来源: 设计文档第12.1.3节, 2022版A.2.3.1.12
+ * XML结构:
+ *   <Control>
+ *     <CmdType>Devicecontrol</CmdType>
+ *     <SN>命令序号</SN>
+ *     <DeviceID>设备编码</DeviceID>
+ *     <FirmWare>设备固件版本</FirmWare>
+ *     <FileuRL>升级文件的完整路径</FileuRL>
+ *     <Manufacturer>设备厂商</Manufacturer>
+ *     <sessionID>会话ID(32~128字节)</sessionID>
+ *   </Control>
+ */
+private String buildDeviceUpgradeCmd(String deviceId, int sn, String firmware,
+        String fileUrl, String manufacturer, String sessionId) {
+    // 来源: 设计文档第12.1.3节(第1011~1021行), 2022版A.2.3.1.12
+    StringBuilder xml = new StringBuilder();
+    xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
+    xml.append("<Control>\r\n");
+    xml.append("<CmdType>Devicecontrol</CmdType>\r\n");
+    xml.append("<SN>").append(sn).append("</SN>\r\n");
+    xml.append("<DeviceID>").append(deviceId).append("</DeviceID>\r\n");
+    xml.append("<FirmWare>").append(firmware).append("</FirmWare>\r\n");
+    xml.append("<FileuRL>").append(fileUrl).append("</FileuRL>\r\n");
+    xml.append("<Manufacturer>").append(manufacturer).append("</Manufacturer>\r\n");
+    xml.append("<sessionID>").append(sessionId).append("</sessionID>\r\n");
+    xml.append("</Control>\r\n");
+    return xml.toString();
+}
+
+// === 改造项10补充: 设备软件升级结果通知处理器 ===
+// 来源: 设计文档第12.1.3节(第1023~1033行), 2022版A.2.5.9
+// 规范CmdType: DeviceupgradeResult(小写u, 来源spec_2022.txt行2551)
+// XML字段: cmdType=DeviceupgradeResult, UpgradeResult, Firmware, UpgradeFailedReason
+/**
+ * 设备软件升级结果通知处理器
+ * 来源: 设计文档第12.1.3节, 2022版A.2.5.9
+ * XML结构:
+ *   <Notify>
+ *     <CmdType>DeviceupgradeResult</CmdType>
+ *     <SN>命令序号</SN>
+ *     <DeviceID>设备编码</DeviceID>
+ *     <sessionID>会话ID(32~128字节)</sessionID>
+ *     <UpgradeResult>升级是否成功</UpgradeResult>
+ *     <Firmware>当前软件版本信息</Firmware>
+ *     <UpgradeFailedReason>失败原因(条件必选)</UpgradeFailedReason>
+ *   </Notify>
+ */
+// 改造位置: 新增 DeviceUpgradeResultNotifyMessageHandler.java
 ```
 
 ---
@@ -933,6 +987,46 @@ public class SnapshotFinishedNotifyMessageHandler extends NotifyMessageHandler {
         // 来源: spec_2022.txt行2516
         return "uploadsnapshotFinished";
     }
+}
+
+// === 改造项15补充: 图像抓拍配置命令XML结构 ===
+// 来源: 设计文档第12.2.1节(第1055~1060行), 2022版A.2.1.24
+// 规范XML字段: snapNum, Interval, uploaduRL, sessionID
+/**
+ * 构建图像抓拍配置命令XML
+ * 来源: 设计文档第12.2.1节, 2022版A.2.1.24
+ * XML结构:
+ *   <Control>
+ *     <CmdType>Devicecontrol</CmdType>
+ *     <SN>命令序号</SN>
+ *     <DeviceID>设备编码</DeviceID>
+ *     <SnapConfig>
+ *       <snapNum>连拍张数(1~10)</snapNum>
+ *       <Interval>单张抓拍间隔时间(秒, 可选)</Interval>
+ *       <uploaduRL>抓拍图像上传路径</uploaduRL>
+ *       <sessionID>会话ID(32~128字节)</sessionID>
+ *     </SnapConfig>
+ *   </Control>
+ */
+private String buildSnapConfigCmd(String deviceId, int sn, int snapNum,
+        Integer interval, String uploadUrl, String sessionId) {
+    // 来源: 设计文档第12.2.1节(第1055~1060行), 2022版A.2.1.24
+    StringBuilder xml = new StringBuilder();
+    xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
+    xml.append("<Control>\r\n");
+    xml.append("<CmdType>Devicecontrol</CmdType>\r\n");
+    xml.append("<SN>").append(sn).append("</SN>\r\n");
+    xml.append("<DeviceID>").append(deviceId).append("</DeviceID>\r\n");
+    xml.append("<SnapConfig>\r\n");
+    xml.append("<snapNum>").append(snapNum).append("</snapNum>\r\n");
+    if (interval != null) {
+        xml.append("<Interval>").append(interval).append("</Interval>\r\n");
+    }
+    xml.append("<uploaduRL>").append(uploadUrl).append("</uploaduRL>\r\n");
+    xml.append("<sessionID>").append(sessionId).append("</sessionID>\r\n");
+    xml.append("</SnapConfig>\r\n");
+    xml.append("</Control>\r\n");
+    return xml.toString();
 }
 ```
 
@@ -1504,6 +1598,75 @@ public static boolean isValidNetCode(String netCode) {
     // 来源: 设计文档第13.5节, 2022版附录E
     return code >= 0 && code <= 9;
 }
+
+// === 改造项补充: 5个低优先级核查报告条目 ===
+// 以下5项为核查报告中的低优先级需升级项, 在38个改造项之外, 补充实现
+
+// === 补充1: SIP端口防干扰 ===
+// 来源: 设计文档第4.3.2节(第300~303行), 2022版4.3.2
+// 规范要求: "互联的联网系统平台及设备不应向对方的SIP端口发送应用无关消息"
+// 改造位置: SIP消息接收处理器, 增加消息类型过滤
+/**
+ * SIP端口消息类型过滤
+ * 来源: 设计文档第4.3.2节, 2022版4.3.2
+ * 规范要求: 不应向对方SIP端口发送应用无关消息
+ */
+private boolean isSipMessageValid(RequestEvent evt) {
+    // 来源: 设计文档第4.3.2节(第300~303行), 2022版4.3.2
+    String method = evt.getRequest().getMethod();
+    // 仅允许SIP标准方法, 拒绝非SIP消息
+    return "REGISTER".equals(method) || "MESSAGE".equals(method) ||
+           "INVITE".equals(method) || "ACK".equals(method) ||
+           "BYE".equals(method) || "CANCEL".equals(method) ||
+           "OPTIONS".equals(method) || "INFO".equals(method) ||
+           "SUBSCRIBE".equals(method) || "NOTIFY".equals(method);
+}
+
+// === 补充2: G.722.1编解码支持 ===
+// 来源: 设计文档第6.2节(第522~535行), 2022版附录F.1
+// 规范要求: G.722.1为宜采用(推荐), 非强制
+// 改造位置: SIPCommander.java SDP协商中增加G.722.1 rtpmap
+/**
+ * 添加G.722.1音频SDP描述
+ * 来源: 设计文档第6.2节, 2022版附录F.1/C.2.4
+ * PT=9, rtpmap:9 G722/8000
+ */
+private void appendG7221AudioSdp(StringBuffer content) {
+    // 来源: 设计文档第13.3节(第1453行), 2022版附录C.2.4
+    content.append("a=rtpmap:9 G722/8000\r\n");
+}
+
+// === 补充3: a=svcspace参数支持 ===
+// 来源: 设计文档第7节(第602行), 2022版附录G
+// 规范要求: a=svcspace(空域编码, 两版均有)
+/**
+ * 添加a=svcspace参数
+ * 来源: 设计文档第7节(第602行), 2022版附录G
+ */
+private void appendSvcspace(StringBuffer content, String svcspace) {
+    content.append("a=svcspace:" + svcspace + "\r\n");
+}
+
+// === 补充4: a=svctime参数支持 ===
+// 来源: 设计文档第7节(第603行), 2022版附录G
+// 规范要求: a=svctime(时域编码, 两版均有)
+/**
+ * 添加a=svctime参数
+ * 来源: 设计文档第7节(第603行), 2022版附录G
+ */
+private void appendSvctime(StringBuffer content, String svctime) {
+    content.append("a=svctime:" + svctime + "\r\n");
+}
+
+// === 补充5: 联网系统扩展应用 ===
+// 来源: 设计文档附录A.4, 2022版附录A.4
+// 规范要求: 联网系统扩展应用(资料性, 可选)
+/**
+ * 联网系统扩展应用接口定义
+ * 来源: 设计文档附录A.4, 2022版附录A.4
+ * 实现说明: 扩展应用为资料性内容, 非强制要求
+ */
+// 改造位置: 新增 ExtensionApplicationHandler.java (可选)
 ```
 
 ---
