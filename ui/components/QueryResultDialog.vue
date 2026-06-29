@@ -78,7 +78,7 @@
             <el-table-column prop="name" label="轨迹名称" min-width="150" show-overflow-tooltip />
             <el-table-column prop="presetList" label="预置位序列" min-width="200" show-overflow-tooltip>
               <template slot-scope="scope">
-                {{ Array.isArray(scope.row.presetList) ? scope.row.presetList.join(' → ') : scope.row.presetList || '—' }}
+                {{ Array.isArray(scope.row.presetList) ? scope.row.presetList.join(' → ') : (typeof scope.row.presetList === 'object' && scope.row.presetList !== null ? JSON.stringify(scope.row.presetList) : (scope.row.presetList || '—')) }}
               </template>
             </el-table-column>
           </el-table>
@@ -92,13 +92,13 @@
           </template>
           <el-descriptions v-else :column="1" border size="small">
             <el-descriptions-item label="水平转角（Pan）">
-              {{ ptzStatus.pan != null ? `${ptzStatus.pan.toFixed(2)}°` : '—' }}
+              {{ ptzStatus.pan != null && !isNaN(ptzStatus.pan) ? `${ptzStatus.pan.toFixed(2)}°` : '—' }}
             </el-descriptions-item>
             <el-descriptions-item label="垂直转角（Tilt）">
-              {{ ptzStatus.tilt != null ? `${ptzStatus.tilt.toFixed(2)}°` : '—' }}
+              {{ ptzStatus.tilt != null && !isNaN(ptzStatus.tilt) ? `${ptzStatus.tilt.toFixed(2)}°` : '—' }}
             </el-descriptions-item>
             <el-descriptions-item label="变倍倍数（Zoom）">
-              {{ ptzStatus.zoom != null ? `${ptzStatus.zoom.toFixed(1)}×` : '—' }}
+              {{ ptzStatus.zoom != null && !isNaN(ptzStatus.zoom) ? `${ptzStatus.zoom.toFixed(1)}×` : '—' }}
             </el-descriptions-item>
           </el-descriptions>
         </el-tab-pane>
@@ -280,11 +280,12 @@ export default {
      * 来源: 后端改造项12, 2022版A.2.4.11
      * API: GET /api/device/control/cruise_track_query/{deviceId}/{channelId}
      */
-    async queryCruiseTrackData() {
+    async queryCruiseTrackData(signal) {
       this.queryLoading = true
       this.cruiseTrackError = null
       try {
         const { data } = await queryCruiseTrack(this.deviceId, this.channelId)
+        if (signal && signal.aborted) return
         if (data && data.CruiseTrackList && data.CruiseTrackList.CruiseTrack) {
           const tracks = data.CruiseTrackList.CruiseTrack
           this.cruiseTrackList = Array.isArray(tracks) ? tracks : [tracks]
@@ -312,11 +313,12 @@ export default {
      * 来源: 后端改造项13, 2022版A.2.4.13
      * API: GET /api/device/control/ptz_precise_status_query/{deviceId}/{channelId}
      */
-    async queryPtzPreciseStatusData() {
+    async queryPtzPreciseStatusData(signal) {
       this.queryLoading = true
       this.ptzStatusError = null
       try {
         const { data } = await queryPtzPreciseStatus(this.deviceId, this.channelId)
+        if (signal && signal.aborted) return
         if (data && data.Pan !== undefined) {
           this.ptzStatus = {
             pan: parseFloat(data.Pan),
