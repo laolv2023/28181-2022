@@ -65,7 +65,7 @@
 | 后端改造项 | 说明 |
 |---|---|
 | 改造项1 X-GB-ver | 信令层自动协商，前端无感知（F6 仅展示结果） |
-| 改造项2 SM3 | 摘要算法后端自动降级，前端无感知 |
+| 改造项2 SM3 | 摘要算法后端自动降级，前端无需改动业务逻辑（F8 仅提供配置开关） |
 | 改造项3 注册重定向 | 302 响应后端自动处理 |
 | 改造项4-6,18-23 SDP 字段 | 媒体协商后端自动处理 |
 
@@ -162,6 +162,8 @@ handlePtzPrecise() {
 }
 ```
 
+> **R3修复**: `ptz-precise` 和 `target-track` 事件由父组件 `live/index.vue` 监听并调用 API。父组件需添加：`<ptz-controls @ptz-precise="handlePtzPrecise" @target-track="handleTargetTrack" :is-version2022="device.isVersion2022()" />`，并在 methods 中调用 `ptzPrecise(params)` 和 `targetTrack(params)` API。
+
 ### 3.2 F2: 存储卡格式化与状态查询
 
 **后端改造项**: 改造项8（存储卡格式化）、改造项14（存储卡状态查询）
@@ -216,6 +218,8 @@ export function formatStorageCard(deviceId, channelId) {
   })
 }
 ```
+
+> **R3修复**: StorageCardDialog.vue 需包含 `data() { return { visible: false, cardStatus: {}, formatting: false } }` 和 methods: `queryStatus()`（调用 `queryStorageCardStatus`）、`handleFormat()`（调用 `formatStorageCard`）、`handleClose()`。`@open` 事件触发 `queryStatus()`。
 
 ### 3.3 F3: 目标跟踪控制
 
@@ -289,7 +293,7 @@ export function targetTrack({ deviceId, channelId, action }) {
     <div slot="footer">
       <el-button @click="visible = false">关闭</el-button>
       <el-button type="primary" :loading="upgrading"
-        @click="handleUpgrade" :disabled="!form.file">开始升级</el-button>
+        @click="handleUpgrade" :disabled="!form.firmware">开始升级</el-button>
     </div>
   </el-dialog>
 </template>
@@ -356,6 +360,8 @@ export function targetTrack({ deviceId, channelId, action }) {
 </template>
 ```
 
+> **R3修复**: QueryResultDialog.vue 需包含 `data() { return { visible: false, activeTab: 'homePosition', homePositionInfo: {}, cruiseTrackList: [], ptzStatus: {} } }` 和 methods: `queryHomePosition()`、`queryCruiseTrack()`、`queryPtzStatus()`。各 tab 的 `@click` 事件触发对应查询方法。
+
 ### 3.6 F6: 设备列表新增"协议版本"列
 
 **后端改造项**: 改造项1（X-GB-ver 版本协商）
@@ -413,6 +419,8 @@ export function targetTrack({ deviceId, channelId, action }) {
   </el-dialog>
 </template>
 ```
+
+> **R3修复**: SnapshotConfigDialog.vue 需包含 `data() { return { visible: false, form: { resolution: 3, snapNum: 1 }, snapshotList: [], capturing: false } }` 和 methods: `handleSnapshot()`（调用 `snapshotConfig` API）、`handleClose()`。
 
 ### 3.8 F8: 系统配置新增 SM3/TLS 开关
 
@@ -560,6 +568,27 @@ export function snapshotConfig({ deviceId, channelId, resolution, snapNum }) {
     params: { resolution, snapNum }
   })
 }
+
+// 改造项10配套: 固件文件上传 (D5修复)
+export function uploadFirmware(deviceId, file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request({
+    method: 'post',
+    url: `/api/device/control/upload_firmware/${deviceId}`,
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
+// 改造项2,30配套: 保存安全配置 (D6修复)
+export function saveSecurityConfig(data) {
+  return request({
+    method: 'post',
+    url: '/api/device/config/save_security',
+    data: data
+  })
+}
 ```
 
 ---
@@ -572,7 +601,7 @@ export function snapshotConfig({ deviceId, channelId, resolution, snapNum }) {
 | `web/src/views/device/common/DeviceUpgradeDialog.vue` | 新增 | 设备软件升级对话框 |
 | `web/src/views/device/common/QueryResultDialog.vue` | 新增 | 看守位/巡航轨迹/PTZ精准状态查询结果 |
 | `web/src/views/device/common/SnapshotConfigDialog.vue` | 新增 | 图像抓拍配置对话框 |
-| `web/src/api/frontEnd.js` | 修改 | 新增 9 个 API 方法 |
+| `web/src/api/frontEnd.js` | 修改 | 新增 11 个 API 方法（9 个控制 API + uploadFirmware + saveSecurityConfig） |
 | `web/src/views/common/ptzControls.vue` | 修改 | 新增精准控制面板+目标跟踪按钮 |
 | `web/src/views/device/list.vue` | 修改 | 新增"协议版本"列 |
 | `web/src/views/operations/securityConfig.vue` | 新增 | 安全配置页（SM3/TLS/字符集开关） |
@@ -621,6 +650,10 @@ export function snapshotConfig({ deviceId, channelId, resolution, snapNum }) {
 | `/api/device/control/ptz_precise_status_query/{deviceId}/{channelId}` | GET | 改造项13 | PTZ 精准状态查询 |
 | `/api/device/control/storage_card_status_query/{deviceId}/{channelId}` | GET | 改造项14 | 存储卡状态查询 |
 | `/api/device/control/snapshot_config/{deviceId}/{channelId}` | POST | 改造项15 | 图像抓拍配置 |
+| `/api/device/control/upload_firmware/{deviceId}` | POST | 改造项10配套 | 固件文件上传 |
+| `/api/device/config/save_security` | POST | 改造项2,30配套 | 安全配置保存 |
+
+> **R5修复**: F4 模板中引用了 `handleFileChange` 方法但未说明。该方法需在 DeviceUpgradeDialog.vue 的 methods 中定义：`handleFileChange(file) { this.form.firmware = file.name; this.form.rawFile = file.raw; }`，将用户选择的文件信息存入 form。
 
 **Controller 实现示例**（以 PTZ 精准控制为例）：
 
