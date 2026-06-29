@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A4.1-03                                                 -->
+<!-- 测试名称: 目标跟踪命令                                            -->
+<!-- 来源: 改造项9, GB/T 28181-2022 附录A.2.3.1.14                     -->
+<!-- 测试场景: 模拟WVP向设备发送目标跟踪控制MESSAGE,                   -->
+<!--           XML包含 TargetTrack 元素, action=Auto 启动自动跟踪     -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. CmdType=DeviceControl                                       -->
+<!--   3. TargetTrack 元素包含 action 子元素                          -->
+<!--   4. action 取值 Auto/Stop 之一                                  -->
+<!--   5. 设备返回 200 OK                                             -->
+<!-- 改造项9要点: 目标跟踪为2022版新增设备控制,                       -->
+<!--             Auto=启动自动跟踪, Stop=停止跟踪                    -->
+<!-- ================================================================ -->
+
+<scenario name="ctrl_target_track">
+
+  <!-- 步骤1: WVP向设备发送目标跟踪启动控制 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA4103[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A4103
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <TargetTrack>
+      <action>Auto</action>
+      </TargetTrack>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
