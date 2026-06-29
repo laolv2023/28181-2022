@@ -31,7 +31,7 @@ import java.text.ParseException;
  * <p>
  * <b>规范依据：</b><br>
  * 来源：设计文档第10.2节（信息查询类命令扩展），2022版 A.2.4.1.2 看守位信息查询。<br>
- * 命令类型：CmdType = HomePositionQuery<br>
+ * 命令类型：CmdType = HomepositionQuery<br>
  * 协议要求：2022 版新增看守位信息查询命令，用于查询设备当前看守位配置状态，包括：
  * 是否启用、复位预置位编号、复位时间。
  * </p>
@@ -40,7 +40,7 @@ import java.text.ParseException;
  * <pre>
  * &lt;?xml version="1.0" encoding="GB18030"?&gt;
  * &lt;Query&gt;
- *     &lt;CmdType&gt;HomePositionQuery&lt;/CmdType&gt;
+ *     &lt;CmdType&gt;HomepositionQuery&lt;/CmdType&gt;
  *     &lt;SN&gt;1&lt;/SN&gt;
  *     &lt;DeviceID&gt;34020000001320000001&lt;/DeviceID&gt;
  * &lt;/Query&gt;
@@ -51,7 +51,7 @@ import java.text.ParseException;
  * <pre>
  * &lt;?xml version="1.0" encoding="GB18030"?&gt;
  * &lt;Response&gt;
- *     &lt;CmdType&gt;HomePositionQuery&lt;/CmdType&gt;
+ *     &lt;CmdType&gt;HomepositionQuery&lt;/CmdType&gt;
  *     &lt;SN&gt;1&lt;/SN&gt;
  *     &lt;DeviceID&gt;34020000001320000001&lt;/DeviceID&gt;
  *     &lt;Result&gt;OK&lt;/Result&gt;
@@ -84,7 +84,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
      * 命令类型字符串
      * <p>
      * 改造项11：来源 设计文档第10.2节，2022版 A.2.4.1.2<br>
-     * CmdType 字符串："HomePositionQuery"
+     * CmdType 字符串："HomepositionQuery"
      * </p>
      */
     private final String cmdType = "HomepositionQuery";
@@ -123,7 +123,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
     /**
      * Spring 容器初始化后回调，将当前处理器注册到 QueryMessageHandler 中。
      * <p>
-     * 改造项11：注册 CmdType=HomePositionQuery，使 QueryMessageHandler 收到
+     * 改造项11：注册 CmdType=HomepositionQuery，使 QueryMessageHandler 收到
      * 该类型 Query 时路由到本处理器。
      * 来源：设计文档第10.2节，2022版 A.2.4.1.2。
      * </p>
