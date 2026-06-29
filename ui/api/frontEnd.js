@@ -62,11 +62,14 @@ export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom } = {}) {
  * @param {string} params.action    - 跟踪模式，'Auto'（自动跟踪）或 'Manual'（手动跟踪）
  * @returns {Promise}
  */
-export function targetTrack({ deviceId, channelId, action }) {
+export function targetTrack({ deviceId, channelId, action } = {}) {
+  if (!deviceId || !channelId) throw new Error('[targetTrack] deviceId 和 channelId 为必填参数')
+  if (!['Auto', 'Manual'].includes(action)) throw new Error(`[targetTrack] action 必须为 Auto 或 Manual，实际值: ${action}`)
   return request({
     method: 'get',
     url: `/api/device/control/target_track/${deviceId}/${channelId}`,
-    params: { action }
+    params: { action },
+    timeout: 10000
   })
 }
 
@@ -87,7 +90,8 @@ export function targetTrack({ deviceId, channelId, action }) {
 export function queryStorageCardStatus(deviceId, channelId) {
   return request({
     method: 'get',
-    url: `/api/device/control/storage_card_status_query/${deviceId}/${channelId}`
+    url: `/api/device/control/storage_card_status_query/${deviceId}/${channelId}`,
+    timeout: 15000
   })
 }
 
@@ -104,7 +108,8 @@ export function queryStorageCardStatus(deviceId, channelId) {
 export function formatStorageCard(deviceId, channelId) {
   return request({
     method: 'post',
-    url: `/api/device/control/format_sdcard/${deviceId}/${channelId}`
+    url: `/api/device/control/format_sdcard/${deviceId}/${channelId}`,
+    timeout: 30000
   })
 }
 
@@ -131,7 +136,8 @@ export function deviceUpgrade({ deviceId, channelId, firmware, fileUrl, manufact
   return request({
     method: 'post',
     url: `/api/device/control/device_upgrade/${deviceId}/${channelId}`,
-    data: { firmware, fileUrl, manufacturer, sessionId }
+    data: { firmware, fileUrl, manufacturer, sessionId },
+    timeout: 30000
   })
 }
 
@@ -179,7 +185,8 @@ export function uploadFirmware(deviceId, file) {
 export function queryHomePosition(deviceId, channelId) {
   return request({
     method: 'get',
-    url: `/api/device/control/home_position_query/${deviceId}/${channelId}`
+    url: `/api/device/control/home_position_query/${deviceId}/${channelId}`,
+    timeout: 15000
   })
 }
 
@@ -197,7 +204,8 @@ export function queryCruiseTrack(deviceId, channelId, trackListId) {
   return request({
     method: 'get',
     url: `/api/device/control/cruise_track_query/${deviceId}/${channelId}`,
-    params: { trackListId }
+    params: { trackListId },
+    timeout: 15000
   })
 }
 
@@ -213,7 +221,8 @@ export function queryCruiseTrack(deviceId, channelId, trackListId) {
 export function queryPtzPreciseStatus(deviceId, channelId) {
   return request({
     method: 'get',
-    url: `/api/device/control/ptz_precise_status_query/${deviceId}/${channelId}`
+    url: `/api/device/control/ptz_precise_status_query/${deviceId}/${channelId}`,
+    timeout: 15000
   })
 }
 
@@ -241,7 +250,8 @@ export function snapshotConfig({ deviceId, channelId, resolution, snapNum, inter
   return request({
     method: 'post',
     url: `/api/device/control/snapshot_config/${deviceId}/${channelId}`,
-    data: { resolution, snapNum, interval, uploadUrl, sessionId }
+    data: { resolution, snapNum, interval, uploadUrl, sessionId },
+    timeout: 15000
   })
 }
 
@@ -266,6 +276,7 @@ export function saveSecurityConfig(config) {
   return request({
     method: 'post',
     url: '/api/device/config/save_security',
-    data: config
+    data: config,
+    timeout: 10000
   })
 }
