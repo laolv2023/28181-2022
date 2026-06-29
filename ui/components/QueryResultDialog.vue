@@ -170,7 +170,13 @@ export default {
     }
   },
 
-  // ========== Methods ==========
+  beforeDestroy() {
+    // 组件销毁时取消进行中的请求，防止内存泄漏和状态污染
+    if (this._abortController) {
+      this._abortController.abort()
+      this._abortController = null
+    }
+  },
   methods: {
     // ---- 生命周期 ----
 
@@ -205,18 +211,25 @@ export default {
     },
 
     /**
-     * 查询当前标签页数据
+     * 查询当前标签页数据（带竞态防护：新请求自动取消旧请求）
      */
     queryCurrentTab() {
+      // 取消上一个未完成的请求，防止快速切换标签页时数据覆盖
+      if (this._abortController) {
+        this._abortController.abort()
+      }
+      this._abortController = new AbortController()
+      const signal = this._abortController.signal
+
       switch (this.activeTab) {
         case 'homePosition':
-          this.queryHomePositionData()
+          this.queryHomePositionData(signal)
           break
         case 'cruiseTrack':
-          this.queryCruiseTrackData()
+          this.queryCruiseTrackData(signal)
           break
         case 'ptzStatus':
-          this.queryPtzPreciseStatusData()
+          this.queryPtzPreciseStatusData(signal)
           break
       }
     },
@@ -236,11 +249,12 @@ export default {
      * 来源: 后端改造项11, 2022版A.2.4.10
      * API: GET /api/device/control/home_position_query/{deviceId}/{channelId}
      */
-    async queryHomePositionData() {
+    async queryHomePositionData(signal) {
       this.queryLoading = true
       this.homePositionError = null
       try {
         const { data } = await queryHomePosition(this.deviceId, this.channelId)
+        if (signal && signal.aborted) return  // 请求已被取消
         if (data && data.HomePosition) {
           this.homePositionInfo = {
             enabled: data.HomePosition.Enabled === 'true' || data.HomePosition.Enabled === true,
