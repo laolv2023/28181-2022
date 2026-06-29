@@ -20,7 +20,7 @@ check_prerequisites() {
     log "═══════════════════════════════════════════"
     if [ ! -d "$WVP_DIR/src/main/java" ]; then
         err "WVP 源码目录不存在: $WVP_DIR/src/main/java"
-        err "请先克隆: git clone https://github.com/648540858/wvp-GB28181-pro.git $WVP_DIR"
+        err "WVP 源码应已包含在仓库 wvp/ 目录中。如缺失请重新克隆仓库。"
         exit 1
     fi
     [ -d "$SRC_DIR" ] || { err "升级源码目录不存在: $SRC_DIR"; exit 1; }
