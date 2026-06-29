@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A5.1-02                                                 -->
+<!-- 测试名称: 巡航轨迹列表查询                                        -->
+<!-- 来源: 改造项12, GB/T 28181-2022 附录A.2.4.1.3                     -->
+<!-- 测试场景: 模拟WVP发送巡航轨迹列表查询MESSAGE,                     -->
+<!--           XML包含:                                                -->
+<!--             - CmdType=CruiseTrackQuery                          -->
+<!--             - CruiseTrackListID=0(0=查询所有轨迹列表)           -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. CmdType=CruiseTrackQuery                                    -->
+<!--   3. CruiseTrackListID=0 表示获取所有巡航轨迹列表                -->
+<!--   4. 设备返回 200 OK 后通过响应MESSAGE回送轨迹列表               -->
+<!-- 改造项12要点: 巡航轨迹查询为2022版新增,支持两级查询:            -->
+<!--             列表查询(List ID=0)+ 详情查询(具体Track ID)        -->
+<!-- ================================================================ -->
+
+<scenario name="query_cruise_track_list">
+
+  <!-- 步骤1: WVP向设备发送巡航轨迹列表查询 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA5102[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A5102
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Query>
+      <CmdType>CruiseTrackQuery</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <CruiseTrackListID>0</CruiseTrackListID>
+      </Query>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <!-- 步骤3: 接收设备返回的巡航轨迹列表 Notify MESSAGE -->
+  <recv request="MESSAGE" rtd="true">
+    <action>
+      <ereg regexp="CruiseTrackList" search_in="body" assign_to="track_list_elem" />
+    </action>
+  </recv>
+
+  <!-- 步骤4: WVP返回 200 OK 表示已收到查询响应 -->
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
