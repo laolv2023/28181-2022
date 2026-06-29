@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A4.1-04                                                 -->
+<!-- 测试名称: 设备软件升级命令                                        -->
+<!-- 来源: 改造项10, GB/T 28181-2022 附录A.2.3.1.12                    -->
+<!-- 测试场景: 模拟WVP向设备发送软件升级控制MESSAGE,                   -->
+<!--           XML包含 Deviceupgrade 元素及子元素                      -->
+<!--             - FirmWare: 目标固件版本号                           -->
+<!--             - FileuRL: 固件下载地址                              -->
+<!--             - Manufacturer: 厂商标识                             -->
+<!--             - sessionID: 升级会话标识                            -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. CmdType=DeviceControl                                       -->
+<!--   3. Deviceupgrade 元素及其4个子元素完整                         -->
+<!--   4. 设备返回 200 OK 后开始下载固件                              -->
+<!-- 改造项10要点: 升级结果通过单独的Notify消息回报(见A4.2-01)        -->
+<!-- ================================================================ -->
+
+<scenario name="ctrl_device_upgrade">
+
+  <!-- 步骤1: WVP向设备发送软件升级控制 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA4104[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A4104
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <Deviceupgrade>
+      <FirmWare>V2.0</FirmWare>
+      <FileuRL>http://10.0.0.1/firmware/V2.0.bin</FileuRL>
+      <Manufacturer>Test</Manufacturer>
+      <sessionID>123</sessionID>
+      </Deviceupgrade>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应(设备开始下载固件) -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
