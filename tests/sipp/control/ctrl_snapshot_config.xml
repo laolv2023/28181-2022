@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A4.1-05                                                 -->
+<!-- 测试名称: 图像抓拍配置命令                                        -->
+<!-- 来源: 改造项15, 设计文档第9.14节                                  -->
+<!-- 测试场景: 模拟WVP向设备发送抓拍配置MESSAGE,                       -->
+<!--           XML包含 SnapConfig 元素:                                -->
+<!--             - resolution: 分辨率代号(3=1080P)                    -->
+<!--             - snapNum: 抓拍数量(1张)                             -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. CmdType=DeviceControl                                       -->
+<!--   3. SnapConfig 元素包含 resolution 与 snapNum 子元素            -->
+<!--   4. 设备返回 200 OK                                             -->
+<!-- 改造项15要点: 抓拍配置为2022版新增,抓拍完成后设备应主动上报      -->
+<!--             uploadsnapshotFinished 通知(见A4.2-02)              -->
+<!-- ================================================================ -->
+
+<scenario name="ctrl_snapshot_config">
+
+  <!-- 步骤1: WVP向设备发送抓拍配置控制 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA4105[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A4105
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <SnapConfig>
+      <resolution>3</resolution>
+      <snapNum>1</snapNum>
+      </SnapConfig>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
