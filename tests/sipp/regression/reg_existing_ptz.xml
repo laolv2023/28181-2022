@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A10-02                                                  -->
+<!-- 测试名称: 现有PTZ控制命令回归                                     -->
+<!-- 来源: 设计文档第14.3节, GB/T 28181-2016 附录A.2.3.1.1            -->
+<!-- 测试场景: 验证2016版PTZCmd控制命令仍能正常下发                    -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 回归验证项:                                                -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. CmdType=DeviceControl                                       -->
+<!--   3. PTZCmd 元素携带 8字节16进制控制码(2016版格式)               -->
+<!--   4. 控制码字节布局: A(方向) | B(水平速度) | C(垂直速度)         -->
+<!--                   | D(变倍速度)                                  -->
+<!--   5. 设备返回 200 OK                                             -->
+<!-- 注意: 此测试为回归测试,确保2022改造不破坏2016版PTZCmd下发能力    -->
+<!-- ================================================================ -->
+
+<scenario name="reg_existing_ptz">
+
+  <!-- 步骤1: WVP向设备发送 2016版 PTZ向上控制MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000002@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA1002[callNumber]
+      To: <sip:34020000001320000002@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A1002
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000002</DeviceID>
+      <PTZCmd>0080040000000000</PTZCmd>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <!-- 步骤3: WVP发送 PTZ 停止命令(2016版PTZCmd格式) -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000002@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA1002b[callNumber]
+      To: <sip:34020000001320000002@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A1002
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>2</SN>
+      <DeviceID>34020000001320000002</DeviceID>
+      <PTZCmd>0000000000000000</PTZCmd>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
