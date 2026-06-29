@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B16-01~03                                               -->
+<!-- 测试名称: 协议版本标识合规性                                      -->
+<!-- 来源: 设计文档第14.16节, GB/T 28181-2022 附录I(X-GB-ver头域)    -->
+<!-- 测试场景: 验证X-GB-ver头域格式和版本协商                         -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项(覆盖B16-01/02/03):                                 -->
+<!--   B16-01: REGISTER请求中X-GB-ver头域格式正确("X-GB-ver: 2.0")    -->
+<!--   B16-02: WVP 200 OK响应中X-GB-ver头域格式正确                   -->
+<!--   B16-03: 设备与WVP版本协商一致(均使用2.0)                      -->
+<!-- X-GB-ver头域定义:                                                -->
+<!--   - 值为"M.N"格式,M为主版本,N为次版本                           -->
+<!--   - 2022版为"2.0",2016版未定义                                   -->
+<!-- ================================================================ -->
+
+<scenario name="reg_b2_07_register_b16_xgbver">
+
+  <!-- 步骤1: 发送携带X-GB-ver: 2.0的REGISTER(B16-01验证项) -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB16[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B16
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401,验证401响应中X-GB-ver头域(B16-02验证项) -->
+  <recv response="401" auth="true">
+    <action>
+      <ereg regexp="X-GB-ver:\s*2\.0" search_in="hdr" assign_to="xgbver_401" />
+    </action>
+  </recv>
+
+  <!-- 步骤3: 发送带Authorization的REGISTER,携带X-GB-ver: 2.0 -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB16[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B16
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收200 OK,验证响应中X-GB-ver: 2.0(B16-02/03验证项) -->
+  <recv response="200" rtd="true">
+    <action>
+      <ereg regexp="X-GB-ver:\s*2\.0" search_in="hdr" assign_to="xgbver_200" />
+    </action>
+    <test param="xgbver_200" criteria="X-GB-ver: 2.0" assign_to="version_match" />
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
