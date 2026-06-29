@@ -7,6 +7,7 @@ import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.IMessag
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.query.QueryMessageHandler;
 import com.genersoft.iot.vmp.gb28181.utils.GBProtocolVersionHelper;
 import com.genersoft.iot.vmp.gb28181.utils.XmlUtil;
+import com.genersoft.iot.vmp.gb28181.utils.SipCharsetHelper;
 import gov.nist.javax.sip.message.SIPRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.dom4j.Element;
@@ -37,7 +38,7 @@ import java.text.ParseException;
  * <p>
  * <b>请求 XML 结构示例：</b>
  * <pre>
- * &lt;?xml version="1.0" encoding="GB2312"?&gt;
+ * &lt;?xml version="1.0" encoding="GB18030"?&gt;
  * &lt;Query&gt;
  *     &lt;CmdType&gt;HomePositionQuery&lt;/CmdType&gt;
  *     &lt;SN&gt;1&lt;/SN&gt;
@@ -48,7 +49,7 @@ import java.text.ParseException;
  * <p>
  * <b>响应 XML 结构示例：</b>
  * <pre>
- * &lt;?xml version="1.0" encoding="GB2312"?&gt;
+ * &lt;?xml version="1.0" encoding="GB18030"?&gt;
  * &lt;Response&gt;
  *     &lt;CmdType&gt;HomePositionQuery&lt;/CmdType&gt;
  *     &lt;SN&gt;1&lt;/SN&gt;
@@ -235,7 +236,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
     private String buildResponseXml(String deviceId, String sn, String result,
                                     boolean enabled, int presetId, int resetTime) {
         StringBuilder xml = new StringBuilder(256);
-        xml.append("<?xml version=\"1.0\" encoding=\"GB2312\"?>\r\n");
+        xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Response>\r\n");
         xml.append("<CmdType>").append(cmdType).append("</CmdType>\r\n");
         xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : sn).append("</SN>\r\n");
