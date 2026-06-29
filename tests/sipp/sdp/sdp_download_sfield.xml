@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A3.1-01                                                 -->
+<!-- 测试名称: s字段DoWnload大写W                                      -->
+<!-- 来源: 改造项4, 设计文档第7节                                      -->
+<!-- 测试场景: 验证INVITE的SDP中s=DoWnload(大写W)符合2022版规范        -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. INVITE消息SDP体含s=DoWnload字段                              -->
+<!--   2. DoWnload首字母大写D, 第三字母大写W(注意大小写)               -->
+<!--   3. 用于下载类型媒体会话                                         -->
+<!--   4. 字段值大小写敏感,WVP须原样接收                               -->
+<!--   5. 设备返回 200 OK                                             -->
+<!-- ================================================================ -->
+
+<scenario name="sdp_download_sfield">
+
+  <!-- 步骤1: WVP向设备发送INVITE,SDP含s=DoWnload -->
+  <send retrans="500">
+    <![CDATA[
+      INVITE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA3101[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] INVITE
+      Contact: <sip:34020000002000000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A3101
+      Subject: Download Test
+      Content-Type: application/sdp
+      Content-Length: [len]
+
+      v=0
+      o=34020000002000000001 0 0 IN IP4 [local_ip]
+      s=DoWnload
+      c=IN IP4 [local_ip]
+      t=0 0
+      m=video 6000 RTP/AVP 100
+      a=rtpmap:100 H265/90000
+      a=recvonly
+      y=0000000001
+      f=v/2/1920x1080/25/1/4096a/2/4096/1
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备 100 Trying -->
+  <recv response="100" optional="true">
+  </recv>
+
+  <!-- 步骤3: 接收设备 200 OK(含SDP应答) -->
+  <recv response="200" rtd="true">
+    <action>
+      <ereg regexp="s=DoWnload" search_in="body" assign_to="sfield_check" />
+      <ereg regexp="m=video" search_in="body" assign_to="mvideo_check" />
+    </action>
+  </recv>
+
+  <!-- 步骤4: WVP发送ACK确认 -->
+  <send>
+    <![CDATA[
+      ACK sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA3101[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>[peer_tag_param]
+      Call-ID: [call_id]
+      CSeq: [cseq] ACK
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- 步骤5: WVP发送BYE结束会话 -->
+  <send retrans="500">
+    <![CDATA[
+      BYE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA3101[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>[peer_tag_param]
+      Call-ID: [call_id]
+      CSeq: [cseq] BYE
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- 步骤6: 接收 200 OK -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
