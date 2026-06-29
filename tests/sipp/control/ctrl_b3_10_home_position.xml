@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B3-10                                                   -->
+<!-- 测试名称: 看守位控制合规性                                        -->
+<!-- 来源: 设计文档第14.3节, GB/T 28181-2022 附录A.2.3.1.10           -->
+<!-- 测试场景: 验证看守位(HomePosition)控制命令格式                    -->
+<!--           启用/停用看守位功能,设置复位预置位                      -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. CmdType=DeviceControl                                       -->
+<!--   3. HomePosition 元素及子元素:                                  -->
+<!--      - Enabled: 1=启用看守位, 0=停用看守位                       -->
+<!--      - ResetTime: 复位时间(秒),摄像机空闲多久后自动复位          -->
+<!--      - PresetID: 复位目标预置位编号                              -->
+<!--   4. 设备返回 200 OK 表示接受配置                                -->
+<!-- GB/T 28181-2022 A.2.3.1.10 看守位控制:                          -->
+<!--   当摄像机长时间无控制操作时,自动复位到预设位置                  -->
+<!-- ================================================================ -->
+
+<scenario name="ctrl_b3_10_home_position">
+
+  <!-- 步骤1: WVP向设备发送看守位启用控制 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB310[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B310
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <HomePosition>
+      <Enabled>1</Enabled>
+      <ResetTime>30</ResetTime>
+      <PresetID>1</PresetID>
+      </HomePosition>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <!-- 步骤3: WVP向设备发送停用看守位控制 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB310b[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B310
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>2</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <HomePosition>
+      <Enabled>0</Enabled>
+      <ResetTime>0</ResetTime>
+      <PresetID>0</PresetID>
+      </HomePosition>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
