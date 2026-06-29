@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A2.2-02                                                 -->
+<!-- 测试名称: 设备注销                                                -->
+<!-- 来源: 设计文档第13.10节, GB/T 28181-2022 第9.2.2节               -->
+<!-- 测试场景: 模拟设备发送Expires=0的REGISTER进行注销                -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: GB/T 28181规定,设备可通过Expires头域值为0的REGISTER消息    -->
+<!--       主动注销。WVP应响应200 OK并停止维护该设备的注册状态。       -->
+<!--       本场景首先完成正常注册,然后发送注销请求。                  -->
+<!-- ================================================================ -->
+
+<scenario name="reg_unregister">
+
+  <!-- ============== 第一段: 先完成正常注册 ============== -->
+
+  <!-- 步骤1: 发送初始REGISTER -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag08[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401 -->
+  <recv response="401" auth="true">
+  </recv>
+
+  <!-- 步骤3: 发送带Authorization的REGISTER -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag08[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收200 OK,正常注册成功 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <!-- ============== 第二段: 发送注销请求 ============== -->
+
+  <!-- 步骤5: 发送Expires=0的REGISTER进行注销 -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]logout
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag08[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]-logout
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator
+      Expires: 0
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤6: 接收200 OK,验证注销成功 -->
+  <recv response="200" rtd="true">
+    <action>
+      <ereg regexp="Expires: 0" search_in="hdr" assign_to="logout_check" />
+    </action>
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
