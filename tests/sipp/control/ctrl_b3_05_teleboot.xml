@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B3-05                                                   -->
+<!-- 测试名称: 远程启动合规性                                          -->
+<!-- 来源: 设计文档第14.3节, GB/T 28181-2022 附录A.2.3.1.8            -->
+<!-- 测试场景: 验证远程启动(TeleBoot)设备控制命令格式                  -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. CmdType=DeviceControl                                       -->
+<!--   3. TeleBoot 元素存在(值为 Boot 触发远程重启)                   -->
+<!--   4. 设备返回 200 OK 后异步执行重启                              -->
+<!-- GB/T 28181-2022 A.2.3.1.8 定义 TeleBoot 远程启动命令:           -->
+<!--   - 设备收到 Boot 值后执行系统重启                              -->
+<!--   - 重启完成后设备重新发起 REGISTER 注册流程                     -->
+<!-- 安全提示: 远程启动为高危操作,生产环境需二次确认                  -->
+<!-- ================================================================ -->
+
+<scenario name="ctrl_b3_05_teleboot">
+
+  <!-- 步骤1: WVP向设备发送远程启动控制 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB305[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B305
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <TeleBoot>Boot</TeleBoot>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应(设备开始执行重启) -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
