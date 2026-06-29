@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B2-06                                                   -->
+<!-- 测试名称: 拒绝注册(认证失败)                                     -->
+<!-- 来源: 设计文档第14.2节, GB/T 28181-2022 第9.2.1节                -->
+<!-- 测试场景: 验证WVP对认证失败的REGISTER返回403 Forbidden           -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 设备使用错误密码计算摘要,WVP应返回403。                    -->
+<!--       本场景使用SIPp内置[authentication]标签配合错误密码         -->
+<!--       (password=wrongpassword)生成错误MD5摘要。                  -->
+<!-- ================================================================ -->
+
+<scenario name="reg_b2_06_register_reject">
+
+  <!-- 步骤1: 发送初始REGISTER -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB206[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B206
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401 Challenge -->
+  <recv response="401" auth="true">
+  </recv>
+
+  <!--
+    步骤3: 发送携带错误密码生成摘要的REGISTER
+    注意: password=wrongpassword故意使用错误密码
+  -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB206[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=wrongpassword]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B206
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收403 Forbidden,验证WVP拒绝错误认证 -->
+  <recv response="403" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
