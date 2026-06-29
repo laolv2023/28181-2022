@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A5.1-01                                                 -->
+<!-- 测试名称: 看守位信息查询                                          -->
+<!-- 来源: 改造项11, GB/T 28181-2022 附录A.2.4.1.2                     -->
+<!-- 测试场景: 模拟WVP发送查询MESSAGE,设备返回看守位配置               -->
+<!--           响应XML包含 HomePosition 元素:                          -->
+<!--             - Enabled: 看守位是否启用(1=启用)                    -->
+<!--             - PresetID: 复位预置位编号                           -->
+<!-- 测试模式: UAC + UAS复合(WVP发送查询,设备返回响应)                -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. 查询CmdType=ConfigQuery,MsgType=HomePosition                -->
+<!--   3. 响应CmdType=ConfigQuery,MsgType=HomePosition                -->
+<!--   4. 设备返回 200 OK 后携带完整HomePosition配置                  -->
+<!-- 改造项11要点: 看守位信息查询为2022版新增,可远程获取设备         -->
+<!--             当前看守位配置,配合A4.1类控制命令实现闭环管理       -->
+<!-- ================================================================ -->
+
+<scenario name="query_home_position">
+
+  <!-- 步骤1: WVP向设备发送看守位信息查询 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA5101[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A5101
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Query>
+      <CmdType>ConfigQuery</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <MsgType>HomePosition</MsgType>
+      </Query>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应(空响应) -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <!-- 步骤3: 接收设备返回的看守位配置 Notify MESSAGE -->
+  <recv request="MESSAGE" rtd="true">
+    <action>
+      <ereg regexp="HomePosition" search_in="body" assign_to="home_position_elem" />
+      <ereg regexp="<Enabled>1</Enabled>" search_in="body" assign_to="enabled_val" />
+      <ereg regexp="<PresetID>1</PresetID>" search_in="body" assign_to="preset_val" />
+    </action>
+  </recv>
+
+  <!-- 步骤4: WVP返回 200 OK 表示已收到查询响应 -->
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
