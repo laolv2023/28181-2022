@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A2.1-02                                                 -->
+<!-- 测试名称: 设备在REGISTER中携带X-GB-ver头域                        -->
+<!-- 来源: 设计文档第13.9节, 2022版附录I                               -->
+<!-- 测试场景: 模拟2022版设备在REGISTER请求中携带 X-GB-ver: 2.0 头域   -->
+<!--           验证设备端发送侧的协议版本标识能力                      -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: REGISTER请求中显式添加自定义头域 X-GB-ver: 2.0             -->
+<!--       用于验证WVP对设备携带X-GB-ver头域的兼容性                  -->
+<!-- ================================================================ -->
+
+<scenario name="reg_xgbver_device_send">
+
+  <!-- 步骤1: 发送携带X-GB-ver头域的初始REGISTER -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag02[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-2022
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401 Challenge -->
+  <recv response="401" auth="true">
+  </recv>
+
+  <!-- 步骤3: 发送带Authorization的REGISTER,同时携带X-GB-ver头域 -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag02[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-2022
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收200 OK -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
