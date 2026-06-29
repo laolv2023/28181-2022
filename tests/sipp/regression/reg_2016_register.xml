@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A10-01                                                  -->
+<!-- 测试名称: 2016设备注册回归                                        -->
+<!-- 来源: 设计文档第14.2节, GB/T 28181-2016 第9.2.1节                -->
+<!-- 测试场景: 验证2016版设备(无X-GB-ver头域)仍能正常注册              -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 回归验证项:                                                -->
+<!--   1. REGISTER消息不携带X-GB-ver头域(模拟2016版设备)              -->
+<!--   2. WVP应识别为2016版设备并按2016流程处理                       -->
+<!--   3. WVP应仍允许设备注册(向后兼容)                              -->
+<!--   4. WVP不应在响应中要求X-GB-ver头域                             -->
+<!--   5. 注册成功返回200 OK                                          -->
+<!-- 注意: 此测试为回归测试,确保2022改造不破坏2016设备兼容性          -->
+<!-- ================================================================ -->
+
+<scenario name="reg_2016_register">
+
+  <!-- 步骤1: 发送2016版REGISTER(无X-GB-ver头域) -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000002@[local_ip]:[local_port]>;tag=[pid]SIPpTagA1001[callNumber]
+      To: <sip:34020000001320000002@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000002@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A1001-Legacy2016
+      Expires: 3600
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401 Challenge -->
+  <recv response="401" auth="true">
+    <action>
+      <ereg regexp="WWW-Authenticate" search_in="hdr" assign_to="www_auth_hdr" />
+    </action>
+  </recv>
+
+  <!-- 步骤3: 发送带Authorization的REGISTER(无X-GB-ver头域,符合2016版) -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000002@[local_ip]:[local_port]>;tag=[pid]SIPpTagA1001[callNumber]
+      To: <sip:34020000001320000002@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000002@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000002 password=12345678]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A1001-Legacy2016
+      Expires: 3600
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收200 OK,验证2016设备注册成功 -->
+  <recv response="200" rtd="true">
+    <action>
+      <ereg regexp="Contact:" search_in="hdr" assign_to="contact_hdr" />
+      <ereg regexp="Expires:" search_in="hdr" assign_to="expires_hdr" />
+    </action>
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
