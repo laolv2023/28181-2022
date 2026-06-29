@@ -207,6 +207,19 @@ export default {
     }
   },
 
+  // ========== Lifecycle ==========
+
+  /**
+   * 组件销毁前清理：清除格式化后延迟刷新定时器
+   * 防止路由跳转导致组件销毁后 setTimeout 仍触发
+   */
+  beforeDestroy() {
+    if (this._formatTimer) {
+      clearTimeout(this._formatTimer)
+      this._formatTimer = null
+    }
+  },
+
   // ========== Methods ==========
   methods: {
     // ---- 生命周期 ----
