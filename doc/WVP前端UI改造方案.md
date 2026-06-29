@@ -93,7 +93,7 @@
 export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom }) {
   return request({
     method: 'get',
-    url: `/api/front-end/ptz_precise/${deviceId}/${channelId}`,
+    url: `/api/device/control/ptz_precise/${deviceId}/${channelId}`,
     params: { pan, tilt, zoom }
   })
 }
@@ -107,9 +107,12 @@ export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom }) {
 <!-- === F1改造: PTZ精准控制面板 === -->
 <!-- 来源: 后端改造项7, 设计文档第10.1节, 2022版A.2.3.1.11 -->
 <!-- 规范要求: 2022版新增PTZ精准控制, 支持pan/Tilt/zoom精确角度设置 -->
-<!-- 说明: 使用 v-show + CSS transition 替代 el-collapse-transition（项目中未验证过） -->
+<!-- D7修复: 补充展开/收起按钮触发 preciseVisible -->
+<div v-if="isVersion2022" class="ptz-precise-toggle" @click="preciseVisible = !preciseVisible">
+  <i :class="preciseVisible ? 'el-icon-arrow-down' : 'el-icon-arrow-right'" />
+  <span>精准控制（GB/T 28181-2022）</span>
+</div>
 <div v-show="preciseVisible" class="ptz-precise-section" style="transition: all 0.3s;">
-  <div class="precise-title">精准控制（GB/T 28181-2022）</div>
   <el-form :inline="true" size="mini" label-width="60px">
     <el-form-item label="水平角">
       <el-input-number v-model="precisePan"
@@ -200,15 +203,16 @@ handlePtzPrecise() {
 export function queryStorageCardStatus(deviceId, channelId) {
   return request({
     method: 'get',
-    url: `/api/front-end/storage_card_status/${deviceId}/${channelId}`
+    url: `/api/device/control/storage_card_status_query/${deviceId}/${channelId}`
   })
 }
 
 /** 存储卡格式化 (改造项8, 2022版A.2.3.1.13) */
+// D2修复: 破坏性操作使用 POST 方法
 export function formatStorageCard(deviceId, channelId) {
   return request({
-    method: 'get',
-    url: `/api/front-end/format_sdcard/${deviceId}/${channelId}`
+    method: 'post',
+    url: `/api/device/control/format_sdcard/${deviceId}/${channelId}`
   })
 }
 ```
@@ -247,7 +251,7 @@ export function formatStorageCard(deviceId, channelId) {
 export function targetTrack({ deviceId, channelId, action }) {
   return request({
     method: 'get',
-    url: `/api/front-end/target_track/${deviceId}/${channelId}`,
+    url: `/api/device/control/target_track/${deviceId}/${channelId}`,
     params: { action }  // Auto | Manual | Stop
   })
 }
@@ -290,6 +294,23 @@ export function targetTrack({ deviceId, channelId, action }) {
   </el-dialog>
 </template>
 ```
+
+> **D5修复**: 设备升级涉及文件上传。流程为：(1) 用户选择本地固件文件 → (2) 调用文件上传 API `/api/device/control/upload_firmware` 上传到服务器 → (3) 服务器返回文件 URL → (4) 调用 `deviceUpgrade` API 传入 `fileUrl` 触发升级。需在 `frontEnd.js` 新增文件上传 API：
+>
+> ```javascript
+> // D5修复: 固件文件上传 API
+> export function uploadFirmware(deviceId, file) {
+>   const formData = new FormData()
+>   formData.append('file', file)
+>   return request({
+>     method: 'post',
+>     url: `/api/device/control/upload_firmware/${deviceId}`,
+>     data: formData,
+>     headers: { 'Content-Type': 'multipart/form-data' }
+>   })
+> }
+> ```
+> `handleUpgrade` 方法中先调用 `uploadFirmware` 获取 `fileUrl`，再调用 `deviceUpgrade`。
 
 ### 3.5 F5: 新增查询页面
 
@@ -428,9 +449,27 @@ export function targetTrack({ deviceId, channelId, action }) {
     <el-form-item label="TCP媒体重连">
       <el-switch v-model="config.tcpReconnectEnabled" />
     </el-form-item>
+    <!-- D6修复: 补充保存按钮 -->
+    <el-form-item>
+      <el-button type="primary" :loading="saving" @click="handleSave">保存配置</el-button>
+    </el-form-item>
   </el-form>
 </el-card>
 ```
+
+> **D6修复**: 补充保存配置功能。需在 `frontEnd.js` 新增保存 API：
+>
+> ```javascript
+> // D6修复: 保存安全配置 API
+> export function saveSecurityConfig(data) {
+>   return request({
+>     method: 'post',
+>     url: '/api/device/config/save_security',
+>     data: data
+>   })
+> }
+> ```
+> `handleSave` 方法调用 `saveSecurityConfig(this.config)`，保存成功后提示"配置已保存，部分配置重启后生效"。
 
 ---
 
@@ -555,6 +594,21 @@ export function snapshotConfig({ deviceId, channelId, resolution, snapNum }) {
 前端新增 API 需要后端 Controller 提供对应接口。以下接口需在现有 `ApiControlController.java`（`@RequestMapping("/api/v1/control")`）或 `ApiDeviceController.java`（`@RequestMapping("/api/v1/device")`）中新增对应方法。建议在 `ApiDeviceController.java` 中新增，与现有 `/api/device/control/` 路径前缀一致。
 
 > **A3修复说明**: 这些 Controller 接口不在《WVP 合规性升级改造开发方案》的 38 项中，需要额外开发。Controller 内部调用已有的 `SIPCommander` 方法下发 SIP 命令到设备。以下为接口定义，Controller 实现代码需另行开发。
+
+> **D3修复说明**: WVP 后端 `ApiDeviceController` 的 `@RequestMapping` 是 `/api/v1/device`，但前端 `device.js` 调用的是 `/api/device/control/...` 路径。这说明 WVP 可能有 Spring Boot 路径映射配置（如 `server.servlet.context-path` 或 `@RequestMapping` 级别调整）将 `/api/device/` 映射到 `ApiDeviceController`。新增接口应遵循同样的路径模式。如路径不通，需检查 WVP 的 Spring Boot 路由配置或在前端调整 API 前缀。
+
+> **D4修复说明**: Controller 示例中调用 `cmder.ptzPreciseCmd()` 等方法，但 SIPCommander 中尚无这些方法。需在 `SIPCommander.java` 中新增以下 9 个方法（不在 38 项改造中，需额外开发）：
+> - `ptzPreciseCmd(Device, String channelId, double pan, double tilt, double zoom)` — 改造项7
+> - `formatSdcardCmd(Device, String channelId)` — 改造项8
+> - `targetTrackCmd(Device, String channelId, String action)` — 改造项9
+> - `deviceUpgradeCmd(Device, String channelId, String firmware, String fileUrl, String manufacturer, String sessionId)` — 改造项10
+> - `homePositionQueryCmd(Device, String channelId)` — 改造项11
+> - `cruiseTrackQueryCmd(Device, String channelId, Integer trackListId)` — 改造项12
+> - `ptzPreciseStatusQueryCmd(Device, String channelId)` — 改造项13
+> - `storageCardStatusQueryCmd(Device, String channelId)` — 改造项14
+> - `snapshotConfigCmd(Device, String channelId, int resolution, int snapNum)` — 改造项15
+>
+> 这些方法内部构造 XML 消息（如 `<PTzPrecisectrl><pan>...</pan><Tilt>...</Tilt><zoom>...</zoom></PTzPrecisectrl>`），通过 SIP 发送到设备。
 
 | API 路径 | 方法 | 对应后端改造项 | 说明 |
 |---|---|---|---|
