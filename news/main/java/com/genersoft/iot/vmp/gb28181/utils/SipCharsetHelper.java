@@ -218,4 +218,33 @@ public final class SipCharsetHelper {
         // 2022 版及其他默认 GB 18030
         return DEFAULT_CHARSET;
     }
+
+    /**
+     * XML 特殊字符转义
+     * <p>
+     * 将 & < > " ' 转义为 XML 实体，防止 XML 注入攻击。
+     * 审计修复：所有外部输入拼入 XML 前必须调用此方法。
+     * </p>
+     *
+     * @param input 原始字符串
+     * @return 转义后的安全字符串
+     */
+    public static String escapeXml(String input) {
+        if (input == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(input.length());
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            switch (c) {
+                case '&':  sb.append("&amp;");  break;
+                case '<':  sb.append("&lt;");   break;
+                case '>':  sb.append("&gt;");   break;
+                case '"':  sb.append("&quot;");  break;
+                case '\'': sb.append("&apos;");  break;
+                default:   sb.append(c);        break;
+            }
+        }
+        return sb.toString();
+    }
 }
