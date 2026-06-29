@@ -200,10 +200,13 @@ export default {
 
     /**
      * 是否允许开始升级
-     * 条件：已选择文件 且 上传成功 且 已填写制造商
+     * 条件：已选择文件 且 上传成功 且 已填写制造商 且 当前无进行中的上传/升级操作
      */
     canUpgrade() {
-      return this.uploadSuccess && this.form.manufacturer.trim() !== ''
+      return this.uploadSuccess &&
+             this.form.manufacturer.trim() !== '' &&
+             !this.uploading &&
+             !this.upgrading
     }
   },
 
@@ -243,7 +246,7 @@ export default {
      * 文件选择变化事件
      *
      * 来源: 后端改造项10, 设备软件升级文件选择
-     * 将用户选择的文件信息保存到 form 中
+     * 校验: 文件类型（.bin/.img/.zip）、空文件、大小限制（200MB）
      *
      * @param {Object} file - Element UI el-upload 的 file 对象
      * @param {Array}  fileList - 当前文件列表
@@ -254,6 +257,32 @@ export default {
         fileList.splice(0, 1)
       }
       const rawFile = file.raw
+      if (!rawFile) {
+        this.$message.warning('文件对象无效，请重新选择')
+        return
+      }
+      // 校验文件类型（JS 层面二次校验，防止绕过 HTML accept 属性）
+      const ALLOWED_EXT = ['.bin', '.img', '.zip']
+      const fileName = rawFile.name.toLowerCase()
+      const ext = '.' + fileName.split('.').pop()
+      if (!ALLOWED_EXT.includes(ext)) {
+        this.$message.error(`不支持的文件类型：${ext}，请选择 .bin / .img / .zip 格式的固件文件`)
+        fileList.splice(0, 1)
+        return
+      }
+      // 校验空文件
+      if (rawFile.size === 0) {
+        this.$message.error('不能上传空文件')
+        fileList.splice(0, 1)
+        return
+      }
+      // 校验文件大小（上限 200MB）
+      const MAX_SIZE = 200 * 1024 * 1024
+      if (rawFile.size > MAX_SIZE) {
+        this.$message.error(`文件过大：${(rawFile.size / 1024 / 1024).toFixed(1)}MB，上限 200MB`)
+        fileList.splice(0, 1)
+        return
+      }
       this.form.firmware = file.name
       this.form.firmwareFile = rawFile
       this.uploadSuccess = false
@@ -337,7 +366,12 @@ export default {
       this.uploading = true
       try {
         const { data } = await uploadFirmware(this.deviceId, this.form.firmwareFile)
-        this.uploadedFileUrl = data.fileUrl || data.url || data
+        // 防御性获取 fileUrl：兼容多种后端响应格式
+        const url = data && (data.fileUrl || data.url)
+        if (typeof url !== 'string' || url.length === 0) {
+          throw new Error('服务器返回的文件地址无效')
+        }
+        this.uploadedFileUrl = url
         this.uploadSuccess = true
         this.$message.success('固件文件上传成功')
       } catch (err) {
@@ -356,7 +390,8 @@ export default {
      * @returns {string} UUID v4 字符串
      */
     generateUUID() {
-      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      // 优先使用浏览器原生 crypto.randomUUID()，需同时检查 crypto 非 null
+      if (typeof crypto !== 'undefined' && crypto !== null && typeof crypto.randomUUID === 'function') {
         return crypto.randomUUID()
       }
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
