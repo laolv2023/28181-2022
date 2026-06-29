@@ -35,14 +35,14 @@ import java.util.List;
  * <p>
  * <b>规范依据：</b><br>
  * 来源：设计文档第10.2节（信息查询类命令扩展），2022版 A.2.4.1.3 巡航轨迹查询。<br>
- * 命令类型：CmdType = CruiseTrackQuery<br>
+ * 命令类型：CmdType = cruiseTrackQuery<br>
  * 协议要求：2022 版新增巡航轨迹查询命令，用于查询巡航轨迹列表以及单条轨迹的详细预置位序列。
  * </p>
  * <p>
  * <b>列表查询请求 XML 示例：</b>
  * <pre>
  * &lt;Query&gt;
- *     &lt;CmdType&gt;CruiseTrackQuery&lt;/CmdType&gt;
+ *     &lt;CmdType&gt;cruiseTrackQuery&lt;/CmdType&gt;
  *     &lt;SN&gt;10&lt;/SN&gt;
  *     &lt;DeviceID&gt;34020000001320000001&lt;/DeviceID&gt;
  *     &lt;CruiseTrackListID&gt;1&lt;/CruiseTrackListID&gt;
@@ -53,7 +53,7 @@ import java.util.List;
  * <b>详情查询请求 XML 示例：</b>
  * <pre>
  * &lt;Query&gt;
- *     &lt;CmdType&gt;CruiseTrackQuery&lt;/CmdType&gt;
+ *     &lt;CmdType&gt;cruiseTrackQuery&lt;/CmdType&gt;
  *     &lt;SN&gt;11&lt;/SN&gt;
  *     &lt;DeviceID&gt;34020000001320000001&lt;/DeviceID&gt;
  *     &lt;CruiseTrackID&gt;1&lt;/CruiseTrackID&gt;
@@ -64,7 +64,7 @@ import java.util.List;
  * <b>响应 XML 示例（列表查询）：</b>
  * <pre>
  * &lt;Response&gt;
- *     &lt;CmdType&gt;CruiseTrackQuery&lt;/CmdType&gt;
+ *     &lt;CmdType&gt;cruiseTrackQuery&lt;/CmdType&gt;
  *     &lt;SN&gt;10&lt;/SN&gt;
  *     &lt;DeviceID&gt;34020000001320000001&lt;/DeviceID&gt;
  *     &lt;Result&gt;OK&lt;/Result&gt;
@@ -85,7 +85,7 @@ import java.util.List;
  * <b>响应 XML 示例（详情查询）：</b>
  * <pre>
  * &lt;Response&gt;
- *     &lt;CmdType&gt;CruiseTrackQuery&lt;/CmdType&gt;
+ *     &lt;CmdType&gt;cruiseTrackQuery&lt;/CmdType&gt;
  *     &lt;SN&gt;11&lt;/SN&gt;
  *     &lt;DeviceID&gt;34020000001320000001&lt;/DeviceID&gt;
  *     &lt;Result&gt;OK&lt;/Result&gt;
@@ -129,7 +129,7 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
     /**
      * Spring 容器初始化后回调，将当前处理器注册到 QueryMessageHandler。
      * <p>
-     * 改造项12：注册 CmdType=CruiseTrackQuery。
+     * 改造项12：注册 CmdType=cruiseTrackQuery。
      * 来源：设计文档第10.2节，2022版 A.2.4.1.3。
      * </p>
      *
