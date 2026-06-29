@@ -30,14 +30,14 @@ import java.text.ParseException;
  * <p>
  * <b>规范依据：</b><br>
  * 来源：设计文档第10.2节（信息查询类命令扩展），2022版 A.2.4.1.5 PTZ 精准状态查询。<br>
- * 命令类型：CmdType = PTzPreciseStatusQuery（注意 P 大写、T 大写、z 小写，按规范拼写）<br>
+ * 命令类型：CmdType = pTZposition（按 GB/T 28181-2022 规范拼写）<br>
  * 协议要求：2022 版新增 PTZ 精准状态查询命令，返回当前云台的水平转角、垂直转角、变倍值。
  * </p>
  * <p>
  * <b>请求 XML 示例：</b>
  * <pre>
  * &lt;Query&gt;
- *     &lt;CmdType&gt;PTzPreciseStatusQuery&lt;/CmdType&gt;
+ *     &lt;CmdType&gt;pTZposition&lt;/CmdType&gt;
  *     &lt;SN&gt;20&lt;/SN&gt;
  *     &lt;DeviceID&gt;34020000001320000001&lt;/DeviceID&gt;
  * &lt;/Query&gt;
@@ -47,7 +47,7 @@ import java.text.ParseException;
  * <b>响应 XML 示例：</b>
  * <pre>
  * &lt;Response&gt;
- *     &lt;CmdType&gt;PTzPreciseStatusQuery&lt;/CmdType&gt;
+ *     &lt;CmdType&gt;pTZposition&lt;/CmdType&gt;
  *     &lt;SN&gt;20&lt;/SN&gt;
  *     &lt;DeviceID&gt;34020000001320000001&lt;/DeviceID&gt;
  *     &lt;Result&gt;OK&lt;/Result&gt;
@@ -77,7 +77,7 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
      * 命令类型字符串
      * <p>
      * 改造项13：来源 设计文档第10.2节，2022版 A.2.4.1.5<br>
-     * 注意：规范要求首字母 P 大写、T 大写、z 小写，与 2016 版 PTZCmd 大小写不同。
+     * 注意：按 GB/T 28181-2022 规范拼写为 pTZposition，与 2016 版 PTZCmd 不同。
      * </p>
      */
     private final String cmdType = "pTZposition";
@@ -111,7 +111,7 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
     /**
      * Spring 容器初始化后回调，将当前处理器注册到 QueryMessageHandler。
      * <p>
-     * 改造项13：注册 CmdType=PTzPreciseStatusQuery。
+     * 改造项13：注册 CmdType=pTZposition。
      * 来源：设计文档第10.2节，2022版 A.2.4.1.5。
      * </p>
      *
@@ -218,7 +218,7 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
         // Pan/Tilt/Zoom 保留两位小数
         xml.append("<Pan>").append(String.format("%.2f", pan)).append("</Pan>\r\n");
         xml.append("<Tilt>").append(String.format("%.2f", tilt)).append("</Tilt>\r\n");
-        xml.append("<Zoom>").append(String.format("%.2f", zoom)).append("</Zoom>\r\n");
+        xml.append("<Zoom>").2f", zoom)).append("</Zoom>\r\n");
         xml.append("</Response>\r\n");
         return xml.toString();
     }
