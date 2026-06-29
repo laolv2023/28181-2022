@@ -332,8 +332,8 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Control>\r\n");
         xml.append("<CmdType>DeviceControl</CmdType>\r\n");
-        xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : sn).append("</SN>\r\n");
-        xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : deviceId).append("</DeviceID>\r\n");
+        xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : SipCharsetHelper.escapeXml(sn)).append("</SN>\r\n");
+        xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<SnapConfig>\r\n");
         xml.append("<Resolution>").append(resolution).append("</Resolution>\r\n");
         xml.append("<SnapNum>").append(snapNum).append("</SnapNum>\r\n");
