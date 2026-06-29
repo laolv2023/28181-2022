@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B2-01                                                   -->
+<!-- 测试名称: 基本注册流程合规性                                      -->
+<!-- 来源: 设计文档第14.2节, GB/T 28181-2022 第9.2.1节                -->
+<!-- 测试场景: 验证REGISTER消息格式符合2022版规范                     -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. Request-URI格式正确                                         -->
+<!--   2. From/To头域使用GB28181设备ID(20位)                          -->
+<!--   3. CSeq递增                                                    -->
+<!--   4. Contact头域包含设备地址                                     -->
+<!--   5. Max-Forwards=70                                             -->
+<!--   6. Expires头域存在                                             -->
+<!--   7. X-GB-ver: 2.0(2022版)                                       -->
+<!-- ================================================================ -->
+
+<scenario name="reg_b2_01_basic_register">
+
+  <!-- 步骤1: 发送符合2022版规范的REGISTER -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB201[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B201
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401 Challenge -->
+  <recv response="401" auth="true">
+    <action>
+      <ereg regexp="WWW-Authenticate" search_in="hdr" assign_to="www_auth_hdr" />
+    </action>
+  </recv>
+
+  <!-- 步骤3: 发送带Authorization的REGISTER -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB201[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B201
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收200 OK,验证注册成功 -->
+  <recv response="200" rtd="true">
+    <action>
+      <ereg regexp="Contact:" search_in="hdr" assign_to="contact_hdr" />
+      <ereg regexp="Expires:" search_in="hdr" assign_to="expires_hdr" />
+    </action>
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
