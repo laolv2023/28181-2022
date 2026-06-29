@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A4.1-01                                                 -->
+<!-- 测试名称: PTZ精准控制命令                                         -->
+<!-- 来源: 改造项7, 设计文档第10.1节, GB/T 28181-2022 附录A.2.3.1.11  -->
+<!-- 测试场景: 模拟WVP向设备发送设备控制MESSAGE,                       -->
+<!--           XML包含 PTzPrecisectrl (pan/Tilt/zoom) 精准定位元素    -->
+<!-- 测试模式: UAC (WVP侧发送MESSAGE, 设备侧UAS返回200 OK)            -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法Request-URI为设备SIP ID                          -->
+<!--   2. Content-Type: Application/MANSCDP+xml                       -->
+<!--   3. CmdType=DeviceControl                                       -->
+<!--   4. PTzPrecisectrl 元素包含 pan/Tilt/zoom 三个浮点字段          -->
+<!--   5. 设备返回 200 OK 表示接受控制                                -->
+<!-- 改造项7要点: PTZ精准控制为2022版新增,扩展传统8方向控制为         -->
+<!--             连续精确定位,支持浮点角度值                          -->
+<!-- ================================================================ -->
+
+<scenario name="ctrl_ptz_precise">
+
+  <!-- 步骤1: WVP向设备发送 PTZ 精准控制 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA4101[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A4101
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <PTzPrecisectrl>
+      <pan>10.5</pan>
+      <Tilt>20.3</Tilt>
+      <zoom>1.5</zoom>
+      </PTzPrecisectrl>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+    <action>
+      <ereg regexp="Content-Type" search_in="hdr" assign_to="ct_hdr" />
+    </action>
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
