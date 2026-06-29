@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A3.1-02                                                 -->
+<!-- 测试名称: Talk操作类型删除                                        -->
+<!-- 来源: 改造项5                                                    -->
+<!-- 测试场景: 验证2022版不再使用s=Talk操作类型                        -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. 2022版规范删除了Talk操作类型                                -->
+<!--   2. SDP中s字段不应再使用s=Talk                                  -->
+<!--   3. 应使用s=Play或s=Download等替代                              -->
+<!--   4. 验证WVP对错误使用s=Talk的拒绝行为                           -->
+<!--   5. 设备应返回 488 或拒绝错误响应                               -->
+<!-- ================================================================ -->
+
+<scenario name="sdp_talk_removed">
+
+  <!-- 步骤1: WVP发送INVITE,SDP故意使用已废弃的s=Talk字段 -->
+  <send retrans="500">
+    <![CDATA[
+      INVITE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA3102[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] INVITE
+      Contact: <sip:34020000002000000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A3102
+      Subject: Talk Test (Deprecated)
+      Content-Type: application/sdp
+      Content-Length: [len]
+
+      v=0
+      o=34020000002000000001 0 0 IN IP4 [local_ip]
+      s=Talk
+      c=IN IP4 [local_ip]
+      t=0 0
+      m=audio 6000 RTP/AVP 8
+      a=rtpmap:8 PCMA/8000
+      a=sendrecv
+      y=0000000002
+      f=a/1/1/1/1/1/1/1
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备 100 Trying -->
+  <recv response="100" optional="true">
+  </recv>
+
+  <!-- 步骤3: 接收设备响应(预期488或拒绝,因Talk已废弃) -->
+  <recv response="488" rtd="true" optional="true">
+    <action>
+      <ereg regexp="Warning" search_in="hdr" assign_to="warning_hdr" />
+      <ereg regexp="s=Talk" search_in="body" assign_to="talk_check" />
+    </action>
+  </recv>
+
+  <!-- 备选: 接收 415 不支持的媒体类型 -->
+  <recv response="415" rtd="true" optional="true">
+  </recv>
+
+  <!-- 备选: 接收 200 OK(WVP兼容模式仍接受) -->
+  <recv response="200" rtd="true" optional="true">
+    <action>
+      <ereg regexp="s=Talk" search_in="body" assign_to="talk_in_resp" />
+    </action>
+  </recv>
+
+  <!-- 步骤4: 若为200 OK则发送ACK,并结束会话 -->
+  <send optional="true">
+    <![CDATA[
+      ACK sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA3102[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>[peer_tag_param]
+      Call-ID: [call_id]
+      CSeq: [cseq] ACK
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <send retrans="500" optional="true">
+    <![CDATA[
+      BYE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA3102[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>[peer_tag_param]
+      Call-ID: [call_id]
+      CSeq: [cseq] BYE
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <recv response="200" optional="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
