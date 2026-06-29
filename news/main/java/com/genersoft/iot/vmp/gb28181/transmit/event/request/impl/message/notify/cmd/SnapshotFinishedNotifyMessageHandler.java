@@ -1,9 +1,9 @@
 package com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.notify.cmd;
 
-import com.genersoft.iot.vmp.conf.SipConfig;
-import com.genersoft.iot.vmp.conf.UserSetting;
+
+
 import com.genersoft.iot.vmp.gb28181.bean.Device;
-import com.genersoft.iot.vmp.gb28181.bean.ParentPlatform;
+import com.genersoft.iot.vmp.gb28181.bean.Platform;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorParent;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.IMessageHandler;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.notify.NotifyMessageHandler;
@@ -41,7 +41,7 @@ import java.util.List;
  * <p>
  * <b>XML 结构示例：</b>
  * <pre>
- * &lt;?xml version="1.0" encoding="GB2312"?&gt;
+ * &lt;?xml version="1.0" encoding="GB18030"?&gt;
  * &lt;Notify&gt;
  *     &lt;CmdType&gt;uploadsnapshotFinished&lt;/CmdType&gt;
  *     &lt;SN&gt;1&lt;/SN&gt;
@@ -97,11 +97,7 @@ public class SnapshotFinishedNotifyMessageHandler extends SIPRequestProcessorPar
     @Autowired
     private NotifyMessageHandler notifyMessageHandler;
 
-    @Autowired
-    private UserSetting userSetting;
 
-    @Autowired
-    private SipConfig sipConfig;
 
     /**
      * Spring 容器初始化后回调，将当前处理器注册到 NotifyMessageHandler 中。
@@ -123,8 +119,6 @@ public class SnapshotFinishedNotifyMessageHandler extends SIPRequestProcessorPar
      *
      * @return 命令类型字符串
      */
-    @Override
-    public String getCmdType() {
         return CMD_TYPE;
     }
 
@@ -135,8 +129,8 @@ public class SnapshotFinishedNotifyMessageHandler extends SIPRequestProcessorPar
      * @param parentPlatform 上级平台
      */
     @Override
-    public void handForPlatform(RequestEvent evt, ParentPlatform parentPlatform) {
-        handleMessage(evt);
+    public void handForPlatform(RequestEvent evt, Platform parentPlatform, Element element) {
+        handleMessage(evt, element);
     }
 
     /**
@@ -144,10 +138,11 @@ public class SnapshotFinishedNotifyMessageHandler extends SIPRequestProcessorPar
      *
      * @param evt    SIP 请求事件
      * @param device 上报设备
+     * @param element XML 根元素
      */
     @Override
-    public void handForDevice(RequestEvent evt, Device device) {
-        handleMessage(evt);
+    public void handForDevice(RequestEvent evt, Device device, Element element) {
+        handleMessage(evt, element);
     }
 
     /**
@@ -164,11 +159,10 @@ public class SnapshotFinishedNotifyMessageHandler extends SIPRequestProcessorPar
      *
      * @param evt SIP 请求事件
      */
-    private void handleMessage(RequestEvent evt) {
+    private void handleMessage(RequestEvent evt, Element rootElement) {
         try {
-            Element rootElement = getRootElement(evt);
             if (rootElement == null) {
-                logger.warn("[抓图完成通知] 解析 XML 根节点失败，无法处理");
+                logger.warn("[抓图完成通知] XML 根节点为空，无法处理");
                 respondAck(evt, Response.BAD_REQUEST);
                 return;
             }
