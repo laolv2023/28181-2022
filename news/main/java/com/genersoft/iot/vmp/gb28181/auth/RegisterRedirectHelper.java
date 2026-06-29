@@ -160,18 +160,14 @@ public final class RegisterRedirectHelper {
 
         // 更新设备本地保存的注册地址
         if (!ObjectUtils.isEmpty(host)) {
-            // Device 中通常以 registerHost / registerPort 字段保存，此处仅作示例更新
-            // 实际项目可根据 Device 类字段定义调整
+            // 审计修复: Device 类有 transport 字段但无 registerPort 字段
+            // 仅更新 transport，registerPort 通过设备重新注册时自动获取
             try {
-                if (port > 0) {
-                    device.setRegisterPort(port);
-                }
                 if (!ObjectUtils.isEmpty(transport)) {
                     device.setTransport(transport);
                 }
             } catch (Throwable t) {
-                // 部分字段可能不存在，忽略 NoSuchMethodError
-                logger.debug("[注册重定向] Device 字段更新忽略: {}", t.getMessage());
+                logger.debug("[注册重定向] Device transport 字段更新忽略: {}", t.getMessage());
             }
         }
 
