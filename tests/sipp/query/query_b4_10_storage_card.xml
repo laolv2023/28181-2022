@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B4-10                                                   -->
+<!-- 测试名称: 存储卡状态查询合规性                                    -->
+<!-- 来源: 设计文档第14.4节, GB/T 28181-2022 附录A.2.4.1.7            -->
+<!-- 测试场景: 验证存储卡状态查询(StorageCardStatusQuery)命令          -->
+<!--           查询设备挂载的SD/TF卡容量/使用量/状态                   -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. 查询CmdType=StorageCardStatusQuery                          -->
+<!--   3. 设备返回 200 OK 后通过MESSAGE回报存储卡状态                 -->
+<!--   4. 响应字段: Result/Capacity/RemainSpace/                      -->
+<!--              StorageCardStatus/ErrorNum                         -->
+<!-- GB/T 28181-2022 A.2.4.1.7 存储卡状态查询:                        -->
+<!--   - 用于检测设备本地存储健康度,触发容量告警                      -->
+<!--   - 与A4.1-02格式化命令配合实现存储卡远程运维                    -->
+<!--   - StorageCardStatus 取值 OK/ERROR                              -->
+<!--   - 容量单位: MB                                                 -->
+<!-- ================================================================ -->
+
+<scenario name="query_b4_10_storage_card">
+
+  <!-- 步骤1: WVP向设备发送存储卡状态查询 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB410[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B410
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Query>
+      <CmdType>StorageCardStatusQuery</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      </Query>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <!-- 步骤3: 接收设备返回的存储卡状态 Notify MESSAGE -->
+  <recv request="MESSAGE" rtd="true">
+    <action>
+      <ereg regexp="CmdType>StorageCardStatus<" search_in="body" assign_to="card_resp" />
+      <ereg regexp="Capacity>[0-9]+<" search_in="body" assign_to="capacity_val" />
+      <ereg regexp="RemainSpace>[0-9]+<" search_in="body" assign_to="remain_val" />
+      <ereg regexp="StorageCardStatus>OK<" search_in="body" assign_to="card_status" />
+    </action>
+  </recv>
+
+  <!-- 步骤4: WVP返回 200 OK 表示已收到存储卡状态 -->
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
