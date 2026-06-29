@@ -1,0 +1,580 @@
+# WVP 前端 UI 改造方案（GB/T 28181-2022 配套）
+
+> **方案对象**: WVP-GB28181-pro 前端（web/ 目录，Vue 2.6 + Element UI）
+> **方案依据**: 《WVP 合规性升级改造开发方案》后端 38 项改造
+> **方案目标**: 为后端新增的 2022 版功能提供前端 UI 入口和交互界面
+> **方案日期**: 2026-06-29
+> **WVP 前端版本**: 4.4.0 (vue-admin-template)
+
+---
+
+## 一、改造概述
+
+### 1.1 改造范围
+
+后端合规性升级新增了 12 项用户可感知的功能，其中 8 项需要前端 UI 配套，4 项为信令层透传无需前端改造。
+
+| 类别 | 数量 | 说明 |
+|---|---|---|
+| **必须改前端** | 5 项 | 新增功能无 UI 入口，用户无法触发 |
+| **建议改前端** | 3 项 | 提升用户体验，后端功能不受影响 |
+| **无需改前端** | 4 项 | SM3、X-GB-ver、注册重定向、SDP 字段 — 信令层透传 |
+
+### 1.2 技术栈
+
+| 维度 | 版本 |
+|---|---|
+| Vue | 2.6.10 |
+| Vue Router | 3.0.6 |
+| Vuex | 3.1.0 |
+| Element UI | （随 vue-admin-template） |
+| HTTP | axios ^0.24.0 |
+| 构建 | vue-cli-service |
+
+### 1.3 改造原则
+
+1. **增量改造**：不修改原有页面结构，新增独立组件和对话框
+2. **配置驱动**：通过设备 `isVersion2022()` 判断，仅 2022 版设备显示新功能按钮
+3. **来源标注**：每个新增组件/方法标注对应后端改造项编号
+4. **生产级**：包含加载状态、错误处理、用户反馈
+
+---
+
+## 二、改造项清单
+
+### 2.1 必须改造（5 项）
+
+| # | 改造项 | 后端改造项 | 改造位置 | 说明 |
+|---|---|---|---|---|
+| F1 | PTZ 精准控制面板 | 改造项7 | `web/src/views/common/ptzControls.vue` | 新增精准控制输入框 |
+| F2 | 存储卡格式化+状态查询 | 改造项8,14 | `web/src/views/device/common/` 新增组件 | 新增对话框 |
+| F3 | 目标跟踪控制 | 改造项9 | `web/src/views/common/ptzControls.vue` | 新增跟踪按钮 |
+| F4 | 设备软件升级 | 改造项10 | `web/src/views/device/common/` 新增组件 | 新增升级对话框 |
+| F5 | 新增查询页面 | 改造项11-13 | `web/src/views/device/common/` 新增组件 | 看守位/巡航轨迹/PTZ 精准状态查询 |
+
+### 2.2 建议改造（3 项）
+
+| # | 改造项 | 后端改造项 | 改造位置 | 说明 |
+|---|---|---|---|---|
+| F6 | 设备列表新增"协议版本"列 | 改造项1 | `web/src/views/device/list.vue` | 显示 X-GB-ver 协商结果 |
+| F7 | 图像抓拍配置 | 改造项15 | `web/src/views/device/common/` 新增组件 | 抓拍分辨率/数量配置 |
+| F8 | SM3/TLS 配置入口 | 改造项2,30 | `web/src/views/operations/` | 系统配置页新增开关 |
+
+### 2.3 无需改造（4 项）
+
+| 后端改造项 | 说明 |
+|---|---|
+| 改造项1 X-GB-ver | 信令层自动协商，前端无感知（F6 仅展示结果） |
+| 改造项2 SM3 | 摘要算法后端自动降级，前端无感知 |
+| 改造项3 注册重定向 | 302 响应后端自动处理 |
+| 改造项4-6,18-23 SDP 字段 | 媒体协商后端自动处理 |
+
+---
+
+## 三、详细改造方案
+
+### 3.1 F1: PTZ 精准控制面板
+
+**后端改造项**: 改造项7（PTZ 精准控制命令，A.2.3.1.11）
+**改造文件**: `web/src/views/common/ptzControls.vue`
+**新增 API**: `web/src/api/frontEnd.js`
+
+#### 新增前端 API
+
+```javascript
+// web/src/api/frontEnd.js 新增
+
+/**
+ * PTZ精准控制
+ * 来源: 后端改造项7, 设计文档第10.1节, 2022版A.2.3.1.11
+ * @param {Object} params - { deviceId, channelId, pan, tilt, zoom }
+ * @returns {Promise}
+ */
+export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom }) {
+  return request({
+    method: 'get',
+    url: `/api/front-end/ptz_precise/${deviceId}/${channelId}`,
+    params: { pan, tilt, zoom }
+  })
+}
+```
+
+#### ptzControls.vue 改造
+
+在 PTZ 控制面板底部新增"精准控制"折叠区域：
+
+```vue
+<!-- === F1改造: PTZ精准控制面板 === -->
+<!-- 来源: 后端改造项7, 设计文档第10.1节, 2022版A.2.3.1.11 -->
+<!-- 规范要求: 2022版新增PTZ精准控制, 支持pan/Tilt/zoom精确角度设置 -->
+<el-collapse-transition>
+  <div v-show="preciseVisible" class="ptz-precise-section">
+    <div class="precise-title">精准控制（GB/T 28181-2022）</div>
+    <el-form :inline="true" size="mini" label-width="60px">
+      <el-form-item label="水平角">
+        <el-input-number v-model="precisePan"
+          :precision="2" :step="0.1" :min="-180" :max="180"
+          controls-position="right" size="mini" style="width: 120px" />
+      </el-form-item>
+      <el-form-item label="垂直角">
+        <el-input-number v-model="preciseTilt"
+          :precision="2" :step="0.1" :min="-90" :max="90"
+          controls-position="right" size="mini" style="width: 120px" />
+      </el-form-item>
+      <el-form-item label="变倍">
+        <el-input-number v-model="preciseZoom"
+          :precision="1" :step="0.5" :min="0" :max="20"
+          controls-position="right" size="mini" style="width: 120px" />
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" size="mini" @click="handlePtzPrecise">发送</el-button>
+      </el-form-item>
+    </el-form>
+  </div>
+</el-collapse-transition>
+```
+
+新增 data/methods：
+
+```javascript
+// data 新增
+preciseVisible: false,    // 精准控制面板展开状态
+precisePan: 0,            // 水平角度 (-180~180)
+preciseTilt: 0,           // 垂直角度 (-90~90)
+preciseZoom: 1,           // 变倍倍数 (0~20)
+
+// methods 新增
+handlePtzPrecise() {
+  // 来源: 后端改造项7, 2022版A.2.3.1.11 PTZ精准控制
+  this.$emit('ptz-precise', {
+    pan: this.precisePan,
+    tilt: this.preciseTilt,
+    zoom: this.preciseZoom
+  })
+}
+```
+
+### 3.2 F2: 存储卡格式化与状态查询
+
+**后端改造项**: 改造项8（存储卡格式化）、改造项14（存储卡状态查询）
+**新增文件**: `web/src/views/device/common/StorageCardDialog.vue`
+
+```vue
+<!-- StorageCardDialog.vue — 存储卡格式化与状态查询 -->
+<!-- 来源: 后端改造项8(格式化, 2022版A.2.3.1.13) + 改造项14(状态查询, 2022版A.2.4.1.6) -->
+<template>
+  <el-dialog title="存储卡管理" :visible.sync="visible" width="500px"
+    :close-on-click-modal="false" @open="queryStatus">
+    <div v-loading="loading">
+      <!-- 存储卡状态 -->
+      <el-descriptions title="存储卡状态" :column="1" border size="small">
+        <el-descriptions-item label="状态">
+          <el-tag :type="statusTagType" size="small">{{ statusText }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="总容量">{{ capacity }} MB</el-descriptions-item>
+        <el-descriptions-item label="剩余容量">{{ remainCapacity }} MB</el-descriptions-item>
+      </el-descriptions>
+    </div>
+    <div slot="footer">
+      <el-button @click="visible = false">关闭</el-button>
+      <el-button type="danger" :loading="formatting"
+        @click="handleFormat" :disabled="status === 0">
+        格式化存储卡
+      </el-button>
+    </div>
+  </el-dialog>
+</template>
+```
+
+新增 API：
+
+```javascript
+// web/src/api/frontEnd.js 新增
+
+/** 存储卡状态查询 (改造项14, 2022版A.2.4.1.6) */
+export function queryStorageCardStatus(deviceId, channelId) {
+  return request({
+    method: 'get',
+    url: `/api/front-end/storage_card_status/${deviceId}/${channelId}`
+  })
+}
+
+/** 存储卡格式化 (改造项8, 2022版A.2.3.1.13) */
+export function formatStorageCard(deviceId, channelId) {
+  return request({
+    method: 'get',
+    url: `/api/front-end/format_sdcard/${deviceId}/${channelId}`
+  })
+}
+```
+
+### 3.3 F3: 目标跟踪控制
+
+**后端改造项**: 改造项9（目标跟踪命令，A.2.3.1.14）
+**改造文件**: `web/src/views/common/ptzControls.vue`
+
+在 PTZ 功能按钮区新增"目标跟踪"按钮：
+
+```vue
+<!-- === F3改造: 目标跟踪 === -->
+<!-- 来源: 后端改造项9, 设计文档第10.1节, 2022版A.2.3.1.14 -->
+<!-- 规范要求: 2022版新增目标跟踪, action: Auto(自动)/Manual(手动) -->
+<div class="ptz-func-row" v-if="isVersion2022">
+  <div class="ptz-func-btn" :class="{active: trackMode === 'Auto'}"
+    title="自动跟踪" @click="$emit('target-track', 'Auto')">
+    <i class="iconfont icon-track" /><span>自动跟踪</span>
+  </div>
+  <div class="ptz-func-btn" :class="{active: trackMode === 'Manual'}"
+    title="手动跟踪" @click="$emit('target-track', 'Manual')">
+    <i class="iconfont icon-track-manual" /><span>手动跟踪</span>
+  </div>
+  <div class="ptz-func-btn" title="停止跟踪"
+    @click="$emit('target-track', 'Stop')">
+    <i class="iconfont icon-track-stop" /><span>停止跟踪</span>
+  </div>
+</div>
+```
+
+新增 API：
+
+```javascript
+/** 目标跟踪 (改造项9, 2022版A.2.3.1.14) */
+export function targetTrack({ deviceId, channelId, action }) {
+  return request({
+    method: 'get',
+    url: `/api/front-end/target_track/${deviceId}/${channelId}`,
+    params: { action }  // Auto | Manual | Stop
+  })
+}
+```
+
+### 3.4 F4: 设备软件升级
+
+**后端改造项**: 改造项10（设备软件升级命令，A.2.3.1.12）
+**新增文件**: `web/src/views/device/common/DeviceUpgradeDialog.vue`
+
+```vue
+<!-- DeviceUpgradeDialog.vue — 设备软件升级 -->
+<!-- 来源: 后端改造项10, 设计文档第10.1节, 2022版A.2.3.1.12 -->
+<!-- 规范要求: 2022版新增设备软件升级, 需上传固件文件 -->
+<template>
+  <el-dialog title="设备软件升级" :visible.sync="visible" width="600px"
+    :close-on-click-modal="false">
+    <el-form :model="form" label-width="100px" size="small">
+      <el-form-item label="设备ID">
+        <el-input v-model="form.deviceId" disabled />
+      </el-form-item>
+      <el-form-item label="固件文件" required>
+        <el-upload action="#" :auto-upload="false" :on-change="handleFileChange"
+          :limit="1" accept=".bin,.img,.zip">
+          <el-button size="small" type="primary">选择固件</el-button>
+        </el-upload>
+      </el-form-item>
+      <el-form-item label="厂商">
+        <el-input v-model="form.manufacturer" placeholder="设备厂商" />
+      </el-form-item>
+    </el-form>
+    <!-- 升级结果通知区域 (后端改造项10: 设备软件升级结果通知) -->
+    <el-alert v-if="upgradeResult" :title="upgradeResultTitle"
+      :type="upgradeResult === 'OK' ? 'success' : 'error'" :closable="false" />
+    <div slot="footer">
+      <el-button @click="visible = false">关闭</el-button>
+      <el-button type="primary" :loading="upgrading"
+        @click="handleUpgrade" :disabled="!form.file">开始升级</el-button>
+    </div>
+  </el-dialog>
+</template>
+```
+
+### 3.5 F5: 新增查询页面
+
+**后端改造项**: 改造项11（看守位）、改造项12（巡航轨迹）、改造项13（PTZ 精准状态）
+**新增文件**: `web/src/views/device/common/QueryResultDialog.vue`
+
+统一查询结果对话框，通过 tab 切换：
+
+```vue
+<!-- QueryResultDialog.vue — 2022版新增查询结果 -->
+<!-- 来源: 改造项11(看守位查询) + 改造项12(巡航轨迹查询) + 改造项13(PTZ精准状态查询) -->
+<template>
+  <el-dialog title="设备信息查询" :visible.sync="visible" width="700px">
+    <el-tabs v-model="activeTab">
+      <!-- 改造项11: 看守位信息查询 (2022版A.2.4.1.2) -->
+      <el-tab-pane label="看守位信息" name="homePosition">
+        <el-descriptions :column="1" border size="small">
+          <el-descriptions-item label="启用状态">
+            {{ homePosition.enabled ? '已启用' : '未启用' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="预置位ID">{{ homePosition.presetId }}</el-descriptions-item>
+          <el-descriptions-item label="复位时间">{{ homePosition.resetTime }}秒</el-descriptions-item>
+        </el-descriptions>
+      </el-tab-pane>
+      <!-- 改造项12: 巡航轨迹查询 (2022版A.2.4.1.3) -->
+      <el-tab-pane label="巡航轨迹" name="cruiseTrack">
+        <el-table :data="cruiseTrackList" size="small" border>
+          <el-table-column prop="id" label="轨迹ID" width="80" />
+          <el-table-column prop="name" label="名称" />
+          <el-table-column prop="presetList" label="预置位序列" />
+        </el-table>
+      </el-tab-pane>
+      <!-- 改造项13: PTZ精准状态查询 (2022版A.2.4.1.5) -->
+      <el-tab-pane label="PTZ精准状态" name="ptzPreciseStatus">
+        <el-descriptions :column="1" border size="small">
+          <el-descriptions-item label="水平角(Pan)">{{ ptzStatus.pan }}°</el-descriptions-item>
+          <el-descriptions-item label="垂直角(Tilt)">{{ ptzStatus.tilt }}°</el-descriptions-item>
+          <el-descriptions-item label="变倍(Zoom)">{{ ptzStatus.zoom }}x</el-descriptions-item>
+        </el-descriptions>
+      </el-tab-pane>
+    </el-tabs>
+  </el-dialog>
+</template>
+```
+
+### 3.6 F6: 设备列表新增"协议版本"列
+
+**后端改造项**: 改造项1（X-GB-ver 版本协商）
+**改造文件**: `web/src/views/device/list.vue`
+
+在设备列表表格中新增一列：
+
+```vue
+<!-- === F6改造: 设备列表新增协议版本列 === -->
+<!-- 来源: 后端改造项1, 设计文档第13.9节, 2022版附录I -->
+<!-- 说明: 显示X-GB-ver版本协商结果, "2.0"=2022版, "1.0"或空=2016版 -->
+<el-table-column label="协议版本" min-width="100">
+  <template slot-scope="scope">
+    <el-tag :type="scope.row.protocolVersion === '2.0' ? 'success' : 'info'" size="small">
+      {{ scope.row.protocolVersion === '2.0' ? '2022' : '2016' }}
+    </el-tag>
+  </template>
+</el-table-column>
+```
+
+### 3.7 F7: 图像抓拍配置
+
+**后端改造项**: 改造项15（图像抓拍功能，9.14）
+**新增文件**: `web/src/views/device/common/SnapshotConfigDialog.vue`
+
+```vue
+<!-- SnapshotConfigDialog.vue — 图像抓拍配置 -->
+<!-- 来源: 后端改造项15, 设计文档第9.14节, 2022版9.14 -->
+<!-- 规范要求: 2022版新增图像抓拍, 支持分辨率和数量配置 -->
+<template>
+  <el-dialog title="图像抓拍" :visible.sync="visible" width="500px">
+    <el-form :model="form" label-width="100px" size="small">
+      <el-form-item label="分辨率">
+        <el-select v-model="form.resolution" placeholder="选择分辨率">
+          <el-option label="CIF (352×288)" :value="0" />
+          <el-option label="4CIF (704×576)" :value="1" />
+          <el-option label="D1" :value="2" />
+          <el-option label="720P" :value="3" />
+          <el-option label="1080P" :value="4" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="抓拍数量">
+        <el-input-number v-model="form.snapNum" :min="1" :max="10" />
+      </el-form-item>
+    </el-form>
+    <!-- 抓拍结果 (后端改造项15: 抓拍图像传输完成通知) -->
+    <el-table v-if="snapshotList.length" :data="snapshotList" size="small" border>
+      <el-table-column prop="index" label="序号" width="60" />
+      <el-table-column prop="fileId" label="文件ID" />
+    </el-table>
+    <div slot="footer">
+      <el-button @click="visible = false">关闭</el-button>
+      <el-button type="primary" :loading="snapping" @click="handleSnapshot">抓拍</el-button>
+    </div>
+  </el-dialog>
+</template>
+```
+
+### 3.8 F8: 系统配置新增 SM3/TLS 开关
+
+**后端改造项**: 改造项2（SM3）、改造项30（TLS）
+**改造文件**: `web/src/views/operations/` 系统配置页
+
+在系统配置页面新增安全配置区域：
+
+```vue
+<!-- === F8改造: 安全配置 === -->
+<!-- 来源: 后端改造项2(SM3, 设计文档第5.3节) + 改造项30(TLS, 设计文档第8.2节) -->
+<el-card header="安全配置（GB/T 28181-2022）">
+  <el-form label-width="180px" size="small">
+    <el-form-item label="SM3摘要算法">
+      <el-switch v-model="config.sm3DigestEnabled" />
+      <span class="config-hint">开启后摘要认证支持SM3算法（保留MD5兼容）</span>
+    </el-form-item>
+    <el-form-item label="TLS加密传输">
+      <el-switch v-model="config.sipTlsEnabled" />
+      <span class="config-hint">开启后SIP信令通过TLS加密传输</span>
+    </el-form-item>
+    <el-form-item label="SIP字符集">
+      <el-select v-model="config.sipCharset">
+        <el-option label="GB 18030（2022版）" value="gb18030" />
+        <el-option label="GB 2312（2016版）" value="gb2312" />
+      </el-select>
+    </el-form-item>
+    <el-form-item label="注册重定向">
+      <el-switch v-model="config.registerRedirectEnabled" />
+      <span class="config-hint">开启后支持302注册重定向</span>
+    </el-form-item>
+    <el-form-item label="TCP媒体重连">
+      <el-switch v-model="config.tcpReconnectEnabled" />
+    </el-form-item>
+  </el-form>
+</el-card>
+```
+
+---
+
+## 四、新增前端 API 汇总
+
+所有新增 API 添加到 `web/src/api/frontEnd.js`：
+
+```javascript
+// === GB/T 28181-2022 前端新增 API ===
+
+// 改造项7: PTZ精准控制 (2022版A.2.3.1.11)
+export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom }) {
+  return request({
+    method: 'get',
+    url: `/api/front-end/ptz_precise/${deviceId}/${channelId}`,
+    params: { pan, tilt, zoom }
+  })
+}
+
+// 改造项8: 存储卡格式化 (2022版A.2.3.1.13)
+export function formatStorageCard(deviceId, channelId) {
+  return request({
+    method: 'get',
+    url: `/api/front-end/format_sdcard/${deviceId}/${channelId}`
+  })
+}
+
+// 改造项9: 目标跟踪 (2022版A.2.3.1.14)
+export function targetTrack({ deviceId, channelId, action }) {
+  return request({
+    method: 'get',
+    url: `/api/front-end/target_track/${deviceId}/${channelId}`,
+    params: { action }
+  })
+}
+
+// 改造项10: 设备软件升级 (2022版A.2.3.1.12)
+export function deviceUpgrade({ deviceId, channelId, firmware, fileUrl, manufacturer }) {
+  return request({
+    method: 'post',
+    url: `/api/front-end/device_upgrade/${deviceId}/${channelId}`,
+    data: { firmware, fileUrl, manufacturer }
+  })
+}
+
+// 改造项11: 看守位信息查询 (2022版A.2.4.1.2)
+export function queryHomePosition(deviceId, channelId) {
+  return request({
+    method: 'get',
+    url: `/api/front-end/home_position_query/${deviceId}/${channelId}`
+  })
+}
+
+// 改造项12: 巡航轨迹查询 (2022版A.2.4.1.3)
+export function queryCruiseTrack(deviceId, channelId, trackListId) {
+  return request({
+    method: 'get',
+    url: `/api/front-end/cruise_track_query/${deviceId}/${channelId}`,
+    params: { trackListId }
+  })
+}
+
+// 改造项13: PTZ精准状态查询 (2022版A.2.4.1.5)
+export function queryPtzPreciseStatus(deviceId, channelId) {
+  return request({
+    method: 'get',
+    url: `/api/front-end/ptz_precise_status_query/${deviceId}/${channelId}`
+  })
+}
+
+// 改造项14: 存储卡状态查询 (2022版A.2.4.1.6)
+export function queryStorageCardStatus(deviceId, channelId) {
+  return request({
+    method: 'get',
+    url: `/api/front-end/storage_card_status_query/${deviceId}/${channelId}`
+  })
+}
+
+// 改造项15: 图像抓拍配置 (2022版9.14)
+export function snapshotConfig({ deviceId, channelId, resolution, snapNum }) {
+  return request({
+    method: 'get',
+    url: `/api/front-end/snapshot_config/${deviceId}/${channelId}`,
+    params: { resolution, snapNum }
+  })
+}
+```
+
+---
+
+## 五、新增文件清单
+
+| 文件路径 | 类型 | 说明 |
+|---|---|---|
+| `web/src/views/device/common/StorageCardDialog.vue` | 新增 | 存储卡格式化+状态查询对话框 |
+| `web/src/views/device/common/DeviceUpgradeDialog.vue` | 新增 | 设备软件升级对话框 |
+| `web/src/views/device/common/QueryResultDialog.vue` | 新增 | 看守位/巡航轨迹/PTZ精准状态查询结果 |
+| `web/src/views/device/common/SnapshotConfigDialog.vue` | 新增 | 图像抓拍配置对话框 |
+| `web/src/api/frontEnd.js` | 修改 | 新增 9 个 API 方法 |
+| `web/src/views/common/ptzControls.vue` | 修改 | 新增精准控制面板+目标跟踪按钮 |
+| `web/src/views/device/list.vue` | 修改 | 新增"协议版本"列 |
+| `web/src/views/operations/` | 修改 | 系统配置新增安全配置区域 |
+
+---
+
+## 六、改造实施计划
+
+| 阶段 | 改造项 | 工作量 | 优先级 |
+|---|---|---|---|
+| 第一阶段 | F1(PTZ精准) + F3(目标跟踪) + F6(协议版本列) | 2 人天 | 高 |
+| 第二阶段 | F2(存储卡) + F4(设备升级) + F5(查询页面) | 3 人天 | 高 |
+| 第三阶段 | F7(抓拍配置) + F8(系统配置) | 1 人天 | 中 |
+
+---
+
+## 七、后端 Controller 配套改造
+
+前端新增 API 需要后端 Controller 提供对应接口。以下接口需在后端 `ApiControlController.java` 或新建 Controller 中实现：
+
+| API 路径 | 方法 | 对应后端改造项 |
+|---|---|---|
+| `/api/front-end/ptz_precise/{deviceId}/{channelId}` | GET | 改造项7 |
+| `/api/front-end/format_sdcard/{deviceId}/{channelId}` | GET | 改造项8 |
+| `/api/front-end/target_track/{deviceId}/{channelId}` | GET | 改造项9 |
+| `/api/front-end/device_upgrade/{deviceId}/{channelId}` | POST | 改造项10 |
+| `/api/front-end/home_position_query/{deviceId}/{channelId}` | GET | 改造项11 |
+| `/api/front-end/cruise_track_query/{deviceId}/{channelId}` | GET | 改造项12 |
+| `/api/front-end/ptz_precise_status_query/{deviceId}/{channelId}` | GET | 改造项13 |
+| `/api/front-end/storage_card_status_query/{deviceId}/{channelId}` | GET | 改造项14 |
+| `/api/front-end/snapshot_config/{deviceId}/{channelId}` | GET | 改造项15 |
+
+> **说明**: 这些 Controller 接口不在《WVP 合规性升级改造开发方案》的 38 项中，需要额外开发。Controller 内部调用已有的 `SIPCommander` 方法下发 SIP 命令到设备。
+
+---
+
+## 八、版本兼容性
+
+| 设备版本 | 前端行为 |
+|---|---|
+| 2022 版（`protocolVersion === '2.0'`） | 显示全部新功能按钮 |
+| 2016 版（`protocolVersion` 为空或 `'1.0'`） | 隐藏 2022 新功能按钮，仅显示原有功能 |
+| 未知（未注册） | 隐藏 2022 新功能按钮，注册后自动判断 |
+
+通过 `device.isVersion2022()` 判断设备版本，前端通过 API 响应中的 `protocolVersion` 字段判断。
+
+---
+
+## 九、规范来源说明
+
+| 来源 | 说明 |
+|---|---|
+| 《WVP 合规性升级改造开发方案》 | 后端 38 项改造，本方案为其前端配套 |
+| 《GB/T 28181—2022》 | 2022 版规范原文 |
+| WVP-GB28181-pro web/ 目录 | 前端基线代码 |
