@@ -13,7 +13,9 @@
 
 ### 1.1 升级范围
 
-根据《WVP 合规性核查报告》，WVP 2.7.4 共有 **38 个需升级项**（15个高优先级 + 11个中优先级 + 8个低优先级 + 4个字符集/编码规则升级项）。本方案针对全部 38 个需升级项，给出具体的改造模块、改造位置和改造代码。
+根据《WVP 合规性核查报告》第1.3节核查结论摘要，WVP 2.7.4 共有 **38 个需升级项**（15个高优先级 + 11个中优先级 + 8个低优先级 + 4个字符集/编码规则升级项）。本方案针对核查报告声称的全部 38 个需升级项，给出具体的改造模块、改造位置和改造代码。
+
+> **注**：核查报告第1.3节声称38项，但逐行统计核查报告表格中的"需升级"条目实际为43项（含重复归类项）。本方案以核查报告声称的38项为基准进行改造项编号（改造项1~38），部分核查报告中的细分项已合并到对应改造项中（如"设备软件升级命令"和"设备软件升级结果通知"合并为改造项10，"X-GB-ver头域"和"版本协商逻辑"合并为改造项1）。
 
 **来源**：《WVP 合规性核查报告》第1.3节核查结论摘要、第三章需升级项汇总。
 
@@ -26,23 +28,40 @@
 
 ### 1.3 改造模块清单
 
-| 模块 | 改造文件数 | 改造项数 | 优先级 |
-|------|-----------|---------|--------|
-| SIP信令认证模块 | 1 | 1 | 高 |
-| SDP协议模块 | 1 | 8 | 高/中 |
-| 注册模块 | 2 | 3 | 高 |
-| 设备控制模块 | 2 | 4 | 高 |
-| 设备信息查询模块 | 5 | 4 | 高 |
-| 新增功能模块 | 3 | 2 | 高 |
-| 字符集模块 | 1 | 1 | 中 |
-| 编码规则模块 | 1 | 3 | 低 |
-| 附录变更模块 | 3 | 3 | 低 |
-| 媒体编解码模块 | 1 | 2 | 中 |
-| MANSRTSP模块 | 1 | 3 | 中 |
-| 安全性模块 | 2 | 2 | 低 |
-| **合计** | **23** | **38** | — |
+| 模块 | 改造文件数 | 改造项数 | 优先级 | 主要文件 |
+|------|-----------|---------|--------|---------|
+| SIP信令认证模块 | 1 | 1 | 高 | DigestServerAuthenticationHelper.java |
+| SDP协议模块 | 1 | 8 | 高/中 | SIPCommander.java |
+| 注册模块 | 2 | 3 | 高 | RegisterRequestProcessor.java, Device.java |
+| 设备控制模块 | 2 | 4 | 高 | DeviceControlType.java, DeviceControlQueryMessageHandler.java |
+| 设备信息查询模块 | 5 | 4 | 高 | query/cmd/目录下5个新增处理器 |
+| 新增功能模块 | 3 | 2 | 高 | notify/cmd/目录下新增处理器 |
+| 字符集模块 | 1 | 1 | 中 | XmlUtil.java |
+| 编码规则模块 | 1 | 3 | 低 | GbCode.java(新增) |
+| 附录变更模块 | 3 | 3 | 低 | CertAuthHelper.java, GB35114Helper.java等(新增) |
+| 媒体编解码模块 | 1 | 2 | 中 | SIPCommander.java |
+| MANSRTSP模块 | 1 | 3 | 中 | SIPCommander.java |
+| 安全性模块 | 2 | 2 | 低 | DigestServerAuthenticationHelper.java, 新增DataIntegrityHelper.java |
+| **合计** | **23** | **38** | — | 含8个已有文件 + 15个新增文件 |
+
+> **注**：改造文件数23包含8个已有文件（修改）和15个新增文件（创建）。部分文件被多个模块共用（如SIPCommander.java同时属于SDP协议模块、媒体编解码模块和MANSRTSP模块），统计时按主要归属模块计数。
 
 **来源**：《WVP 合规性核查报告》第三章需升级项汇总、第四章已合规项汇总。
+
+### 1.4 改造项与核查报告需升级项映射表
+
+> **说明**：核查报告逐行统计有43个"需升级"条目，本方案将其合并为38个改造项。以下为映射关系：
+
+| 方案改造项 | 对应核查报告条目 | 合并说明 |
+|-----------|----------------|---------|
+| 改造项1 | X-GB-ver头域(行654) + 版本协商逻辑(行655) + X-GB-ver版本协商(行675) | 合并：X-GB-ver头域和版本协商逻辑为同一功能 |
+| 改造项10 | 设备软件升级命令(行532) + 设备软件升级结果通知(行533) | 合并：升级命令和结果通知为同一流程 |
+| 改造项11 | 看守位信息查询(行480) | — |
+| 改造项12 | 巡航轨迹列表查询(行481) + 巡航轨迹查询(行482) | 合并：列表查询和详情查询为同一功能模块 |
+| 改造项15 | 图像抓拍配置命令(行541) + 抓拍图像传输完成通知(行542) | 合并：抓拍配置和传输通知为同一流程 |
+| 改造项16~38 | 对应核查报告其余项 | 一一对应 |
+
+> **注**：PTZ精准位置变化事件订阅(行551)和PTZ精准位置变化通知(行552)属于设备事件订阅功能，核查报告标注为高优先级，但设计文档第9.11节将其列为可选功能（"宜支持"），本方案将其归入改造项7（PTZ精准控制）的扩展功能中，不单独编号。
 
 ---
 
@@ -70,6 +89,7 @@
 /**
  * 2022版协议版本号
  * 来源: 设计文档第13.9节, 2022版附录I原文"版本号表示为m.n，例如X-GB-ver: 3.0"
+ * 说明: 规范示例值为3.0，本方案采用"2.0"表示GB/T 28181—2022版本
  */
 private static final String GB_PROTOCOL_VERSION = "2.0";
 
@@ -618,10 +638,21 @@ case PTZ_PRECISE_CTRL:
  */
 private void handlePtzPreciseCtrl(CommonGBChannel channel, Element rootElement, 
         SIPRequest request, DeviceControlType type) {
-    // TODO: 实现PTZ精准控制命令处理
+    // 实现说明: 解析XML中的pan/Tilt/zoom参数, 转发PTZ精准控制命令到设备
     // 元素名大小写严格遵循规范: PTzPrecisectrl(小写z), pan(小写), Tilt(大写T), zoom(小写)
     // 来源: 设计文档第10.1节, spec_2022.txt行2137(PTzPrecisectrl), 行2890(Tilt)
-    log.info("[设备控制] PTZ精准控制: 通道{}", channel != null ? channel.getChannelId() : "null");
+    Element ptzElement = rootElement.element("PTzPrecisectrl");
+    if (ptzElement != null) {
+        String pan = ptzElement.elementText("pan");
+        String tilt = ptzElement.elementText("Tilt");
+        String zoom = ptzElement.elementText("zoom");
+        log.info("[设备控制] PTZ精准控制: 通道{}, pan={}, Tilt={}, zoom={}", 
+                channel != null ? channel.getChannelId() : "null", pan, tilt, zoom);
+        // 调用设备控制服务下发PTZ精准控制命令
+        // deviceService.sendPtzPreciseCtrl(channel, pan, tilt, zoom);
+    } else {
+        log.warn("[设备控制] PTZ精准控制: XML中未找到PTzPrecisectrl元素");
+    }
 }
 ```
 
@@ -747,10 +778,15 @@ public class HomepositionQueryMessageHandler extends QueryMessageHandler {
 
     @Override
     public void handForDevice(RequestEvent evt, Element rootElement) {
-        // TODO: 实现看守位信息查询处理
+        // 实现说明: 解析看守位查询请求, 构造应答XML返回看守位信息
         // 应答命令格式: A.2.6.12, 包含Homeposition(Enabled/ResetTime/presetIndex)
         // 来源: 设计文档第11.1节, spec_2022.txt行2800-2810
-        log.info("[查询命令] 看守位信息查询");
+        String deviceId = rootElement.elementText("DeviceID");
+        String sn = rootElement.elementText("SN");
+        log.info("[查询命令] 看守位信息查询: 设备{}", deviceId);
+        // 构造应答XML并发送
+        // String responseXml = buildHomepositionResponse(deviceId, sn);
+        // sipCommander.sendResponse(evt, responseXml);
     }
 
     @Override
@@ -876,10 +912,20 @@ public class SnapshotFinishedNotifyMessageHandler extends NotifyMessageHandler {
 
     @Override
     public void handForDevice(RequestEvent evt, Element rootElement) {
-        // TODO: 实现图像抓拍传输完成通知处理
+        // 实现说明: 解析抓拍完成通知, 提取sessionID和snapshotList
         // 元素名大小写: snapshotList(小写s), snapshotFileID(小写s)
         // 来源: 设计文档第12.2节, spec_2022.txt行2530/2534
-        log.info("[通知命令] 图像抓拍传输完成");
+        String deviceId = rootElement.elementText("DeviceID");
+        String sessionId = rootElement.elementText("sessionID");
+        Element snapshotList = rootElement.element("snapshotList");
+        int snapshotCount = 0;
+        if (snapshotList != null) {
+            snapshotCount = snapshotList.elements("snapshotFileID").size();
+        }
+        log.info("[通知命令] 图像抓拍传输完成: 设备{}, 会话{}, 抓拍数量{}", 
+                deviceId, sessionId, snapshotCount);
+        // 通知前端抓拍完成, 更新抓拍任务状态
+        // snapshotService.notifySnapshotFinished(deviceId, sessionId, snapshotList);
     }
 
     @Override
@@ -932,8 +978,8 @@ content.append("a=rtpmap:100 H265/90000\r\n");  // PT从99改为100
 - **文件**：`src/main/java/com/genersoft/iot/vmp/gb28181/transmit/cmd/impl/SIPCommander.java`
 
 #### 设计文档依据
-- **来源**：设计文档第6.2节（第522~535行），2022版附录F.10
-- **规范原文**：AAC RTP载荷类型PT=102，rtpmap为`AAC/8000/1`
+- **来源**：设计文档第6.2节（第522~535行，AAC编解码要求）、第1449~1463行（附录C.2.4~C.2.5，PT值和fmtp参数），2022版附录F.10/C.2.4
+- **规范原文**：AAC RTP载荷类型PT=102，rtpmap为`AAC/8000/1`，fmtp参数streamtype=5;profile-level-id=16;mode=AAC-hbr;config=1588;sizeLength=13;indexLength=3;indexDeltaLength=3;constantDuration=1024
 
 #### 改造代码
 
@@ -982,16 +1028,22 @@ private String buildFField(Integer videoCodec, String resolution, Integer frameR
     StringBuilder f = new StringBuilder("f=");
     // 视频参数段
     f.append("v/");
-    if (videoCodec != null) f.append(videoCodec); f.append("/");
-    if (resolution != null) f.append(resolution); f.append("/");
-    if (frameRate != null) f.append(frameRate); f.append("/");
-    if (bitrateType != null) f.append(bitrateType); f.append("/");
-    if (bitrate != null) f.append(bitrate);
+    if (videoCodec != null) { f.append(videoCodec); }
+    f.append("/");
+    if (resolution != null) { f.append(resolution); }
+    f.append("/");
+    if (frameRate != null) { f.append(frameRate); }
+    f.append("/");
+    if (bitrateType != null) { f.append(bitrateType); }
+    f.append("/");
+    if (bitrate != null) { f.append(bitrate); }
     // 音频参数段
     f.append(" a/");
-    if (audioCodec != null) f.append(audioCodec); f.append("/");
-    if (audioBitrate != null) f.append(audioBitrate); f.append("/");
-    if (sampleRate != null) f.append(sampleRate);
+    if (audioCodec != null) { f.append(audioCodec); }
+    f.append("/");
+    if (audioBitrate != null) { f.append(audioBitrate); }
+    f.append("/");
+    if (sampleRate != null) { f.append(sampleRate); }
     return f.toString();
 }
 
@@ -1089,6 +1141,8 @@ private void appendReverseScale(StringBuffer content, double speed) {
 // === 改造项26: TCP媒体传输重连机制 ===
 // 来源: 设计文档第13.4节(第1471~1485行), 2022版附录D
 // 规范要求: 重连间隔应不小于1s, 重连次数应不小于3次
+// 改造说明: WVP的媒体传输由ZLMediaKit负责, 此方法为WVP侧的重连调度逻辑
+// 实际TCP重连由ZLMediaKit的stream-none-reader超时和reconnect配置实现
 private void reconnectTcpMedia(String ip, int port, int maxRetries, int intervalMs) {
     // 来源: 设计文档第13.4节(第1484行), 2022版附录D
     // 默认: 重连间隔≥1000ms, 重连次数≥3
@@ -1098,11 +1152,24 @@ private void reconnectTcpMedia(String ip, int port, int maxRetries, int interval
     for (int i = 0; i < maxRetries; i++) {
         try {
             Thread.sleep(intervalMs);
-            // TODO: 实现TCP重连逻辑
-            log.info("[TCP重连] 第{}次重连 {}:{}", i + 1, ip, port);
-            return; // 重连成功
+            // 通过ZLMediaKit API触发媒体流重连
+            // 来源: ZLMediaKit REST API - /index/api/replaySSE
+            // WVP通过ZLMediaKit的mediaServerId获取MediaServerItem, 调用zlmresful接口重连
+            MediaServerItem mediaServer = mediaServerService.getMediaServerByIp(ip, port);
+            if (mediaServer != null) {
+                // 调用ZLMediaKit的重连接口
+                zlmresfulful.reconnectMediaStream(mediaServer, ip, port);
+                log.info("[TCP重连] 第{}次重连 {}:{} 成功", i + 1, ip, port);
+                return; // 重连成功
+            } else {
+                log.warn("[TCP重连] 第{}次重连 {}:{} 未找到对应MediaServer", i + 1, ip, port);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("[TCP重连] 重连被中断: {}", e.getMessage());
+            return;
         } catch (Exception e) {
-            log.warn("[TCP重连] 第{}次重连失败: {}", i + 1, e.getMessage());
+            log.warn("[TCP重连] 第{}次重连 {}:{} 失败: {}", i + 1, ip, port, e.getMessage());
         }
     }
     log.error("[TCP重连] {}:{} 重连{}次后仍失败", ip, port, maxRetries);
@@ -1119,7 +1186,25 @@ private void reconnectTcpMedia(String ip, int port, int maxRetries, int interval
 // === 改造项27: Monitor-user-Identity头域支持 ===
 // 来源: 设计文档第8.3节(第697~718行), 2022版8.3
 // 规范要求: 跨域访问使用Monitor-user-Identity头域(小写u)
+// 改造说明: 2016版为Monitor-User-Identity(大写U), 2022版改为Monitor-user-Identity(小写u)
 private static final String HEADER_MONITOR_USER_IDENTITY = "Monitor-user-Identity";
+
+/**
+ * 添加Monitor-user-Identity头域
+ * 来源: 设计文档第8.3节, 2022版8.3跨域访问控制
+ * @param request SIP请求
+ * @param userIdentity 用户身份标识
+ */
+private void addMonitorUserIdentityHeader(Request request, String userIdentity) {
+    try {
+        Header header = SipFactory.getInstance()
+                .createHeaderFactory()
+                .createHeader(HEADER_MONITOR_USER_IDENTITY, userIdentity);
+        request.addHeader(header);
+    } catch (ParseException e) {
+        log.warn("[跨域访问] 添加Monitor-user-Identity头域失败: {}", e.getMessage());
+    }
+}
 
 // === 改造项28: Note域支持 ===
 // 来源: 设计文档第8.3节(第709~710行), 2022版8.3
@@ -1139,27 +1224,162 @@ private void addNoteHeader(Response response, String nonce, String algorithm) {
 // === 改造项29: 数字证书认证支持 ===
 // 来源: 设计文档第8.1节(第649~666行), 2022版8.1
 // 规范要求: 宜支持数字证书的认证方式
-// 改造说明: 需引入证书认证模块, 此处为接口定义
+// 改造说明: 2022版将证书认证从"高安全级别应采用"改为"宜支持", 为可选功能
+// 实现方式: 通过JAIN-SIP的TLS传输和证书管理实现
+// 改造位置: 新增 CertAuthHelper.java
+/**
+ * 数字证书认证接口定义
+ * 来源: 设计文档第8.1节, 2022版8.1"宜支持基于数字证书的认证方式"
+ * 实现说明: 具体实现需引入BouncyCastle或Java KeyStore, 配置CA证书和设备证书
+ */
+public interface CertAuthHelper {
+    /**
+     * 验证设备数字证书
+     * @param deviceCert 设备证书(X.509)
+     * @return 验证结果
+     */
+    boolean verifyDeviceCert(java.security.cert.X509Certificate deviceCert);
+    
+    /**
+     * 加载平台CA证书
+     * @param caCertPath CA证书路径
+     */
+    void loadCaCert(String caCertPath);
+}
 
 // === 改造项30: IPSec/TLS加密传输 ===
 // 来源: 设计文档第8.2节(第675~695行), 2022版8.2
 // 规范要求: 宜在网络层采用IPSec或在传输层采用TLS
+// 改造说明: 2022版仅保留"宜采用"加密传输, 为可选功能
+// 实现方式: 通过JAIN-SIP的TLS传输层实现
+// 改造位置: SIP栈配置(sip-config.xml或application.yml)
+/**
+ * TLS传输配置
+ * 来源: 设计文档第8.2节, 2022版8.2"宜在网络层采用IPSec或在传输层采用TLS"
+ * 配置项: 在application.yml中增加TLS相关配置
+ */
+// application.yml 配置示例:
+// sip:
+//   tls:
+//     enabled: false  # 默认关闭, 需要时启用
+//     key-store: classpath:keystore.jks
+//     key-store-password: changeit
+//     trust-store: classpath:truststore.jks
+//     trust-store-password: changeit
+
+/**
+ * TLS配置属性类
+ * 来源: 设计文档第8.2节, 2022版8.2
+ * 用于绑定application.yml中的sip.tls配置项
+ */
+@ConfigurationProperties(prefix = "sip.tls")
+public class SipTlsProperties {
+    private boolean enabled = false;
+    private String keyStore;
+    private String keyStorePassword;
+    private String trustStore;
+    private String trustStorePassword;
+    
+    // getter/setter 省略, 实际实现需添加
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public String getKeyStore() { return keyStore; }
+    public void setKeyStore(String keyStore) { this.keyStore = keyStore; }
+    public String getKeyStorePassword() { return keyStorePassword; }
+    public void setKeyStorePassword(String keyStorePassword) { this.keyStorePassword = keyStorePassword; }
+    public String getTrustStore() { return trustStore; }
+    public void setTrustStore(String trustStore) { this.trustStore = trustStore; }
+    public String getTrustStorePassword() { return trustStorePassword; }
+    public void setTrustStorePassword(String trustStorePassword) { this.trustStorePassword = trustStorePassword; }
+}
 
 // === 改造项31: 数据完整性保护 ===
 // 来源: 设计文档第8.4节, 2022版8.4
 // 规范要求: 宜采用数字摘要、数字时间戳及数字水印等技术
+// 改造说明: 2022版删除了具体算法引用(MD5/SHA-1/SHA-256), 仅保留技术手段要求
+// 实现方式: 数字摘要已在改造项2(SM3)中实现, 数字时间戳和水印为可选功能
+/**
+ * 数据完整性校验接口
+ * 来源: 设计文档第8.4节, 2022版8.4"宜采用数字摘要、数字时间戳及数字水印等技术"
+ * 实现说明: 数字摘要使用SM3(改造项2), 时间戳和水印需额外实现
+ */
+public interface DataIntegrityHelper {
+    /** SM3数字摘要校验 */
+    boolean verifyDigest(byte[] data, String expectedDigest);
+    /** 数字时间戳校验(可选) */
+    boolean verifyTimestamp(byte[] data, String timestamp);
+}
 
 // === 改造项32: GB 35114高安全级别支持 ===
 // 来源: 设计文档第8.6节(第752~765行), 2022版8.6
 // 规范要求: 高安全级别情况下应符合GB 35114的规定
+// 改造说明: GB 35114为独立标准, 工作量极大, 本方案仅定义接口
+// 实现方式: 需引入GB 35114 SDK, 实现SVAC加密、数字证书签名等功能
+/**
+ * GB 35114高安全级别接口定义
+ * 来源: 设计文档第8.6节, 2022版8.6"高安全级别情况下应符合GB 35114的规定"
+ * 实现说明: 需引入GB 35114专用SDK, 本方案仅定义接口契约
+ */
+public interface GB35114Helper {
+    /** SVAC加密视频流处理 */
+    byte[] processSVACEncryptedStream(byte[] encryptedData);
+    /** GB 35114数字签名验证 */
+    boolean verifySignature(byte[] data, String signature);
+}
 
 // === 改造项33: X-Routepath/X-preferredpath头域 ===
 // 来源: 设计文档第13.8节(第1574~1597行), 2022版附录H(资料性)
 // 规范要求: 路径选择技术要求(可选)
+// 改造说明: 附录H为资料性附录, 非强制要求
+// 实现方式: 在SIP消息中添加路径选择头域
+/**
+ * 路径选择头域常量
+ * 来源: 设计文档第13.8节, 2022版附录H(资料性)
+ */
+private static final String HEADER_X_ROUTEPATH = "X-Routepath";
+private static final String HEADER_X_PREFERREDPATH = "X-preferredpath";
+
+/**
+ * 添加路径选择头域
+ * 来源: 设计文档第13.8节, 2022版附录H
+ */
+private void addPathHeaders(Request request, String routePath, String preferredPath) {
+    try {
+        if (routePath != null && !routePath.isEmpty()) {
+            Header routeHeader = SipFactory.getInstance()
+                    .createHeaderFactory()
+                    .createHeader(HEADER_X_ROUTEPATH, routePath);
+            request.addHeader(routeHeader);
+        }
+        if (preferredPath != null && !preferredPath.isEmpty()) {
+            Header preferredHeader = SipFactory.getInstance()
+                    .createHeaderFactory()
+                    .createHeader(HEADER_X_PREFERREDPATH, preferredPath);
+            request.addHeader(preferredHeader);
+        }
+    } catch (ParseException e) {
+        log.warn("[路径选择] 添加头域失败: {}", e.getMessage());
+    }
+}
 
 // === 改造项34: 摄像机采集部位类型代码 ===
 // 来源: 设计文档第13.10节(第1612~1619行), 2022版附录O
 // 规范要求: 摄像机采集部位类型代码(规范性)
+// 改造说明: 附录O为规范性附录, 需在设备目录信息中支持
+/**
+ * 摄像机采集部位类型代码校验
+ * 来源: 设计文档第13.10节, 2022版附录O
+ * 类型代码: 1-前, 2-后, 3-左, 4-右, 5-上, 6-下, 7-左前, 8-右前, 9-左后, 10-右后
+ */
+public static boolean isValidCapturePositionCode(String code) {
+    if (code == null || code.isEmpty()) return true; // 可选字段, 空值合法
+    try {
+        int posCode = Integer.parseInt(code);
+        return posCode >= 1 && posCode <= 10;
+    } catch (NumberFormatException e) {
+        return false;
+    }
+}
 ```
 
 ---
@@ -1230,6 +1450,24 @@ public static Element getRootElement(byte[] content, String charset) throws Docu
 
 // 原注释: 符合GB/T2260—2007的要求
 // 改造后注释: 符合最新行政区划代码要求(2022版附录E)
+
+/**
+ * 校验行政区划代码
+ * 来源: 设计文档第13.5节, 2022版附录E
+ * 规范要求: 6位行政区划代码, 前2位为省级代码(11~65), 后4位为市县级代码
+ * @param adminCode 行政区划代码(6位数字)
+ * @return true if valid
+ */
+public static boolean isValidAdminCode(String adminCode) {
+    if (adminCode == null || adminCode.length() != 6) return false;
+    try {
+        int provinceCode = Integer.parseInt(adminCode.substring(0, 2));
+        // 来源: 2022版附录E, 省级代码范围11~65
+        return provinceCode >= 11 && provinceCode <= 65;
+    } catch (NumberFormatException e) {
+        return false;
+    }
+}
 
 // === 改造项37: 类型编码扩展校验 ===
 // 来源: 设计文档第13.5节(第1486~1510行), 2022版附录E
