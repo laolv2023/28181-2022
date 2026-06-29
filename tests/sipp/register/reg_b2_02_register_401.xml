@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B2-02                                                   -->
+<!-- 测试名称: 401 Challenge响应合规性                                 -->
+<!-- 来源: 设计文档第14.2节, GB/T 28181-2022 第9.2.1节                -->
+<!--       RFC 2617 第3.2.1节(WWW-Authenticate头域格式)               -->
+<!-- 测试场景: 验证WVP返回的401响应中WWW-Authenticate头域格式         -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. 状态码为401                                                 -->
+<!--   2. 包含WWW-Authenticate头域                                    -->
+<!--   3. scheme为Digest                                              -->
+<!--   4. 包含realm字段                                               -->
+<!--   5. 包含nonce字段                                               -->
+<!--   6. 包含algorithm字段(MD5或SM3)                                 -->
+<!--   7. 包含qop字段(可选)                                           -->
+<!-- ================================================================ -->
+
+<scenario name="reg_b2_02_register_401">
+
+  <!-- 步骤1: 发送初始REGISTER触发401 -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB202[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B202
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401,验证WWW-Authenticate头域格式合规 -->
+  <recv response="401">
+    <action>
+      <ereg regexp="WWW-Authenticate: Digest" search_in="hdr" assign_to="auth_scheme" />
+      <ereg regexp='realm="[^"]+"' search_in="hdr" assign_to="auth_realm" />
+      <ereg regexp='nonce="[^"]+"' search_in="hdr" assign_to="auth_nonce" />
+      <ereg regexp="algorithm=(MD5|SM3)" search_in="hdr" assign_to="auth_algo" />
+      <ereg regexp="qop=" search_in="hdr" assign_to="auth_qop" />
+    </action>
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
