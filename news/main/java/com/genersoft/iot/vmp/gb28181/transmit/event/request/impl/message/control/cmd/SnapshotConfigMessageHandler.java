@@ -44,7 +44,7 @@ import java.text.ParseException;
  *     &lt;DeviceID&gt;34020000001320000001&lt;/DeviceID&gt;
  *     &lt;SnapConfig&gt;
  *         &lt;Resolution&gt;4&lt;/Resolution&gt;
- *         &lt;SnapNum&gt;3&lt;/SnapNum&gt;
+ *         &lt;snapNum&gt;3&lt;/snapNum&gt;
  *     &lt;/SnapConfig&gt;
  * &lt;/Control&gt;
  * </pre>
@@ -60,7 +60,7 @@ import java.text.ParseException;
  * </ul>
  * </p>
  * <p>
- * <b>SnapNum 字段取值范围：</b>1~10
+ * <b>snapNum 字段取值范围：</b>1~10
  * </p>
  * <p>
  * <b>注意：</b>抓拍完成后的图像回传通过既有的 uploadsnapshot 通知消息实现，
@@ -215,8 +215,8 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
      * 改造项15：来源 设计文档第9.14节，2022版 9.14。
      * 处理流程：
      * <ol>
-     *     <li>从 XML 根节点或 SnapConfig 子节点中解析 Resolution、SnapNum</li>
-     *     <li>校验 Resolution ∈ {0,1,2,3,4}，SnapNum ∈ [1,10]</li>
+     *     <li>从 XML 根节点或 SnapConfig 子节点中解析 Resolution、snapNum</li>
+     *     <li>校验 Resolution ∈ {0,1,2,3,4}，snapNum ∈ [1,10]</li>
      *     <li>构造下发给设备的 DeviceControl XML（实际项目通过 ISIPCommander 发送）</li>
      *     <li>回复 200 OK</li>
      * </ol>
@@ -336,7 +336,7 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
         xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<SnapConfig>\r\n");
         xml.append("<Resolution>").append(resolution).append("</Resolution>\r\n");
-        xml.append("<SnapNum>").append(snapNum).append("</SnapNum>\r\n");
+        xml.append("<snapNum>").append(snapNum).append("</snapNum>\r\n");
         xml.append("</SnapConfig>\r\n");
         xml.append("</Control>\r\n");
         return xml.toString();
