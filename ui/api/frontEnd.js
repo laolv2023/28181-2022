@@ -35,11 +35,13 @@ import request from '@/utils/request'
  * @param {number} params.zoom      - 变倍倍数，范围 0 ~ 20，精度 0.1
  * @returns {Promise} 后端响应
  */
-export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom }) {
+export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom } = {}) {
+  if (!deviceId || !channelId) throw new Error('[ptzPrecise] deviceId 和 channelId 为必填参数')
   return request({
     method: 'get',
     url: `/api/device/control/ptz_precise/${deviceId}/${channelId}`,
-    params: { pan, tilt, zoom }
+    params: { pan: pan ?? 0, tilt: tilt ?? 0, zoom: zoom ?? 1 },
+    timeout: 10000  // PTZ 控制命令 10s 超时
   })
 }
 
@@ -144,12 +146,19 @@ export function deviceUpgrade({ deviceId, channelId, firmware, fileUrl, manufact
  * @returns {Promise} 响应包含 { fileUrl: "http://..." }
  */
 export function uploadFirmware(deviceId, file) {
+  if (!file || !(file instanceof File)) {
+    return Promise.reject(new Error('[uploadFirmware] 无效的文件对象'))
+  }
+  if (file.size === 0) {
+    return Promise.reject(new Error('[uploadFirmware] 不允许上传空文件'))
+  }
   const formData = new FormData()
   formData.append('file', file)
   return request({
     method: 'post',
     url: `/api/device/control/upload_firmware/${deviceId}`,
-    data: formData
+    data: formData,
+    timeout: 120000  // 固件上传 120s 超时（大文件场景）
     // 注意: 不使用手动 Content-Type，由 axios 自动设置 boundary，确保 multipart 正确解析
   })
 }
