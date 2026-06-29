@@ -18,7 +18,7 @@
 |---|---|---|
 | **必须改前端** | 5 项 | 新增功能无 UI 入口，用户无法触发 |
 | **建议改前端** | 3 项 | 提升用户体验，后端功能不受影响 |
-| **无需改前端** | 4 项 | SM3、X-GB-ver、注册重定向、SDP 字段 — 信令层透传 |
+| **无需改前端** | 4 项 | SM3、X-GB-ver、注册重定向、SDP 字段 — 信令层透传（SM3和注册重定向在F8中提供配置开关，但业务逻辑无需前端改动） |
 
 ### 1.2 技术栈
 
@@ -58,7 +58,7 @@
 |---|---|---|---|---|
 | F6 | 设备列表新增"协议版本"列 | 改造项1 | `web/src/views/device/list.vue` | 显示 X-GB-ver 协商结果 |
 | F7 | 图像抓拍配置 | 改造项15 | `web/src/views/device/common/` 新增组件 | 抓拍分辨率/数量配置 |
-| F8 | SM3/TLS 配置入口 | 改造项2,30 | `web/src/views/operations/securityConfig.vue` 新增页面 | 安全配置页新增开关 |
+| F8 | SM3/TLS 配置入口 | 改造项2,3,26,30,35 | `web/src/views/operations/securityConfig.vue` 新增页面 | 安全配置页新增开关 |
 
 ### 2.3 无需改造（4 项）
 
@@ -66,7 +66,7 @@
 |---|---|
 | 改造项1 X-GB-ver | 信令层自动协商，前端无感知（F6 仅展示结果） |
 | 改造项2 SM3 | 摘要算法后端自动降级，前端无需改动业务逻辑（F8 仅提供配置开关） |
-| 改造项3 注册重定向 | 302 响应后端自动处理 |
+| 改造项3 注册重定向 | 302 响应后端自动处理，F8 提供系统级功能开关 |
 | 改造项4-6,18-23 SDP 字段 | 媒体协商后端自动处理 |
 
 ---
@@ -107,7 +107,7 @@ export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom }) {
 <!-- === F1改造: PTZ精准控制面板 === -->
 <!-- 来源: 后端改造项7, 设计文档第10.1节, 2022版A.2.3.1.11 -->
 <!-- 规范要求: 2022版新增PTZ精准控制, 支持pan/Tilt/zoom精确角度设置 -->
-<!-- D7修复: 补充展开/收起按钮触发 preciseVisible -->
+<!-- D7已修复: 补充展开/收起按钮触发 preciseVisible -->
 <div v-if="isVersion2022" class="ptz-precise-toggle" @click="preciseVisible = !preciseVisible">
   <i :class="preciseVisible ? 'el-icon-arrow-down' : 'el-icon-arrow-right'" />
   <span>精准控制（GB/T 28181-2022）</span>
@@ -150,6 +150,7 @@ preciseVisible: false,    // 精准控制面板展开状态
 precisePan: 0,            // 水平角度 (-180~180)
 preciseTilt: 0,           // 垂直角度 (-90~90)
 preciseZoom: 1,           // 变倍倍数 (0~20)
+trackMode: 'Auto',        // 目标跟踪模式 (Auto/Manual)
 
 // methods 新增
 handlePtzPrecise() {
@@ -171,13 +172,14 @@ handlePtzPrecise() {
 
 ```vue
 <!-- StorageCardDialog.vue — 存储卡格式化与状态查询 -->
-<!-- 来源: 后端改造项8(格式化, 2022版A.2.3.1.13) + 改造项14(状态查询, 2022版A.2.4.1.6) -->
+<!-- 来源: 后端改造项8(格式化, 2022版A.2.3.1.13) + 改造项14(状态查询, 2022版A.2.4.14) -->
 <template>
   <el-dialog title="存储卡管理" :visible.sync="visible" width="500px"
     :close-on-click-modal="false" @open="queryStatus">
     <div v-loading="loading">
       <!-- 存储卡状态 -->
-      <el-descriptions title="存储卡状态" :column="1" border size="small">
+      <h4 style="margin: 8px 0">存储卡状态</h4>
+      <el-descriptions :column="1" border size="small">
         <el-descriptions-item label="状态">
           <el-tag :type="statusTagType" size="small">{{ statusText }}</el-tag>
         </el-descriptions-item>
@@ -201,7 +203,7 @@ handlePtzPrecise() {
 ```javascript
 // web/src/api/frontEnd.js 新增
 
-/** 存储卡状态查询 (改造项14, 2022版A.2.4.1.6) */
+/** 存储卡状态查询 (改造项14, 2022版A.2.4.14) */
 export function queryStorageCardStatus(deviceId, channelId) {
   return request({
     method: 'get',
@@ -210,7 +212,7 @@ export function queryStorageCardStatus(deviceId, channelId) {
 }
 
 /** 存储卡格式化 (改造项8, 2022版A.2.3.1.13) */
-// D2修复: 破坏性操作使用 POST 方法
+// B1修复: 破坏性操作使用 POST 方法
 export function formatStorageCard(deviceId, channelId) {
   return request({
     method: 'post',
@@ -219,7 +221,7 @@ export function formatStorageCard(deviceId, channelId) {
 }
 ```
 
-> **R3修复**: StorageCardDialog.vue 需包含 `data() { return { visible: false, cardStatus: {}, formatting: false } }` 和 methods: `queryStatus()`（调用 `queryStorageCardStatus`）、`handleFormat()`（调用 `formatStorageCard`）、`handleClose()`。`@open` 事件触发 `queryStatus()`。
+> **R3修复**: StorageCardDialog.vue 需包含 `data() { return { visible: false, cardStatus: {}, formatting: false } }` 和 methods: `queryStatus()`（调用 `queryStorageCardStatus`）、`handleFormat()`（调用 `formatStorageCard`）、`handleClose()`。`@open` 事件触发 `queryStatus()`。模板中 `statusTagType`、`statusText`、`capacity`、`remainCapacity` 为 computed 属性，从 `cardStatus` 派生。
 
 ### 3.3 F3: 目标跟踪控制
 
@@ -231,7 +233,7 @@ export function formatStorageCard(deviceId, channelId) {
 ```vue
 <!-- === F3改造: 目标跟踪 === -->
 <!-- 来源: 后端改造项9, 设计文档第10.1节, 2022版A.2.3.1.14 -->
-<!-- 规范要求: 2022版新增目标跟踪, action: Auto(自动)/Manual(手动) -->
+<!-- 规范要求: 2022版新增目标跟踪, action: Auto(自动)/Manual(手动)（停止跟踪由后端超时自动处理） -->
 <div class="ptz-func-row" v-if="isVersion2022">
   <div class="ptz-func-btn" :class="{active: trackMode === 'Auto'}"
     title="自动跟踪" @click="$emit('target-track', 'Auto')">
@@ -240,10 +242,6 @@ export function formatStorageCard(deviceId, channelId) {
   <div class="ptz-func-btn" :class="{active: trackMode === 'Manual'}"
     title="手动跟踪" @click="$emit('target-track', 'Manual')">
     <i class="iconfont icon-track-manual" /><span>手动跟踪</span>
-  </div>
-  <div class="ptz-func-btn" title="停止跟踪"
-    @click="$emit('target-track', 'Stop')">
-    <i class="iconfont icon-track-stop" /><span>停止跟踪</span>
   </div>
 </div>
 ```
@@ -256,7 +254,7 @@ export function targetTrack({ deviceId, channelId, action }) {
   return request({
     method: 'get',
     url: `/api/device/control/target_track/${deviceId}/${channelId}`,
-    params: { action }  // Auto | Manual | Stop
+    params: { action }  // Auto | Manual（停止跟踪由后端超时自动处理，非规范定义值）
   })
 }
 ```
@@ -309,8 +307,8 @@ export function targetTrack({ deviceId, channelId, action }) {
 >   return request({
 >     method: 'post',
 >     url: `/api/device/control/upload_firmware/${deviceId}`,
->     data: formData,
->     headers: { 'Content-Type': 'multipart/form-data' }
+>     data: formData
+>     // 注意: 不使用手动 Content-Type，由 axios 自动设置 boundary
 >   })
 > }
 > ```
@@ -329,17 +327,17 @@ export function targetTrack({ deviceId, channelId, action }) {
 <template>
   <el-dialog title="设备信息查询" :visible.sync="visible" width="700px">
     <el-tabs v-model="activeTab">
-      <!-- 改造项11: 看守位信息查询 (2022版A.2.4.1.2) -->
+      <!-- 改造项11: 看守位信息查询 (2022版A.2.4.10) -->
       <el-tab-pane label="看守位信息" name="homePosition">
         <el-descriptions :column="1" border size="small">
           <el-descriptions-item label="启用状态">
-            {{ homePosition.enabled ? '已启用' : '未启用' }}
+            {{ homePositionInfo.enabled ? '已启用' : '未启用' }}
           </el-descriptions-item>
-          <el-descriptions-item label="预置位ID">{{ homePosition.presetId }}</el-descriptions-item>
-          <el-descriptions-item label="复位时间">{{ homePosition.resetTime }}秒</el-descriptions-item>
+          <el-descriptions-item label="预置位ID">{{ homePositionInfo.presetIndex }}</el-descriptions-item>
+          <el-descriptions-item label="复位时间">{{ homePositionInfo.resetTime }}秒</el-descriptions-item>
         </el-descriptions>
       </el-tab-pane>
-      <!-- 改造项12: 巡航轨迹查询 (2022版A.2.4.1.3) -->
+      <!-- 改造项12: 巡航轨迹查询 (2022版A.2.4.11) -->
       <el-tab-pane label="巡航轨迹" name="cruiseTrack">
         <el-table :data="cruiseTrackList" size="small" border>
           <el-table-column prop="id" label="轨迹ID" width="80" />
@@ -347,7 +345,7 @@ export function targetTrack({ deviceId, channelId, action }) {
           <el-table-column prop="presetList" label="预置位序列" />
         </el-table>
       </el-tab-pane>
-      <!-- 改造项13: PTZ精准状态查询 (2022版A.2.4.1.5) -->
+      <!-- 改造项13: PTZ精准状态查询 (2022版A.2.4.13) -->
       <el-tab-pane label="PTZ精准状态" name="ptzPreciseStatus">
         <el-descriptions :column="1" border size="small">
           <el-descriptions-item label="水平角(Pan)">{{ ptzStatus.pan }}°</el-descriptions-item>
@@ -360,7 +358,7 @@ export function targetTrack({ deviceId, channelId, action }) {
 </template>
 ```
 
-> **R3修复**: QueryResultDialog.vue 需包含 `data() { return { visible: false, activeTab: 'homePosition', homePositionInfo: {}, cruiseTrackList: [], ptzStatus: {} } }` 和 methods: `queryHomePosition()`、`queryCruiseTrack()`、`queryPtzStatus()`。各 tab 的 `@click` 事件触发对应查询方法。
+> **R3修复**: QueryResultDialog.vue 需包含 `data() { return { visible: false, activeTab: 'homePosition', homePositionInfo: {}, cruiseTrackList: [], ptzStatus: {} } }` 和 methods: `queryHomePosition()`、`queryCruiseTrack()`、`queryPtzPreciseStatus()`。在 `<el-tabs @tab-click="handleTabClick">` 上监听 tab 切换事件触发对应查询方法。
 
 ### 3.6 F6: 设备列表新增"协议版本"列
 
@@ -375,8 +373,8 @@ export function targetTrack({ deviceId, channelId, action }) {
 <!-- 说明: 显示X-GB-ver版本协商结果, "2.0"=2022版, "1.0"或空=2016版 -->
 <el-table-column label="协议版本" min-width="100">
   <template slot-scope="scope">
-    <el-tag :type="scope.row.protocolVersion === '2.0' ? 'success' : 'info'" size="small">
-      {{ scope.row.protocolVersion === '2.0' ? '2022' : '2016' }}
+    <el-tag :type="(scope.row.protocolVersion || '').startsWith('2.') ? 'success' : 'info'" size="small">
+      {{ (scope.row.protocolVersion || '').startsWith('2.') ? '2022' : '2016' }}
     </el-tag>
   </template>
 </el-table-column>
@@ -384,13 +382,14 @@ export function targetTrack({ deviceId, channelId, action }) {
 
 ### 3.7 F7: 图像抓拍配置
 
-**后端改造项**: 改造项15（图像抓拍功能，9.14）
+**后端改造项**: 改造项15（图像抓拍功能，设计文档第12.2节，2022版9.14）
 **新增文件**: `web/src/views/device/common/SnapshotConfigDialog.vue`
 
 ```vue
 <!-- SnapshotConfigDialog.vue — 图像抓拍配置 -->
-<!-- 来源: 后端改造项15, 设计文档第9.14节, 2022版9.14 -->
-<!-- 规范要求: 2022版新增图像抓拍, 支持分辨率和数量配置 -->
+<!-- 来源: 后端改造项15, 设计文档第12.2节, 2022版9.14 -->
+<!-- 注: interval/uploadUrl/sessionId 由前端自动生成(sessionId=UUID)或使用系统默认值 -->
+<!-- 规范要求: 2022版新增图像抓拍, Resolution 枚举值由后端 SnapshotConfigMessageHandler 定义 -->
 <template>
   <el-dialog title="图像抓拍" :visible.sync="visible" width="500px">
     <el-form :model="form" label-width="100px" size="small">
@@ -414,7 +413,7 @@ export function targetTrack({ deviceId, channelId, action }) {
     </el-table>
     <div slot="footer">
       <el-button @click="visible = false">关闭</el-button>
-      <el-button type="primary" :loading="snapping" @click="handleSnapshot">抓拍</el-button>
+      <el-button type="primary" :loading="capturing" @click="handleSnapshot">抓拍</el-button>
     </div>
   </el-dialog>
 </template>
@@ -424,7 +423,7 @@ export function targetTrack({ deviceId, channelId, action }) {
 
 ### 3.8 F8: 系统配置新增 SM3/TLS 开关
 
-**后端改造项**: 改造项2（SM3）、改造项30（TLS）
+**后端改造项**: 改造项2（SM3）、改造项3（注册重定向）、改造项26（TCP重连）、改造项30（TLS）、改造项35（字符集）
 **改造文件**: 新增 `web/src/views/operations/securityConfig.vue`
 
 > **B3修复**: `operations/` 目录下现有页面仅含日志和系统信息（`historyLog.vue`/`realLog.vue`/`showLog.vue`/`systemInfo.vue`），无配置编辑页面。因此新增独立的 `securityConfig.vue` 配置页面，并在路由中注册。
@@ -433,7 +432,7 @@ export function targetTrack({ deviceId, channelId, action }) {
 
 ```vue
 <!-- === F8改造: 安全配置 === -->
-<!-- 来源: 后端改造项2(SM3, 设计文档第5.3节) + 改造项30(TLS, 设计文档第8.2节) -->
+<!-- 来源: 后端改造项2(SM3, 设计文档第8.3节) + 改造项3(注册重定向) + 改造项26(TCP重连) + 改造项30(TLS, 设计文档第8.2节) + 改造项35(字符集) -->
 <el-card header="安全配置（GB/T 28181-2022）">
   <el-form label-width="180px" size="small">
     <el-form-item label="SM3摘要算法">
@@ -513,12 +512,12 @@ export function targetTrack({ deviceId, channelId, action }) {
   return request({
     method: 'get',
     url: `/api/device/control/target_track/${deviceId}/${channelId}`,
-    params: { action }  // Auto | Manual | Stop
+    params: { action }  // Auto | Manual（停止跟踪由后端超时自动处理，非规范定义值）
   })
 }
 
 // 改造项10: 设备软件升级 (2022版A.2.3.1.12)
-// B2修复: 补充 sessionID 参数
+// B2修复: 补充 sessionID 参数（前端通过 crypto.randomUUID() 或 uuid 库生成）
 export function deviceUpgrade({ deviceId, channelId, firmware, fileUrl, manufacturer, sessionId }) {
   return request({
     method: 'post',
@@ -527,7 +526,7 @@ export function deviceUpgrade({ deviceId, channelId, firmware, fileUrl, manufact
   })
 }
 
-// 改造项11: 看守位信息查询 (2022版A.2.4.1.2)
+// 改造项11: 看守位信息查询 (2022版A.2.4.10)
 export function queryHomePosition(deviceId, channelId) {
   return request({
     method: 'get',
@@ -535,7 +534,7 @@ export function queryHomePosition(deviceId, channelId) {
   })
 }
 
-// 改造项12: 巡航轨迹查询 (2022版A.2.4.1.3)
+// 改造项12: 巡航轨迹查询 (2022版A.2.4.11)
 export function queryCruiseTrack(deviceId, channelId, trackListId) {
   return request({
     method: 'get',
@@ -544,7 +543,7 @@ export function queryCruiseTrack(deviceId, channelId, trackListId) {
   })
 }
 
-// 改造项13: PTZ精准状态查询 (2022版A.2.4.1.5)
+// 改造项13: PTZ精准状态查询 (2022版A.2.4.13)
 export function queryPtzPreciseStatus(deviceId, channelId) {
   return request({
     method: 'get',
@@ -552,7 +551,7 @@ export function queryPtzPreciseStatus(deviceId, channelId) {
   })
 }
 
-// 改造项14: 存储卡状态查询 (2022版A.2.4.1.6)
+// 改造项14: 存储卡状态查询 (2022版A.2.4.14)
 export function queryStorageCardStatus(deviceId, channelId) {
   return request({
     method: 'get',
@@ -561,11 +560,12 @@ export function queryStorageCardStatus(deviceId, channelId) {
 }
 
 // 改造项15: 图像抓拍配置 (2022版9.14)
-export function snapshotConfig({ deviceId, channelId, resolution, snapNum }) {
+// 注: resolution 为后端 SnapshotConfigMessageHandler 支持的枚举值(0-4)
+export function snapshotConfig({ deviceId, channelId, resolution, snapNum, interval, uploadUrl, sessionId }) {
   return request({
     method: 'post',
     url: `/api/device/control/snapshot_config/${deviceId}/${channelId}`,
-    params: { resolution, snapNum }
+    data: { resolution, snapNum, interval, uploadUrl, sessionId }  // POST 请求体传参
   })
 }
 
@@ -577,11 +577,11 @@ export function uploadFirmware(deviceId, file) {
     method: 'post',
     url: `/api/device/control/upload_firmware/${deviceId}`,
     data: formData,
-    headers: { 'Content-Type': 'multipart/form-data' }
+    // 注意: 不使用手动 Content-Type，由 axios 自动设置 boundary
   })
 }
 
-// 改造项2,30配套: 保存安全配置 (D6修复)
+// 改造项2,3,26,30,35配套: 保存安全配置 (D6修复)
 export function saveSecurityConfig(data) {
   return request({
     method: 'post',
@@ -616,6 +616,8 @@ export function saveSecurityConfig(data) {
 | 第二阶段 | F2(存储卡) + F4(设备升级) + F5(查询页面) | 3 人天 | 高 |
 | 第三阶段 | F7(抓拍配置) + F8(系统配置) | 1 人天 | 中 |
 
+> **说明**：F6（协议版本列）虽属\"建议改造\"，但改动极小（仅新增一列），放在第一阶段可快速见效。F2/F4/F5 虽属\"必须改造\"，但涉及新增对话框组件，工作量较大，安排在第二阶段。
+
 ---
 
 ## 七、后端 Controller 配套改造
@@ -635,7 +637,7 @@ export function saveSecurityConfig(data) {
 > - `cruiseTrackQueryCmd(Device, String channelId, Integer trackListId)` — 改造项12
 > - `ptzPreciseStatusQueryCmd(Device, String channelId)` — 改造项13
 > - `storageCardStatusQueryCmd(Device, String channelId)` — 改造项14
-> - `snapshotConfigCmd(Device, String channelId, int resolution, int snapNum)` — 改造项15
+> - `snapshotConfigCmd(Device, String channelId, int resolution, int snapNum, int interval, String uploadUrl, String sessionId)` — 改造项15
 >
 > 这些方法内部构造 XML 消息（如 `<PTzPrecisectrl><pan>...</pan><Tilt>...</Tilt><zoom>...</zoom></PTzPrecisectrl>`），通过 SIP 发送到设备。
 
@@ -651,7 +653,7 @@ export function saveSecurityConfig(data) {
 | `/api/device/control/storage_card_status_query/{deviceId}/{channelId}` | GET | 改造项14 | 存储卡状态查询 |
 | `/api/device/control/snapshot_config/{deviceId}/{channelId}` | POST | 改造项15 | 图像抓拍配置 |
 | `/api/device/control/upload_firmware/{deviceId}` | POST | 改造项10配套 | 固件文件上传 |
-| `/api/device/config/save_security` | POST | 改造项2,30配套 | 安全配置保存 |
+| `/api/device/config/save_security` | POST | 改造项2,3,26,30,35配套 | 安全配置保存 |
 
 > **R5修复**: F4 模板中引用了 `handleFileChange` 方法但未说明。该方法需在 DeviceUpgradeDialog.vue 的 methods 中定义：`handleFileChange(file) { this.form.firmware = file.name; this.form.rawFile = file.raw; }`，将用户选择的文件信息存入 form。
 
