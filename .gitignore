@@ -1,0 +1,14 @@
+# WVP 编译产物
+wvp/target/
+wvp/bin/
+wvp/build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 系统
+.DS_Store
+*.log
+node_modules/
