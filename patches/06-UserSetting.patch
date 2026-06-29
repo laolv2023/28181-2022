@@ -1,0 +1,60 @@
+--- original/src/main/java/com/genersoft/iot/vmp/conf/UserSetting.java	2026-06-29 17:11:02.349379925 +0800
++++ modified/src/main/java/com/genersoft/iot/vmp/conf/UserSetting.java	2026-06-29 17:11:02.349379925 +0800
+@@ -256,4 +256,57 @@
+      */
+     private int alarmKeepDays = 7;
+ 
++    // === WVP合规性升级改造配置项 ===
++
++    /**
++     * 是否启用GB/T 28181-2022协议支持
++     * 来源: 改造项1, 设计文档第13.9节
++     * 说明: 开启后, SIP注册响应将携带X-GB-ver头域, 支持版本协商
++     */
++    private boolean gb28181Version2022Enabled = true;
++
++    /**
++     * 是否启用SM3摘要算法
++     * 来源: 改造项2, 设计文档第5.3节, 2022版6.7.2
++     * 说明: 开启后, 摘要认证将支持SM3算法(保留MD5兼容)
++     */
++    private boolean sm3DigestEnabled = true;
++
++    /**
++     * 是否启用注册重定向(302响应)
++     * 来源: 改造项3, 设计文档第13.2节
++     */
++    private boolean registerRedirectEnabled = true;
++
++    /**
++     * 是否启用TCP媒体传输重连
++     * 来源: 改造项26, 设计文档第7.3.2节
++     */
++    private boolean tcpReconnectEnabled = true;
++
++    /**
++     * TCP重连最大重试次数
++     * 来源: 改造项26, 设计文档第7.3.2节
++     */
++    private int tcpReconnectMaxRetries = 3;
++
++    /**
++     * TCP重连间隔(毫秒)
++     * 来源: 改造项26, 设计文档第7.3.2节
++     */
++    private int tcpReconnectIntervalMs = 1000;
++
++    /**
++     * SIP信令字符集
++     * 来源: 改造项35, 设计文档第5.4节, 2022版6.10
++     * 说明: 2022版从GB 2312升级为GB 18030
++     */
++    private String sipCharset = "gb18030";
++
++    /**
++     * 是否启用TLS加密传输
++     * 来源: 改造项30, 设计文档第8.2节, 2022版8.2
++     */
++    private boolean sipTlsEnabled = false;
++
+ }
