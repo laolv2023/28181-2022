@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # merge.sh — WVP GB/T 28181-2022 合规性升级合并脚本
+# news/ 目录为扁平结构，文件名→WVP目标路径映射通过 FILE_MAP 定义
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -12,6 +13,45 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 log()  { echo -e "${GREEN}[$(date +%H:%M:%S)]${NC} $*"; }
 warn() { echo -e "${YELLOW}[$(date +%H:%M:%S)] WARN:${NC} $*"; }
 err()  { echo -e "${RED}[$(date +%H:%M:%S)] ERROR:${NC} $*" >&2; }
+
+# ═══════════════════════════════════════════════════════════
+# 文件名 → WVP 目标路径映射表
+# news/ 下的文件是扁平结构（无子目录），合并时需要复制到 WVP 的正确目录
+# ═══════════════════════════════════════════════════════════
+declare -A FILE_MAP=(
+    ["DeviceControlType.java"]="src/main/java/com/genersoft/iot/vmp/common/enums/DeviceControlType.java"
+    ["SipTlsProperties.java"]="src/main/java/com/genersoft/iot/vmp/conf/SipTlsProperties.java"
+    ["CertAuthHelper.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/auth/CertAuthHelper.java"
+    ["DataIntegrityHelper.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/auth/DataIntegrityHelper.java"
+    ["GB35114Helper.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/auth/GB35114Helper.java"
+    ["RegisterRedirectHelper.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/auth/RegisterRedirectHelper.java"
+    ["SM3DigestHelper.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/auth/SM3DigestHelper.java"
+    ["SnapshotConfigMessageHandler.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/control/cmd/SnapshotConfigMessageHandler.java"
+    ["DeviceUpgradeResultNotifyMessageHandler.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/notify/cmd/DeviceUpgradeResultNotifyMessageHandler.java"
+    ["SnapshotFinishedNotifyMessageHandler.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/notify/cmd/SnapshotFinishedNotifyMessageHandler.java"
+    ["CruiseTrackQueryMessageHandler.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/query/cmd/CruiseTrackQueryMessageHandler.java"
+    ["HomePositionQueryMessageHandler.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/query/cmd/HomePositionQueryMessageHandler.java"
+    ["PtzPreciseStatusQueryMessageHandler.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/query/cmd/PtzPreciseStatusQueryMessageHandler.java"
+    ["StorageCardStatusQueryMessageHandler.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/query/cmd/StorageCardStatusQueryMessageHandler.java"
+    ["ExtensionApplicationHandler.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/utils/ExtensionApplicationHandler.java"
+    ["GBProtocolVersionHelper.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/utils/GBProtocolVersionHelper.java"
+    ["GbCode2022.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/utils/GbCode2022.java"
+    ["MansrtspHelper.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/utils/MansrtspHelper.java"
+    ["SdpFieldHelper.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/utils/SdpFieldHelper.java"
+    ["SipCharsetHelper.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/utils/SipCharsetHelper.java"
+    ["SipMessageFilter.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/utils/SipMessageFilter.java"
+    ["TcpReconnectHelper.java"]="src/main/java/com/genersoft/iot/vmp/gb28181/utils/TcpReconnectHelper.java"
+)
+
+# 补丁修改的文件列表（用于验证）
+declare -a PATCHED_FILES=(
+    "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/RegisterRequestProcessor.java"
+    "src/main/java/com/genersoft/iot/vmp/gb28181/auth/DigestServerAuthenticationHelper.java"
+    "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/cmd/impl/SIPCommander.java"
+    "src/main/java/com/genersoft/iot/vmp/gb28181/bean/Device.java"
+    "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/control/cmd/DeviceControlQueryMessageHandler.java"
+    "src/main/java/com/genersoft/iot/vmp/conf/UserSetting.java"
+)
 
 check_prerequisites() {
     log "═══════════════════════════════════════════"
@@ -31,16 +71,22 @@ check_prerequisites() {
 copy_new_files() {
     log "步骤1: 复制新增/替换文件..."
     local count=0 failed=0
-    while IFS= read -r -d '' file; do
-        local rel_path="${file#$SRC_DIR/}"
-        local target="$WVP_DIR/$rel_path"
-        mkdir -p "$(dirname "$target")"
-        if cp "$file" "$target"; then
-            count=$((count + 1)); log "  ✅ $(basename "$file")"
-        else
-            failed=$((failed + 1)); warn "  ❌ $(basename "$file")"
+    for src_file in "$SRC_DIR"/*.java; do
+        local filename=$(basename "$src_file")
+        local target_rel="${FILE_MAP[$filename]:-}"
+        if [ -z "$target_rel" ]; then
+            warn "  ⚠️ $filename (无映射, 跳过)"
+            failed=$((failed + 1))
+            continue
         fi
-    done < <(find "$SRC_DIR" -name '*.java' -print0)
+        local target="$WVP_DIR/$target_rel"
+        mkdir -p "$(dirname "$target")"
+        if cp "$src_file" "$target"; then
+            count=$((count + 1)); log "  ✅ $filename → $target_rel"
+        else
+            failed=$((failed + 1)); warn "  ❌ $filename"
+        fi
+    done
     log "步骤1完成: 复制 $count 个文件, 失败 $failed 个"
 }
 
@@ -64,41 +110,17 @@ apply_patches() {
 verify_merge() {
     log "步骤3: 验证合并结果..."
     local errors=0
-    local new_files=(
-        "src/main/java/com/genersoft/iot/vmp/gb28181/utils/GBProtocolVersionHelper.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/auth/SM3DigestHelper.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/auth/RegisterRedirectHelper.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/utils/SdpFieldHelper.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/utils/MansrtspHelper.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/utils/TcpReconnectHelper.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/utils/SipCharsetHelper.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/utils/GbCode2022.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/utils/SipMessageFilter.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/auth/CertAuthHelper.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/auth/DataIntegrityHelper.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/auth/GB35114Helper.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/utils/ExtensionApplicationHandler.java"
-        "src/main/java/com/genersoft/iot/vmp/conf/SipTlsProperties.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/query/cmd/HomePositionQueryMessageHandler.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/query/cmd/CruiseTrackQueryMessageHandler.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/query/cmd/PtzPreciseStatusQueryMessageHandler.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/query/cmd/StorageCardStatusQueryMessageHandler.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/notify/cmd/DeviceUpgradeResultNotifyMessageHandler.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/notify/cmd/SnapshotFinishedNotifyMessageHandler.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/control/cmd/SnapshotConfigMessageHandler.java"
-    )
-    for f in "${new_files[@]}"; do
-        [ -f "$WVP_DIR/$f" ] && log "  ✅ $(basename "$f")" || { err "  ❌ $f (缺失)"; errors=$((errors + 1)); }
+    # 验证新增文件
+    for filename in "${!FILE_MAP[@]}"; do
+        local target="$WVP_DIR/${FILE_MAP[$filename]}"
+        if [ -f "$target" ]; then
+            log "  ✅ $filename"
+        else
+            err "  ❌ $filename (缺失)"; errors=$((errors + 1))
+        fi
     done
-    local patched_files=(
-        "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/RegisterRequestProcessor.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/auth/DigestServerAuthenticationHelper.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/cmd/impl/SIPCommander.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/bean/Device.java"
-        "src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/control/cmd/DeviceControlQueryMessageHandler.java"
-        "src/main/java/com/genersoft/iot/vmp/conf/UserSetting.java"
-    )
-    for f in "${patched_files[@]}"; do
+    # 验证补丁
+    for f in "${PATCHED_FILES[@]}"; do
         if grep -q "改造项" "$WVP_DIR/$f" 2>/dev/null; then
             log "  ✅ $(basename "$f") (补丁已应用)"
         else
@@ -115,14 +137,16 @@ verify_merge() {
 
 revert_merge() {
     log "回退合并操作..."
+    # 反向应用补丁
     for patch_file in "$PATCH_DIR"/*.patch; do
-        log "  回退: $(basename "$patch_file")"
+        log "  回退补丁: $(basename "$patch_file")"
         patch -p3 -d "$WVP_DIR" --reverse --fuzz=3 < "$patch_file" 2>/dev/null || true
     done
-    while IFS= read -r -d '' file; do
-        local target="$WVP_DIR/${file#$SRC_DIR/}"
-        [ -f "$target" ] && rm "$target" && log "  删除: $(basename "$target")"
-    done < <(find "$SRC_DIR" -name '*.java' -print0)
+    # 删除新增文件
+    for filename in "${!FILE_MAP[@]}"; do
+        local target="$WVP_DIR/${FILE_MAP[$filename]}"
+        [ -f "$target" ] && rm "$target" && log "  删除: $filename"
+    done
     log "回退完成"
 }
 
