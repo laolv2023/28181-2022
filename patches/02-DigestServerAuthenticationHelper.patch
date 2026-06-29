@@ -1,0 +1,79 @@
+--- original/src/main/java/com/genersoft/iot/vmp/gb28181/auth/DigestServerAuthenticationHelper.java	2026-06-29 17:11:02.348379907 +0800
++++ modified/src/main/java/com/genersoft/iot/vmp/gb28181/auth/DigestServerAuthenticationHelper.java	2026-06-29 17:11:02.348379907 +0800
+@@ -50,9 +50,25 @@
+ 
+     private final MessageDigest messageDigest;
+ 
++    // === 改造项2: SM3摘要算法支持 ===
++    // 来源: 设计文档第5.3节(第531~550行), 2022版6.7.2
++    // 规范要求: 2022版将摘要算法从MD5更新为SM3
++    // 改造说明: 保留MD5作为兼容, 新增SM3作为2022版默认算法
++    // SM3摘要实例, 运行环境若未提供SM3算法则为null(降级使用MD5)
++    private MessageDigest sm3MessageDigest;
++
+     public static final String DEFAULT_ALGORITHM = "MD5";
+     public static final String DEFAULT_SCHEME = "Digest";
+ 
++    /**
++     * SM3 算法名称常量
++     * <p>
++     * 来源: 改造项2, 设计文档第5.3节, 2022版6.7.2
++     * 用于在摘要认证时识别/计算 SM3 摘要
++     * </p>
++     */
++    public static final String SM3_ALGORITHM = "SM3";
++
+     /** to hex converter */
+     private static final char[] toHex = { '0', '1', '2', '3', '4', '5', '6',
+             '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+@@ -63,6 +79,18 @@
+     public DigestServerAuthenticationHelper()
+             throws NoSuchAlgorithmException {
+         messageDigest = MessageDigest.getInstance(DEFAULT_ALGORITHM);
++
++        // === 改造项2: 初始化SM3摘要算法 ===
++        // 来源: 设计文档第5.3节, 2022版6.7.2
++        // 改造说明: SM3为国密算法, 部分JDK默认不支持, 需BouncyCastle等Provider
++        // 此处尝试初始化, 失败则降级为仅使用MD5
++        try {
++            sm3MessageDigest = MessageDigest.getInstance(SM3_ALGORITHM);
++            log.info("[Digest认证] SM3摘要算法初始化成功, 启用2022版摘要认证支持");
++        } catch (NoSuchAlgorithmException e) {
++            sm3MessageDigest = null;
++            log.warn("[Digest认证] 当前运行环境不支持SM3算法, 降级使用MD5: {}", e.getMessage());
++        }
+     }
+ 
+     public static String toHexString(byte[] b) {
+@@ -231,6 +259,31 @@
+         log.debug("mdString: {}", mdString);
+         String response = authHeader.getResponse();
+         log.debug("response: {}", response);
++
++        // === 改造项2: SM3摘要算法支持 ===
++        // 来源: 设计文档第5.3节(第531~550行), 2022版6.7.2
++        // 规范要求: 2022版将摘要算法从MD5更新为SM3
++        // 改造说明: 保留MD5作为兼容, 新增SM3作为2022版默认算法
++        // 当MD5验证失败时, 尝试使用SM3进行验证
++        if (!mdString.equals(response) && sm3MessageDigest != null) {
++            // SM3摘要验证
++            byte[] sm3bytes = sm3MessageDigest.digest(A1.getBytes());
++            String SM3_HA1 = toHexString(sm3bytes);
++            sm3bytes = sm3MessageDigest.digest(A2.getBytes());
++            String SM3_HA2 = toHexString(sm3bytes);
++            String SM3_KD = SM3_HA1 + ":" + nonce;
++            if (qop != null && qop.equalsIgnoreCase("auth")) {
++                if (nc != -1) { SM3_KD += ":" + ncStr; }
++                if (cnonce != null) { SM3_KD += ":" + cnonce; }
++                SM3_KD += ":" + qop;
++            }
++            SM3_KD += ":" + SM3_HA2;
++            sm3bytes = sm3MessageDigest.digest(SM3_KD.getBytes());
++            String sm3String = toHexString(sm3bytes);
++            log.debug("[SM3验证] sm3String: {}", sm3String);
++            return sm3String.equals(response);
++        }
++
+         return mdString.equals(response);
+ 
+     }
