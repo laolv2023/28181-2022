@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
 WVP_DIR="${1:-$REPO_DIR/wvp}"
-SRC_DIR="$REPO_DIR/src"
+SRC_DIR="$REPO_DIR/news"
 PATCH_DIR="$REPO_DIR/patches"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
