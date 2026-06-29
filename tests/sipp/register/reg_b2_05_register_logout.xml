@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B2-05                                                   -->
+<!-- 测试名称: 注销流程                                                -->
+<!-- 来源: 设计文档第14.2节, GB/T 28181-2022 第9.2.2节                -->
+<!-- 测试场景: 验证设备发送Expires=0注销                              -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 设备通过REGISTER携带Expires: 0实现主动注销。                -->
+<!--       WVP应返回200 OK,并停止维护该设备注册状态。                 -->
+<!-- ================================================================ -->
+
+<scenario name="reg_b2_05_register_logout">
+
+  <!-- 步骤1: 发送Expires=0的REGISTER(注销请求) -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB205[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B205
+      Expires: 0
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401(WVP对注销请求也可能要求认证) -->
+  <recv response="401" auth="true">
+  </recv>
+
+  <!-- 步骤3: 发送带Authorization的注销REGISTER,Expires=0 -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB205[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B205
+      Expires: 0
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收200 OK,验证注销成功 -->
+  <recv response="200" rtd="true">
+    <action>
+      <ereg regexp="Expires: 0" search_in="hdr" assign_to="logout_expires" />
+    </action>
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
