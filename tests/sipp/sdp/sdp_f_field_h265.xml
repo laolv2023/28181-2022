@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A3.3-01                                                 -->
+<!-- 测试名称: f字段支持H.265                                         -->
+<!-- 来源: 改造项18                                                   -->
+<!-- 测试场景: 验证SDP f字段包含H.265编码格式                          -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. SDP f字段格式: v/编码格式/分辨率/帧率/...                    -->
+<!--   2. 编码格式字段值为2时代表H.265                                -->
+<!--   3. f=v/2/1920x1080/25/1/4096a/2/4096/1                         -->
+<!--   4. f字段第二段(2)即编码格式H.265                              -->
+<!--   5. 设备返回 200 OK 含匹配的f字段                                -->
+<!-- ================================================================ -->
+
+<scenario name="sdp_f_field_h265">
+
+  <!-- 步骤1: WVP发送INVITE,SDP f字段含H.265编码格式 -->
+  <send retrans="500">
+    <![CDATA[
+      INVITE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA3301[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] INVITE
+      Contact: <sip:34020000002000000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-A3301
+      Subject: H.265 Format Test
+      Content-Type: application/sdp
+      Content-Length: [len]
+
+      v=0
+      o=34020000002000000001 0 0 IN IP4 [local_ip]
+      s=Play
+      c=IN IP4 [local_ip]
+      t=0 0
+      m=video 6000 RTP/AVP 100
+      a=rtpmap:100 H265/90000
+      a=recvonly
+      y=0000000004
+      f=v/2/1920x1080/25/1/4096a/2/4096/1
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收 100 Trying -->
+  <recv response="100" optional="true">
+  </recv>
+
+  <!-- 步骤3: 接收 200 OK,验证f字段H.265编码格式 -->
+  <recv response="200" rtd="true">
+    <action>
+      <ereg regexp="f=v/2/" search_in="body" assign_to="f_h265_check" />
+      <ereg regexp="f=v/[0-9]+/[0-9]+x[0-9]+/[0-9]+" search_in="body" assign_to="f_format" />
+      <ereg regexp="a=rtpmap:100 H265/90000" search_in="body" assign_to="rtpmap_h265" />
+    </action>
+  </recv>
+
+  <!-- 步骤4: WVP发送ACK确认 -->
+  <send>
+    <![CDATA[
+      ACK sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA3301[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>[peer_tag_param]
+      Call-ID: [call_id]
+      CSeq: [cseq] ACK
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- 步骤5: WVP发送BYE结束会话 -->
+  <send retrans="500">
+    <![CDATA[
+      BYE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA3301[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>[peer_tag_param]
+      Call-ID: [call_id]
+      CSeq: [cseq] BYE
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- 步骤6: 接收 200 OK -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
