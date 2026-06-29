@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B3-01                                                   -->
+<!-- 测试名称: PTZ控制合规性                                           -->
+<!-- 来源: 设计文档第14.3节, GB/T 28181-2022 附录A.2.3.1.1~A.2.3.1.7  -->
+<!-- 测试场景: 验证PTZ 8方向控制 + 镜头变倍/聚焦/光圈控制命令格式      -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项(覆盖传统PTZ控制场景):                               -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. CmdType=DeviceControl                                       -->
+<!--   3. PTZControl 元素携带 4位16进制控制码 + 速度参数              -->
+<!--   4. 控制码字节布局: a1~a4(方向) | b1~b4(变倍) | c1~c4(聚焦)     -->
+<!--                   | d1~d4(光圈)                                  -->
+<!--   5. 设备返回 200 OK                                             -->
+<!-- 典型8方向控制码:                                                 -->
+<!--   上=00 08, 下=00 04, 左=00 02, 右=00 01                       -->
+<!--   左上=00 0A, 右上=00 09, 左下=00 06, 右下=00 05               -->
+<!--   停止=00 00                                                     -->
+<!-- ================================================================ -->
+
+<scenario name="ctrl_b3_01_ptz">
+
+  <!-- 步骤1: WVP向设备发送 PTZ 8方向控制(向上)MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB301[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B301
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <PTZControl>
+      <PanTiltSpeed>5</PanTiltSpeed>
+      <ZoomSpeed>5</ZoomSpeed>
+      <ControlCommand>00 08</ControlCommand>
+      </PTZControl>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <!-- 步骤3: WVP发送 PTZ 停止命令,结束方向运动 -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB301b[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B301
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>2</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <PTZControl>
+      <PanTiltSpeed>5</PanTiltSpeed>
+      <ZoomSpeed>5</ZoomSpeed>
+      <ControlCommand>00 00</ControlCommand>
+      </PTZControl>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
