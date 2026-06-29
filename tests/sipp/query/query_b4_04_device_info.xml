@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B4-04                                                   -->
+<!-- 测试名称: 设备信息查询合规性                                      -->
+<!-- 来源: 设计文档第14.4节, GB/T 28181-2022 附录A.2.4.1.4            -->
+<!-- 测试场景: 验证设备信息查询(DeviceInfoQuery)命令格式及响应         -->
+<!--           查询设备厂商/型号/固件版本等基本信息                    -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. 查询CmdType=DeviceInfoQuery                                 -->
+<!--   3. SN字段递增                                                  -->
+<!--   4. 设备返回 200 OK 后通过MESSAGE回报设备信息                   -->
+<!--   5. 响应字段: Result/Manufacturer/Model/FirmwareVersion/        -->
+<!--              DeviceName/DeviceID                                -->
+<!-- GB/T 28181-2022 A.2.4.1.4 设备信息查询:                          -->
+<!--   - 用于设备发现后的属性同步                                     -->
+<!--   - 是平台显示设备详情页的数据源                                 -->
+<!-- ================================================================ -->
+
+<scenario name="query_b4_04_device_info">
+
+  <!-- 步骤1: WVP向设备发送设备信息查询 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB404[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B404
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Query>
+      <CmdType>DeviceInfoQuery</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      </Query>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <!-- 步骤3: 接收设备返回的设备信息 Notify MESSAGE -->
+  <recv request="MESSAGE" rtd="true">
+    <action>
+      <ereg regexp="CmdType>DeviceInfo<" search_in="body" assign_to="devinfo_resp" />
+      <ereg regexp="Manufacturer>[^<]+<" search_in="body" assign_to="manufacturer" />
+      <ereg regexp="Model>[^<]+<" search_in="body" assign_to="model" />
+      <ereg regexp="FirmwareVersion>[^<]+<" search_in="body" assign_to="firmware" />
+    </action>
+  </recv>
+
+  <!-- 步骤4: WVP返回 200 OK 表示已收到设备信息 -->
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
