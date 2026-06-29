@@ -27,14 +27,14 @@
 | Vue | 2.6.10 |
 | Vue Router | 3.0.6 |
 | Vuex | 3.1.0 |
-| Element UI | （随 vue-admin-template） |
+| Element UI | ^2.15.14 |
 | HTTP | axios ^0.24.0 |
 | 构建 | vue-cli-service |
 
 ### 1.3 改造原则
 
 1. **增量改造**：不修改原有页面结构，新增独立组件和对话框
-2. **配置驱动**：通过设备 `isVersion2022()` 判断，仅 2022 版设备显示新功能按钮
+2. **配置驱动**：通过设备 `isVersion2022()` 判断，仅 2022 版设备显示新功能按钮。前端通过 API 响应中的 `protocolVersion` 字段判断设备版本，`ptzControls.vue` 等通用组件需新增 `isVersion2022` prop 由父组件传入
 3. **来源标注**：每个新增组件/方法标注对应后端改造项编号
 4. **生产级**：包含加载状态、错误处理、用户反馈
 
@@ -58,7 +58,7 @@
 |---|---|---|---|---|
 | F6 | 设备列表新增"协议版本"列 | 改造项1 | `web/src/views/device/list.vue` | 显示 X-GB-ver 协商结果 |
 | F7 | 图像抓拍配置 | 改造项15 | `web/src/views/device/common/` 新增组件 | 抓拍分辨率/数量配置 |
-| F8 | SM3/TLS 配置入口 | 改造项2,30 | `web/src/views/operations/` | 系统配置页新增开关 |
+| F8 | SM3/TLS 配置入口 | 改造项2,30 | `web/src/views/operations/securityConfig.vue` 新增页面 | 安全配置页新增开关 |
 
 ### 2.3 无需改造（4 项）
 
@@ -107,36 +107,41 @@ export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom }) {
 <!-- === F1改造: PTZ精准控制面板 === -->
 <!-- 来源: 后端改造项7, 设计文档第10.1节, 2022版A.2.3.1.11 -->
 <!-- 规范要求: 2022版新增PTZ精准控制, 支持pan/Tilt/zoom精确角度设置 -->
-<el-collapse-transition>
-  <div v-show="preciseVisible" class="ptz-precise-section">
-    <div class="precise-title">精准控制（GB/T 28181-2022）</div>
-    <el-form :inline="true" size="mini" label-width="60px">
-      <el-form-item label="水平角">
-        <el-input-number v-model="precisePan"
-          :precision="2" :step="0.1" :min="-180" :max="180"
-          controls-position="right" size="mini" style="width: 120px" />
-      </el-form-item>
-      <el-form-item label="垂直角">
-        <el-input-number v-model="preciseTilt"
-          :precision="2" :step="0.1" :min="-90" :max="90"
-          controls-position="right" size="mini" style="width: 120px" />
-      </el-form-item>
-      <el-form-item label="变倍">
-        <el-input-number v-model="preciseZoom"
-          :precision="1" :step="0.5" :min="0" :max="20"
-          controls-position="right" size="mini" style="width: 120px" />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" size="mini" @click="handlePtzPrecise">发送</el-button>
-      </el-form-item>
-    </el-form>
-  </div>
-</el-collapse-transition>
+<!-- 说明: 使用 v-show + CSS transition 替代 el-collapse-transition（项目中未验证过） -->
+<div v-show="preciseVisible" class="ptz-precise-section" style="transition: all 0.3s;">
+  <div class="precise-title">精准控制（GB/T 28181-2022）</div>
+  <el-form :inline="true" size="mini" label-width="60px">
+    <el-form-item label="水平角">
+      <el-input-number v-model="precisePan"
+        :precision="2" :step="0.1" :min="-180" :max="180"
+        controls-position="right" size="mini" style="width: 120px" />
+    </el-form-item>
+    <el-form-item label="垂直角">
+      <el-input-number v-model="preciseTilt"
+        :precision="2" :step="0.1" :min="-90" :max="90"
+        controls-position="right" size="mini" style="width: 120px" />
+    </el-form-item>
+    <el-form-item label="变倍">
+      <el-input-number v-model="preciseZoom"
+        :precision="1" :step="0.5" :min="0" :max="20"
+        controls-position="right" size="mini" style="width: 120px" />
+    </el-form-item>
+    <el-form-item>
+      <el-button type="primary" size="mini" @click="handlePtzPrecise">发送</el-button>
+    </el-form-item>
+  </el-form>
+</div>
 ```
 
 新增 data/methods：
 
 ```javascript
+// props 新增（A2修复: ptzControls.vue 需新增 isVersion2022 prop）
+// 来源: 审计A2, 通用组件无法获取设备版本, 需由父组件传入
+props: {
+  isVersion2022: { type: Boolean, default: false }  // 由父组件 live/index.vue 传入
+},
+
 // data 新增
 preciseVisible: false,    // 精准控制面板展开状态
 precisePan: 0,            // 水平角度 (-180~180)
@@ -391,9 +396,11 @@ export function targetTrack({ deviceId, channelId, action }) {
 ### 3.8 F8: 系统配置新增 SM3/TLS 开关
 
 **后端改造项**: 改造项2（SM3）、改造项30（TLS）
-**改造文件**: `web/src/views/operations/` 系统配置页
+**改造文件**: 新增 `web/src/views/operations/securityConfig.vue`
 
-在系统配置页面新增安全配置区域：
+> **B3修复**: `operations/` 目录下现有页面仅含日志和系统信息（`historyLog.vue`/`realLog.vue`/`showLog.vue`/`systemInfo.vue`），无配置编辑页面。因此新增独立的 `securityConfig.vue` 配置页面，并在路由中注册。
+
+在新增配置页面中添加安全配置区域：
 
 ```vue
 <!-- === F8改造: 安全配置 === -->
@@ -431,6 +438,8 @@ export function targetTrack({ deviceId, channelId, action }) {
 
 所有新增 API 添加到 `web/src/api/frontEnd.js`：
 
+> **A1修复**: API 路径统一使用 `/api/device/control/` 前缀，与现有 `device.js` 中的控制接口保持一致（如 `/api/device/control/teleboot`、`/api/device/control/drag_zoom/zoom_in`）。避免使用后端不存在的 `/api/front-end/` 前缀。
+
 ```javascript
 // === GB/T 28181-2022 前端新增 API ===
 
@@ -438,16 +447,17 @@ export function targetTrack({ deviceId, channelId, action }) {
 export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom }) {
   return request({
     method: 'get',
-    url: `/api/front-end/ptz_precise/${deviceId}/${channelId}`,
+    url: `/api/device/control/ptz_precise/${deviceId}/${channelId}`,
     params: { pan, tilt, zoom }
   })
 }
 
 // 改造项8: 存储卡格式化 (2022版A.2.3.1.13)
+// B1修复: 破坏性操作使用 POST 方法
 export function formatStorageCard(deviceId, channelId) {
   return request({
-    method: 'get',
-    url: `/api/front-end/format_sdcard/${deviceId}/${channelId}`
+    method: 'post',
+    url: `/api/device/control/format_sdcard/${deviceId}/${channelId}`
   })
 }
 
@@ -455,17 +465,18 @@ export function formatStorageCard(deviceId, channelId) {
 export function targetTrack({ deviceId, channelId, action }) {
   return request({
     method: 'get',
-    url: `/api/front-end/target_track/${deviceId}/${channelId}`,
-    params: { action }
+    url: `/api/device/control/target_track/${deviceId}/${channelId}`,
+    params: { action }  // Auto | Manual | Stop
   })
 }
 
 // 改造项10: 设备软件升级 (2022版A.2.3.1.12)
-export function deviceUpgrade({ deviceId, channelId, firmware, fileUrl, manufacturer }) {
+// B2修复: 补充 sessionID 参数
+export function deviceUpgrade({ deviceId, channelId, firmware, fileUrl, manufacturer, sessionId }) {
   return request({
     method: 'post',
-    url: `/api/front-end/device_upgrade/${deviceId}/${channelId}`,
-    data: { firmware, fileUrl, manufacturer }
+    url: `/api/device/control/device_upgrade/${deviceId}/${channelId}`,
+    data: { firmware, fileUrl, manufacturer, sessionId }
   })
 }
 
@@ -473,7 +484,7 @@ export function deviceUpgrade({ deviceId, channelId, firmware, fileUrl, manufact
 export function queryHomePosition(deviceId, channelId) {
   return request({
     method: 'get',
-    url: `/api/front-end/home_position_query/${deviceId}/${channelId}`
+    url: `/api/device/control/home_position_query/${deviceId}/${channelId}`
   })
 }
 
@@ -481,7 +492,7 @@ export function queryHomePosition(deviceId, channelId) {
 export function queryCruiseTrack(deviceId, channelId, trackListId) {
   return request({
     method: 'get',
-    url: `/api/front-end/cruise_track_query/${deviceId}/${channelId}`,
+    url: `/api/device/control/cruise_track_query/${deviceId}/${channelId}`,
     params: { trackListId }
   })
 }
@@ -490,7 +501,7 @@ export function queryCruiseTrack(deviceId, channelId, trackListId) {
 export function queryPtzPreciseStatus(deviceId, channelId) {
   return request({
     method: 'get',
-    url: `/api/front-end/ptz_precise_status_query/${deviceId}/${channelId}`
+    url: `/api/device/control/ptz_precise_status_query/${deviceId}/${channelId}`
   })
 }
 
@@ -498,15 +509,15 @@ export function queryPtzPreciseStatus(deviceId, channelId) {
 export function queryStorageCardStatus(deviceId, channelId) {
   return request({
     method: 'get',
-    url: `/api/front-end/storage_card_status_query/${deviceId}/${channelId}`
+    url: `/api/device/control/storage_card_status_query/${deviceId}/${channelId}`
   })
 }
 
 // 改造项15: 图像抓拍配置 (2022版9.14)
 export function snapshotConfig({ deviceId, channelId, resolution, snapNum }) {
   return request({
-    method: 'get',
-    url: `/api/front-end/snapshot_config/${deviceId}/${channelId}`,
+    method: 'post',
+    url: `/api/device/control/snapshot_config/${deviceId}/${channelId}`,
     params: { resolution, snapNum }
   })
 }
@@ -525,7 +536,7 @@ export function snapshotConfig({ deviceId, channelId, resolution, snapNum }) {
 | `web/src/api/frontEnd.js` | 修改 | 新增 9 个 API 方法 |
 | `web/src/views/common/ptzControls.vue` | 修改 | 新增精准控制面板+目标跟踪按钮 |
 | `web/src/views/device/list.vue` | 修改 | 新增"协议版本"列 |
-| `web/src/views/operations/` | 修改 | 系统配置新增安全配置区域 |
+| `web/src/views/operations/securityConfig.vue` | 新增 | 安全配置页（SM3/TLS/字符集开关） |
 
 ---
 
@@ -541,21 +552,46 @@ export function snapshotConfig({ deviceId, channelId, resolution, snapNum }) {
 
 ## 七、后端 Controller 配套改造
 
-前端新增 API 需要后端 Controller 提供对应接口。以下接口需在后端 `ApiControlController.java` 或新建 Controller 中实现：
+前端新增 API 需要后端 Controller 提供对应接口。以下接口需在现有 `ApiControlController.java`（`@RequestMapping("/api/v1/control")`）或 `ApiDeviceController.java`（`@RequestMapping("/api/v1/device")`）中新增对应方法。建议在 `ApiDeviceController.java` 中新增，与现有 `/api/device/control/` 路径前缀一致。
 
-| API 路径 | 方法 | 对应后端改造项 |
-|---|---|---|
-| `/api/front-end/ptz_precise/{deviceId}/{channelId}` | GET | 改造项7 |
-| `/api/front-end/format_sdcard/{deviceId}/{channelId}` | GET | 改造项8 |
-| `/api/front-end/target_track/{deviceId}/{channelId}` | GET | 改造项9 |
-| `/api/front-end/device_upgrade/{deviceId}/{channelId}` | POST | 改造项10 |
-| `/api/front-end/home_position_query/{deviceId}/{channelId}` | GET | 改造项11 |
-| `/api/front-end/cruise_track_query/{deviceId}/{channelId}` | GET | 改造项12 |
-| `/api/front-end/ptz_precise_status_query/{deviceId}/{channelId}` | GET | 改造项13 |
-| `/api/front-end/storage_card_status_query/{deviceId}/{channelId}` | GET | 改造项14 |
-| `/api/front-end/snapshot_config/{deviceId}/{channelId}` | GET | 改造项15 |
+> **A3修复说明**: 这些 Controller 接口不在《WVP 合规性升级改造开发方案》的 38 项中，需要额外开发。Controller 内部调用已有的 `SIPCommander` 方法下发 SIP 命令到设备。以下为接口定义，Controller 实现代码需另行开发。
 
-> **说明**: 这些 Controller 接口不在《WVP 合规性升级改造开发方案》的 38 项中，需要额外开发。Controller 内部调用已有的 `SIPCommander` 方法下发 SIP 命令到设备。
+| API 路径 | 方法 | 对应后端改造项 | 说明 |
+|---|---|---|---|
+| `/api/device/control/ptz_precise/{deviceId}/{channelId}` | GET | 改造项7 | PTZ 精准控制 |
+| `/api/device/control/format_sdcard/{deviceId}/{channelId}` | POST | 改造项8 | 存储卡格式化（破坏性操作用 POST） |
+| `/api/device/control/target_track/{deviceId}/{channelId}` | GET | 改造项9 | 目标跟踪 |
+| `/api/device/control/device_upgrade/{deviceId}/{channelId}` | POST | 改造项10 | 设备软件升级 |
+| `/api/device/control/home_position_query/{deviceId}/{channelId}` | GET | 改造项11 | 看守位查询 |
+| `/api/device/control/cruise_track_query/{deviceId}/{channelId}` | GET | 改造项12 | 巡航轨迹查询 |
+| `/api/device/control/ptz_precise_status_query/{deviceId}/{channelId}` | GET | 改造项13 | PTZ 精准状态查询 |
+| `/api/device/control/storage_card_status_query/{deviceId}/{channelId}` | GET | 改造项14 | 存储卡状态查询 |
+| `/api/device/control/snapshot_config/{deviceId}/{channelId}` | POST | 改造项15 | 图像抓拍配置 |
+
+**Controller 实现示例**（以 PTZ 精准控制为例）：
+
+```java
+// === 改造项7 Controller: PTZ精准控制 ===
+// 来源: 后端改造项7, 设计文档第10.1节, 2022版A.2.3.1.11
+// 说明: 接收前端请求, 调用 SIPCommander 下发 PTZ 精准控制命令到设备
+@GetMapping("/control/ptz_precise/{deviceId}/{channelId}")
+@ResponseBody
+public Result ptzPrecise(
+        @PathVariable String deviceId,
+        @PathVariable String channelId,
+        @RequestParam Double pan,
+        @RequestParam Double tilt,
+        @RequestParam Double zoom) {
+    Device device = deviceService.getDevice(deviceId);
+    if (device == null) {
+        return Result.fail(400, "设备不存在");
+    }
+    // 调用 SIPCommander 下发 PTZ 精准控制命令
+    // SIPCommander 内部构造 XML: <PTzPrecisectrl><pan>...</pan><Tilt>...</Tilt><zoom>...</zoom></PTzPrecisectrl>
+    cmder.ptzPreciseCmd(device, channelId, pan, tilt, zoom);
+    return Result.success();
+}
+```
 
 ---
 
@@ -568,6 +604,8 @@ export function snapshotConfig({ deviceId, channelId, resolution, snapNum }) {
 | 未知（未注册） | 隐藏 2022 新功能按钮，注册后自动判断 |
 
 通过 `device.isVersion2022()` 判断设备版本，前端通过 API 响应中的 `protocolVersion` 字段判断。
+
+> **A5修复说明**: `protocolVersion` 字段由后端改造项1（Device.java 补丁 04-Device.patch）新增。设备列表接口 `/api/device/query/devices` 的响应中需要包含此字段。由于 `Device.java` 已添加 `protocolVersion` 属性，Spring/Jackson 会自动序列化到 JSON 响应中，但需确认设备列表查询 SQL 是否包含此列。如果数据库表中尚未添加 `protocolVersion` 列，需执行 `ALTER TABLE device ADD COLUMN protocol_version VARCHAR(10) DEFAULT NULL`。
 
 ---
 
