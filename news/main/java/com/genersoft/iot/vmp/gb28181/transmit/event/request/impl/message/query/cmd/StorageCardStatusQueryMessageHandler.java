@@ -30,14 +30,14 @@ import java.text.ParseException;
  * <p>
  * <b>规范依据：</b><br>
  * 来源：设计文档第10.2节（信息查询类命令扩展），2022版 A.2.4.1.6 存储卡状态查询。<br>
- * 命令类型：CmdType = StorageCardStatusQuery<br>
+ * 命令类型：CmdType = SDcardStatus<br>
  * 协议要求：2022 版新增存储卡状态查询命令，返回存储卡状态及容量信息。
  * </p>
  * <p>
  * <b>请求 XML 示例：</b>
  * <pre>
  * &lt;Query&gt;
- *     &lt;CmdType&gt;StorageCardStatusQuery&lt;/CmdType&gt;
+ *     &lt;CmdType&gt;SDcardStatus&lt;/CmdType&gt;
  *     &lt;SN&gt;30&lt;/SN&gt;
  *     &lt;DeviceID&gt;34020000001320000001&lt;/DeviceID&gt;
  * &lt;/Query&gt;
@@ -47,7 +47,7 @@ import java.text.ParseException;
  * <b>响应 XML 示例：</b>
  * <pre>
  * &lt;Response&gt;
- *     &lt;CmdType&gt;StorageCardStatusQuery&lt;/CmdType&gt;
+ *     &lt;CmdType&gt;SDcardStatus&lt;/CmdType&gt;
  *     &lt;SN&gt;30&lt;/SN&gt;
  *     &lt;DeviceID&gt;34020000001320000001&lt;/DeviceID&gt;
  *     &lt;Result&gt;OK&lt;/Result&gt;
@@ -128,7 +128,7 @@ public class StorageCardStatusQueryMessageHandler extends SIPRequestProcessorPar
     /**
      * Spring 容器初始化后回调，将当前处理器注册到 QueryMessageHandler。
      * <p>
-     * 改造项14：注册 CmdType=StorageCardStatusQuery。
+     * 改造项14：注册 CmdType=SDcardStatus。
      * 来源：设计文档第10.2节，2022版 A.2.4.1.6。
      * </p>
      *
@@ -230,7 +230,7 @@ public class StorageCardStatusQueryMessageHandler extends SIPRequestProcessorPar
         xml.append("<CmdType>").append(cmdType).append("</CmdType>\r\n");
         xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : SipCharsetHelper.escapeXml(sn)).append("</SN>\r\n");
         xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
-        xml.append("<Result>").append(result).append("</Result>\r\n");
+        xml.append("<Resend(result</Result>\r\n");
         xml.append("<StorageCard>\r\n");
         xml.append("<Status>").append(status).append("</Status>\r\n");
         xml.append("<Capacity>").append(capacity).append("</Capacity>\r\n");
