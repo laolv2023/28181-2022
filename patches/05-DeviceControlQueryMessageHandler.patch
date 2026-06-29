@@ -1,0 +1,219 @@
+--- original/src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/control/cmd/DeviceControlQueryMessageHandler.java	2026-06-29 17:11:02.349379925 +0800
++++ modified/src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/control/cmd/DeviceControlQueryMessageHandler.java	2026-06-29 17:11:02.349379925 +0800
+@@ -134,6 +134,30 @@
+                 case HOME_POSITION:
+                     handleHomePositionCmd(channel, rootElement, request, DeviceControlType.HOME_POSITION);
+                     break;
++                // === 改造项7: PTZ精准控制命令 ===
++                // 来源: 设计文档第10.1节(第898~923行), 2022版A.2.3.1.11
++                // 规范要求: 2022版新增PTZ精准控制, XML元素名PTzPrecisectrl
++                case PTZ_PRECISE:
++                    handlePtzPreciseCmd(channel, rootElement, request, DeviceControlType.PTZ_PRECISE);
++                    break;
++                // === 改造项8: 存储卡格式化命令 ===
++                // 来源: 设计文档第10.1节(第898~923行), 2022版A.2.3.1.13
++                // 规范要求: 2022版新增存储卡格式化, XML元素名FormatsDcard
++                case FORMAT_SDCARD:
++                    handleFormatSdCardCmd(channel, rootElement, request, DeviceControlType.FORMAT_SDCARD);
++                    break;
++                // === 改造项9: 目标跟踪命令 ===
++                // 来源: 设计文档第10.1节(第898~923行), 2022版A.2.3.1.14
++                // 规范要求: 2022版新增目标跟踪, XML元素名TargetTrack
++                case TARGET_TRACK:
++                    handleTargetTrackCmd(channel, rootElement, request, DeviceControlType.TARGET_TRACK);
++                    break;
++                // === 改造项10: 设备软件升级命令 ===
++                // 来源: 设计文档第10.1节(第898~923行), 2022版A.2.3.1.12
++                // 规范要求: 2022版新增设备软件升级, XML元素名Deviceupgrade
++                case DEVICE_UPGRADE:
++                    handleDeviceUpgradeCmd(channel, rootElement, request, DeviceControlType.DEVICE_UPGRADE);
++                    break;
+                 default:
+                     break;
+             }
+@@ -651,4 +675,185 @@
+             log.error("[命令发送失败] 回复: {}", e.getMessage());
+         }
+     }
++
++    // =====================================================================
++    // === 改造项7/8/9/10: GB/T 28181-2022 新增设备控制命令处理方法 ===
++    // === 来源: 设计文档第10.1节(第898~923行), 2022版A.2.3.1.11~A.2.3.1.14 ===
++    // =====================================================================
++
++    /**
++     * 处理PTZ精准控制命令
++     * <p>
++     * 来源: 改造项7, 设计文档第10.1节, 2022版A.2.3.1.11
++     * 规范要求: 2022版新增PTZ精准控制, XML元素名 PTzPrecisectrl
++     * XML结构示例:
++     * <pre>
++     * &lt;PTzPrecisectrl&gt;
++     *   &lt;Pan&gt;...&lt;/Pan&gt;
++     *   &lt;Tilt&gt;...&lt;/Tilt&gt;
++     *   &lt;Zoom&gt;...&lt;/Zoom&gt;
++     * &lt;/PTzPrecisectrl&gt;
++     * </pre>
++     */
++    private void handlePtzPreciseCmd(CommonGBChannel channel, Element rootElement, SIPRequest request, DeviceControlType type) {
++        if (channel.getDataType() != ChannelDataType.GB28181) {
++            log.warn("[deviceControl-PTzPrecisectrl] 只支持国标的PTZ精准控制, 通道ID: {}", channel.getGbId());
++            try {
++                responseAck(request, Response.FORBIDDEN, "");
++            } catch (SipException | InvalidArgumentException | ParseException e) {
++                log.error("[命令发送失败] 错误信息: {}", e.getMessage());
++            }
++            return;
++        }
++        Device device = deviceService.getDevice(channel.getDataDeviceId());
++        if (device == null) {
++            log.warn("[deviceControl-PTzPrecisectrl] 通道所属设备不存在, 通道ID: {}", channel.getGbId());
++            try {
++                responseAck(request, Response.NOT_FOUND, "device not found");
++            } catch (SipException | InvalidArgumentException | ParseException e) {
++                log.error("[命令发送失败] 错误信息: {}", e.getMessage());
++            }
++            return;
++        }
++        // 解析PTZ精准控制参数
++        Element ptzPreciseElement = rootElement.element(type.getVal());
++        String pan = ptzPreciseElement != null ? getText(ptzPreciseElement, "Pan") : null;
++        String tilt = ptzPreciseElement != null ? getText(ptzPreciseElement, "Tilt") : null;
++        String zoom = ptzPreciseElement != null ? getText(ptzPreciseElement, "Zoom") : null;
++        log.info("[deviceControl] 命令: PTZ精准控制, 设备: {}({}), 通道: {}, Pan: {}, Tilt: {}, Zoom: {}",
++                device.getName(), device.getDeviceId(), channel.getGbId(), pan, tilt, zoom);
++        // TODO: 后续接入 cmder.ptzPreciseCmd() SIP命令下发方法(待扩展)
++        try {
++            responseAck(request, Response.OK);
++        } catch (SipException | InvalidArgumentException | ParseException e) {
++            log.error("[命令发送失败] PTZ精准控制: {}", e.getMessage());
++        }
++    }
++
++    /**
++     * 处理存储卡格式化命令
++     * <p>
++     * 来源: 改造项8, 设计文档第10.1节, 2022版A.2.3.1.13
++     * 规范要求: 2022版新增存储卡格式化, XML元素名 FormatsDcard
++     */
++    private void handleFormatSdCardCmd(CommonGBChannel channel, Element rootElement, SIPRequest request, DeviceControlType type) {
++        if (channel.getDataType() != ChannelDataType.GB28181) {
++            log.warn("[deviceControl-FormatsDcard] 只支持国标的存储卡格式化, 通道ID: {}", channel.getGbId());
++            try {
++                responseAck(request, Response.FORBIDDEN, "");
++            } catch (SipException | InvalidArgumentException | ParseException e) {
++                log.error("[命令发送失败] 错误信息: {}", e.getMessage());
++            }
++            return;
++        }
++        Device device = deviceService.getDevice(channel.getDataDeviceId());
++        if (device == null) {
++            log.warn("[deviceControl-FormatsDcard] 通道所属设备不存在, 通道ID: {}", channel.getGbId());
++            try {
++                responseAck(request, Response.NOT_FOUND, "device not found");
++            } catch (SipException | InvalidArgumentException | ParseException e) {
++                log.error("[命令发送失败] 错误信息: {}", e.getMessage());
++            }
++            return;
++        }
++        // 解析存储卡格式化参数
++        Element formatElement = rootElement.element(type.getVal());
++        String sdCardIndex = formatElement != null ? getText(formatElement, "SDCardIndex") : null;
++        log.info("[deviceControl] 命令: 存储卡格式化, 设备: {}({}), 通道: {}, SDCardIndex: {}",
++                device.getName(), device.getDeviceId(), channel.getGbId(), sdCardIndex);
++        // TODO: 后续接入 cmder.formatSdCardCmd() SIP命令下发方法(待扩展)
++        try {
++            responseAck(request, Response.OK);
++        } catch (SipException | InvalidArgumentException | ParseException e) {
++            log.error("[命令发送失败] 存储卡格式化: {}", e.getMessage());
++        }
++    }
++
++    /**
++     * 处理目标跟踪命令
++     * <p>
++     * 来源: 改造项9, 设计文档第10.1节, 2022版A.2.3.1.14
++     * 规范要求: 2022版新增目标跟踪, XML元素名 TargetTrack
++     */
++    private void handleTargetTrackCmd(CommonGBChannel channel, Element rootElement, SIPRequest request, DeviceControlType type) {
++        if (channel.getDataType() != ChannelDataType.GB28181) {
++            log.warn("[deviceControl-TargetTrack] 只支持国标的目标跟踪, 通道ID: {}", channel.getGbId());
++            try {
++                responseAck(request, Response.FORBIDDEN, "");
++            } catch (SipException | InvalidArgumentException | ParseException e) {
++                log.error("[命令发送失败] 错误信息: {}", e.getMessage());
++            }
++            return;
++        }
++        Device device = deviceService.getDevice(channel.getDataDeviceId());
++        if (device == null) {
++            log.warn("[deviceControl-TargetTrack] 通道所属设备不存在, 通道ID: {}", channel.getGbId());
++            try {
++                responseAck(request, Response.NOT_FOUND, "device not found");
++            } catch (SipException | InvalidArgumentException | ParseException e) {
++                log.error("[命令发送失败] 错误信息: {}", e.getMessage());
++            }
++            return;
++        }
++        // 解析目标跟踪参数
++        Element trackElement = rootElement.element(type.getVal());
++        String action = trackElement != null ? getText(trackElement, "Action") : null;
++        log.info("[deviceControl] 命令: 目标跟踪, 设备: {}({}), 通道: {}, Action: {}",
++                device.getName(), device.getDeviceId(), channel.getGbId(), action);
++        // TODO: 后续接入 cmder.targetTrackCmd() SIP命令下发方法(待扩展)
++        try {
++            responseAck(request, Response.OK);
++        } catch (SipException | InvalidArgumentException | ParseException e) {
++            log.error("[命令发送失败] 目标跟踪: {}", e.getMessage());
++        }
++    }
++
++    /**
++     * 处理设备软件升级命令
++     * <p>
++     * 来源: 改造项10, 设计文档第10.1节, 2022版A.2.3.1.12
++     * 规范要求: 2022版新增设备软件升级, XML元素名 Deviceupgrade
++     * XML结构示例:
++     * <pre>
++     * &lt;Deviceupgrade&gt;
++     *   &lt;FirmWare&gt;...&lt;/FirmWare&gt;
++     *   &lt;FileuRL&gt;...&lt;/FileuRL&gt;
++     *   &lt;Manufacturer&gt;...&lt;/Manufacturer&gt;
++     * &lt;/Deviceupgrade&gt;
++     * </pre>
++     */
++    private void handleDeviceUpgradeCmd(CommonGBChannel channel, Element rootElement, SIPRequest request, DeviceControlType type) {
++        if (channel.getDataType() != ChannelDataType.GB28181) {
++            log.warn("[deviceControl-Deviceupgrade] 只支持国标的设备软件升级, 通道ID: {}", channel.getGbId());
++            try {
++                responseAck(request, Response.FORBIDDEN, "");
++            } catch (SipException | InvalidArgumentException | ParseException e) {
++                log.error("[命令发送失败] 错误信息: {}", e.getMessage());
++            }
++            return;
++        }
++        Device device = deviceService.getDevice(channel.getDataDeviceId());
++        if (device == null) {
++            log.warn("[deviceControl-Deviceupgrade] 通道所属设备不存在, 通道ID: {}", channel.getGbId());
++            try {
++                responseAck(request, Response.NOT_FOUND, "device not found");
++            } catch (SipException | InvalidArgumentException | ParseException e) {
++                log.error("[命令发送失败] 错误信息: {}", e.getMessage());
++            }
++            return;
++        }
++        // 解析设备软件升级参数
++        Element upgradeElement = rootElement.element(type.getVal());
++        String firmWare = upgradeElement != null ? getText(upgradeElement, "FirmWare") : null;
++        String fileUrl = upgradeElement != null ? getText(upgradeElement, "FileuRL") : null;
++        String manufacturer = upgradeElement != null ? getText(upgradeElement, "Manufacturer") : null;
++        log.info("[deviceControl] 命令: 设备软件升级, 设备: {}({}), 通道: {}, FirmWare: {}, FileuRL: {}, Manufacturer: {}",
++                device.getName(), device.getDeviceId(), channel.getGbId(), firmWare, fileUrl, manufacturer);
++        // TODO: 后续接入 cmder.deviceUpgradeCmd() SIP命令下发方法(待扩展)
++        try {
++            responseAck(request, Response.OK);
++        } catch (SipException | InvalidArgumentException | ParseException e) {
++            log.error("[命令发送失败] 设备软件升级: {}", e.getMessage());
++        }
++    }
+ }
