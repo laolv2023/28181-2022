@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B2-04                                                   -->
+<!-- 测试名称: 心跳保活                                                -->
+<!-- 来源: 设计文档第14.2节, GB/T 28181-2022 第9.2.3节                -->
+<!-- 测试场景: 验证设备注册后发送MESSAGE心跳                          -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: GB/T 28181规定,设备注册后应周期性发送MESSAGE消息          -->
+<!--       作为心跳(Keepalive)。心跳Content-Type为Application/MANSRTSP, -->
+<!--       Body为:                                                    -->
+<!--         <?xml version="1.0"?>                                    -->
+<!--         <Notify>                                                 -->
+<!--           <CmdType>Keepalive</CmdType>                           -->
+<!--           <SN>1</SN>                                             -->
+<!--           <DeviceID>34020000001320000001</DeviceID>              -->
+<!--           <Status>OK</Status>                                    -->
+<!--         </Notify>                                                -->
+<!-- ================================================================ -->
+
+<scenario name="reg_b2_04_register_keepalive">
+
+  <!-- ============== 第一段: 设备注册 ============== -->
+
+  <!-- 步骤1: 发送初始REGISTER -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB204[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B204
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401 -->
+  <recv response="401" auth="true">
+  </recv>
+
+  <!-- 步骤3: 发送带Authorization的REGISTER -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB204[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B204
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收200 OK,注册成功 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <!-- ============== 第二段: 发送心跳MESSAGE ============== -->
+
+  <!-- 步骤5: 发送Keepalive心跳MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]keep
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB204k[callNumber]
+      To: <sip:34020000002000000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]-keep
+      CSeq: 1 MESSAGE
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B204
+      Content-Type: Application/MANSRTSP
+      Content-Length: [len]
+
+      <?xml version="1.0"?>
+      <Notify>
+      <CmdType>Keepalive</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <Status>OK</Status>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤6: 接收200 OK,验证WVP应答心跳 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
