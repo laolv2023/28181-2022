@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A1.1-02                                                 -->
+<!-- 测试名称: 2016设备MD5摘要认证(兼容)                              -->
+<!-- 来源: 设计文档第13.1节, GB/T 28181-2016 第9章                    -->
+<!-- 测试场景: 模拟2016版设备使用MD5算法进行摘要认证                  -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 2016版规范默认使用MD5摘要认证,WVP应向后兼容MD5。           -->
+<!--       SIPp内置[authentication]标签默认使用MD5,可直接使用。       -->
+<!--       本场景不携带X-GB-ver头域,模拟2016设备行为。                -->
+<!-- ================================================================ -->
+
+<scenario name="reg_md5_compat">
+
+  <!-- 步骤1: 发送初始REGISTER(2016设备,无X-GB-ver) -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag05[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-2016-MD5
+      Expires: 3600
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401 Challenge,auth="true"启用SIPp内置MD5认证解析 -->
+  <recv response="401" auth="true">
+  </recv>
+
+  <!-- 步骤3: 发送带MD5 Authorization的REGISTER -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag05[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-2016-MD5
+      Expires: 3600
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收200 OK,验证MD5认证通过 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
