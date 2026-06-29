@@ -219,9 +219,14 @@ export default {
     },
 
     /**
-     * 对话框关闭时：重置状态
+     * 对话框关闭时：重置状态并清理定时器
      */
     handleDialogClosed() {
+      // 清理格式化后延迟刷新定时器，防止组件销毁后仍执行
+      if (this._formatTimer) {
+        clearTimeout(this._formatTimer)
+        this._formatTimer = null
+      }
       this.queryError = null
       this.cardStatus = {}
     },
@@ -272,7 +277,9 @@ export default {
         await formatStorageCard(this.deviceId, this.channelId)
         this.$message.success('格式化命令已下发，请稍后查看状态')
         // 格式化成功后自动刷新状态（延迟 2 秒等待设备响应）
-        setTimeout(() => {
+        // timer 引用存入 this._formatTimer，在 handleDialogClosed 中清理
+        this._formatTimer = setTimeout(() => {
+          this._formatTimer = null
           this.queryStatus()
         }, 2000)
         // 通知父组件
@@ -289,16 +296,19 @@ export default {
 
     /**
      * 格式化容量显示（MB → 可读格式）
+     * 防御性处理：字符串输入转为数值、NaN/负数兜底
      *
-     * @param {number} mb - 容量值（MB）
+     * @param {number|string} mb - 容量值（MB）
      * @returns {string}  格式化后的字符串，如 "64 GB"、"512 MB"
      */
     formatCapacity(mb) {
-      if (mb == null) return '—'
-      if (mb >= 1024) {
-        return `${(mb / 1024).toFixed(1)} GB`
+      if (mb == null || mb === '') return '—'
+      const val = Number(mb)
+      if (isNaN(val) || val < 0) return '—'
+      if (val >= 1024) {
+        return `${(val / 1024).toFixed(1)} GB`
       }
-      return `${mb} MB`
+      return `${val} MB`
     },
 
     /**
