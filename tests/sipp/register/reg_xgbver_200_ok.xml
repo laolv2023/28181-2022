@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A2.1-01                                                 -->
+<!-- 测试名称: 注册响应携带X-GB-ver头域                                 -->
+<!-- 来源: 设计文档第13.9节, 2022版附录I                               -->
+<!-- 测试场景: 模拟设备发起REGISTER,验证WVP返回的200 OK中              -->
+<!--           包含 X-GB-ver: 2.0 头域                                -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: SIPp场景模拟UAC,发送REGISTER -> 接收401 ->                  -->
+<!--       发送带Authorization的REGISTER -> 接收200 OK                 -->
+<!--       使用<ereg>在响应头域中匹配X-GB-ver: 2.0                    -->
+<!-- ================================================================ -->
+
+<scenario name="reg_xgbver_200_ok">
+
+  <!-- 初始化变量: 用于存放X-GB-ver头域匹配结果 -->
+  <Global variables="xgbver,result" />
+
+  <!-- 步骤1: 发送初始REGISTER请求(无Authorization) -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag01[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401 Challenge响应,auth="true"用于自动解析WWW-Authenticate -->
+  <recv response="401" auth="true">
+  </recv>
+
+  <!-- 步骤3: 发送携带Authorization头域的REGISTER请求 -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag01[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收200 OK响应,使用ereg在头域中匹配X-GB-ver字段 -->
+  <recv response="200" rtd="true">
+    <action>
+      <ereg regexp="X-GB-ver:.*2\.0" search_in="hdr" assign_to="xgbver" />
+    </action>
+    <test param="xgbver" criteria="X-GB-ver: 2.0" assign_to="result" />
+  </recv>
+
+  <!-- 响应时间分桶统计(单位:ms) -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- 响应码分桶统计 -->
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
