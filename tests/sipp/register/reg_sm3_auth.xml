@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A1.1-01                                                 -->
+<!-- 测试名称: 2022设备SM3摘要认证                                     -->
+<!-- 来源: 设计文档第13.1节, 2022版附录F(密码算法)                     -->
+<!-- 测试场景: 模拟2022版设备使用SM3算法进行摘要认证                  -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: SIPp内置[authentication]标签默认使用MD5算法,无法直接       -->
+<!--       生成SM3摘要。SM3摘要需通过以下方式之一提供:                -->
+<!--       (1) 通过SIPp -auth参数预计算后注入;                       -->
+<!--       (2) 通过外部脚本(如Python+gmssl)预先计算HA1/Response,    -->
+<!--           再将结果作为变量填充到Authorization头域;               -->
+<!--       (3) 在SIPp执行前由测试框架计算后注入到[field]占位符。      -->
+<!--       本场景预留Authorization字段由外部SM3计算引擎填充。         -->
+<!-- SM3摘要计算公式(参考RFC2617 SM3变体):                            -->
+<!--   HA1 = SM3(username:realm:password)                            -->
+<!--   HA2 = SM3(method:uri)                                         -->
+<!--   Response = SM3(HA1:nonce:HA2)                                 -->
+<!-- ================================================================ -->
+
+<scenario name="reg_sm3_auth">
+
+  <!-- 初始化SM3摘要相关变量(由外部计算后通过-field_file注入) -->
+  <Global variables="sm3_ha1,sm3_response,sm3_nonce" />
+
+  <!-- 步骤1: 发送初始REGISTER -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag04[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-SM3
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401,捕获WWW-Authenticate头域中的nonce和algorithm -->
+  <recv response="401">
+    <action>
+      <ereg regexp="algorithm=SM3" search_in="hdr" assign_to="algo_sm3" />
+      <ereg regexp='nonce="([^"]+)"' search_in="hdr" check_it="false" assign_to="1,sm3_nonce" />
+    </action>
+  </recv>
+
+  <!--
+    注意: SM3摘要计算步骤需在外部完成。建议方式:
+    1. 解析401响应中的realm、nonce、algorithm
+    2. 调用Python gmssl库或OpenSSL EVP_sm3计算:
+       HA1 = SM3("34020000001320000001:" + realm + ":12345678")
+       HA2 = SM3("REGISTER:sip:[remote_ip]:[remote_port]")
+       Response = SM3(HA1 + ":" + nonce + ":" + HA2)
+    3. 将Response注入到下方Authorization头域的response字段
+  -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag04[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: Digest username="34020000001320000001",realm="3402000000",nonce="[$sm3_nonce]",uri="sip:[remote_ip]:[remote_port]",response="[$sm3_response]",algorithm=SM3
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-SM3
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收200 OK,验证SM3认证通过 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
