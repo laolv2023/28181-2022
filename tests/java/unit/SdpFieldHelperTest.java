@@ -48,7 +48,7 @@ class SdpFieldHelperTest {
     void testBuildFField() {
         // 来源: 改造项18, 设计文档第7节
         // f=v/编码格式/分辨率/帧率/码率类型/码率大小a/编码格式/码率大小/采样率
-        String f = SdpFieldHelper.buildFField("H265", "1920x1080", 25, 1, 4096, "AAC", 128, 44100);
+        String f = SdpFieldHelper.buildFField("H265", "1920x1080", "25", "1", "4096", "AAC", "128", "44100");
         assertNotNull(f, "f字段不应为null");
         assertTrue(f.startsWith("f="), "f字段应以f=开头");
         assertTrue(f.contains("H265"), "f字段应包含H265编码");
