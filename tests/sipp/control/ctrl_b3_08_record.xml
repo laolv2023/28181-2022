@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B3-08                                                   -->
+<!-- 测试名称: 录像控制合规性                                          -->
+<!-- 来源: 设计文档第14.3节, GB/T 28181-2022 附录A.2.3.1.9            -->
+<!-- 测试场景: 验证设备录像控制(RecordCmd)命令格式                     -->
+<!--           支持开始录像/停止录像两种动作                          -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. CmdType=DeviceControl                                       -->
+<!--   3. RecordCmd 元素值为 0=停止录像 / 1=开始录像                  -->
+<!--   4. 设备返回 200 OK 表示接受控制                                -->
+<!-- GB/T 28181-2022 A.2.3.1.9 录像控制 RecordCmd 字段:              -->
+<!--   - 取值 0: 停止录像                                             -->
+<!--   - 取值 1: 开始录像                                             -->
+<!-- 录像文件存储位置由设备本地配置决定,与NVR存储策略联动             -->
+<!-- ================================================================ -->
+
+<scenario name="ctrl_b3_08_record">
+
+  <!-- 步骤1: WVP向设备发送开始录像控制 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB308[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B308
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <RecordCmd>1</RecordCmd>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应(开始录像) -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <!-- 步骤3: WVP向设备发送停止录像控制 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB308b[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B308
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceControl</CmdType>
+      <SN>2</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <RecordCmd>0</RecordCmd>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收设备的 200 OK 响应(停止录像) -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
