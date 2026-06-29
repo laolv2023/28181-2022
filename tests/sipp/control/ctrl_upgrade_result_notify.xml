@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A4.2-01                                                 -->
+<!-- 测试名称: 设备软件升级结果通知                                    -->
+<!-- 来源: 改造项10, spec_2022.txt 行2551                              -->
+<!-- 测试场景: 模拟设备向WVP发送升级结果Notify MESSAGE,                -->
+<!--           XML包含:                                                -->
+<!--             - CmdType=DeviceupgradeResult                        -->
+<!--             - UpgradeResult=OK(升级成功)                        -->
+<!-- 测试模式: UAC (设备侧主动发送Notify 给 WVP)                       -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. CmdType=DeviceupgradeResult(注意首字母大写)                 -->
+<!--   3. UpgradeResult 取值 OK/FAIL                                  -->
+<!--   4. WVP返回 200 OK 表示已收到通知                               -->
+<!-- 改造项10要点: 升级结果通知是设备对A4.1-04升级命令的异步回报      -->
+<!-- spec_2022.txt 行2551 定义 DeviceupgradeResult 命令类型           -->
+<!-- ================================================================ -->
+
+<scenario name="ctrl_upgrade_result_notify">
+
+  <!-- 步骤1: 设备向WVP发送升级结果通知 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000002000000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagA4201[callNumber]
+      To: <sip:34020000002000000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: Device-Simulator-A4201
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Notify>
+      <CmdType>DeviceupgradeResult</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      <UpgradeResult>OK</UpgradeResult>
+      </Notify>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收WVP的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
