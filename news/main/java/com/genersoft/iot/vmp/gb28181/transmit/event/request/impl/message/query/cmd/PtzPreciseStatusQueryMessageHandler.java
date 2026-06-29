@@ -80,7 +80,7 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
      * 注意：规范要求首字母 P 大写、T 大写、z 小写，与 2016 版 PTZCmd 大小写不同。
      * </p>
      */
-    private final String cmdType = "PTzPreciseStatusQuery";
+    private final String cmdType = "pTZposition";
 
     /**
      * 响应结果：成功

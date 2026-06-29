@@ -84,7 +84,7 @@ public class StorageCardStatusQueryMessageHandler extends SIPRequestProcessorPar
      * 改造项14：来源 设计文档第10.2节，2022版 A.2.4.1.6
      * </p>
      */
-    private final String cmdType = "StorageCardStatusQuery";
+    private final String cmdType = "SDcardStatus";
 
     /**
      * 响应结果：成功

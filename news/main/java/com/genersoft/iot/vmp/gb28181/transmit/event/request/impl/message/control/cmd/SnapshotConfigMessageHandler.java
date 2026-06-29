@@ -100,7 +100,7 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
     /**
      * 抓拍数量字段名
      */
-    private static final String ELEMENT_SNAP_NUM = "SnapNum";
+    private static final String ELEMENT_SNAP_NUM = "snapNum";
 
     /**
      * 分辨率：CIF（352×288）

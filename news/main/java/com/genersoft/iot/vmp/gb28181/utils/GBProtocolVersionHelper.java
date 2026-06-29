@@ -114,7 +114,8 @@ public final class GBProtocolVersionHelper {
                 request.removeHeader(HEADER_X_GB_VER);
             }
             // 追加当前协议版本头部
-            Header gbVerHeader = SipFactory.getInstance().createHeaderFactory().createHeader(HEADER_X_GB_VER, GB_PROTOCOL_VERSION); request.addHeader(gbVerHeader);
+            Header gbVerHeader = SipFactory.getInstance().createHeaderFactory().createHeader(HEADER_X_GB_VER, GB_PROTOCOL_VERSION);
+            request.addHeader(gbVerHeader);
         } catch (Exception e) {
             // JAIN-SIP 的 createHeader 通常不会抛出受检异常，这里兜底捕获
             logger.error("[协议版本] 追加 X-GB-ver 头部异常", e);

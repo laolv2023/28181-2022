@@ -22,10 +22,10 @@ import org.springframework.context.annotation.Configuration;
  *   tls:
  *     enabled: true
  *     key-store: classpath:sip/server.p12
- *     key-store-password: changeit
+ *     key-store-password: <your-keystore-password>
  *     key-store-type: PKCS12
  *     trust-store: classpath:sip/ca.p12
- *     trust-store-password: changeit
+ *     trust-store-password: <your-truststore-password>
  *     trust-store-type: PKCS12
  *     server-port: 5061
  * </pre>
