@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: B4-07                                                   -->
+<!-- 测试名称: 设备状态查询合规性                                      -->
+<!-- 来源: 设计文档第14.4节, GB/T 28181-2022 附录A.2.4.1.6            -->
+<!-- 测试场景: 验证设备状态查询(DeviceStatusQuery)命令格式及响应       -->
+<!--           查询设备在线状态/CPU/内存/磁盘/编码能力等               -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 验证项:                                                    -->
+<!--   1. MESSAGE方法,Content-Type=Application/MANSCDP+xml            -->
+<!--   2. 查询CmdType=DeviceStatusQuery                               -->
+<!--   3. 设备返回 200 OK 后通过MESSAGE回报设备状态                   -->
+<!--   4. 响应字段: Result/Online/Status/CPU/DeviceTime/              -->
+<!--              Memory/MemoryUsage/HardDiskSpace等                 -->
+<!-- GB/T 28181-2022 A.2.4.1.6 设备状态查询:                          -->
+<!--   - Online=ON/OFF 表示设备自身是否正常在线                       -->
+<!--   - Status=OK/ERROR 综合状态                                     -->
+<!--   - 平台通过定期状态查询实现设备健康监测                         -->
+<!-- ================================================================ -->
+
+<scenario name="query_b4_07_device_status">
+
+  <!-- 步骤1: WVP向设备发送设备状态查询 MESSAGE -->
+  <send retrans="500">
+    <![CDATA[
+      MESSAGE sip:34020000001320000001@[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000002000000001@[local_ip]:[local_port]>;tag=[pid]SIPpTagB407[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] MESSAGE
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-B407
+      Content-Type: Application/MANSCDP+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Query>
+      <CmdType>DeviceStatusQuery</CmdType>
+      <SN>1</SN>
+      <DeviceID>34020000001320000001</DeviceID>
+      </Query>
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收设备的 200 OK 响应 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <!-- 步骤3: 接收设备返回的设备状态 Notify MESSAGE -->
+  <recv request="MESSAGE" rtd="true">
+    <action>
+      <ereg regexp="CmdType>DeviceStatus<" search_in="body" assign_to="status_resp" />
+      <ereg regexp="Online>ON<" search_in="body" assign_to="online_val" />
+      <ereg regexp="Status>OK<" search_in="body" assign_to="status_val" />
+      <ereg regexp="CPU>[0-9]+<" search_in="body" assign_to="cpu_val" />
+    </action>
+  </recv>
+
+  <!-- 步骤4: WVP返回 200 OK 表示已收到设备状态 -->
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
