@@ -6,6 +6,7 @@ import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorP
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.IMessageHandler;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.query.QueryMessageHandler;
 import com.genersoft.iot.vmp.gb28181.utils.XmlUtil;
+import com.genersoft.iot.vmp.gb28181.utils.SipCharsetHelper;
 import gov.nist.javax.sip.message.SIPRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.dom4j.Element;
@@ -208,7 +209,7 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
     private String buildResponseXml(String deviceId, String sn, String result,
                                     double pan, double tilt, double zoom) {
         StringBuilder xml = new StringBuilder(256);
-        xml.append("<?xml version=\"1.0\" encoding=\"GB2312\"?>\r\n");
+        xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Response>\r\n");
         xml.append("<CmdType>").append(cmdType).append("</CmdType>\r\n");
         xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : sn).append("</SN>\r\n");
