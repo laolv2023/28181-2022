@@ -6,6 +6,7 @@ import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorP
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.IMessageHandler;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.control.ControlMessageHandler;
 import com.genersoft.iot.vmp.gb28181.utils.XmlUtil;
+import com.genersoft.iot.vmp.gb28181.utils.SipCharsetHelper;
 import gov.nist.javax.sip.message.SIPRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.dom4j.Element;
@@ -36,7 +37,7 @@ import java.text.ParseException;
  * <p>
  * <b>请求 XML 示例（DeviceControl 容器承载）：</b>
  * <pre>
- * &lt;?xml version="1.0" encoding="GB2312"?&gt;
+ * &lt;?xml version="1.0" encoding="GB18030"?&gt;
  * &lt;Control&gt;
  *     &lt;CmdType&gt;DeviceControl&lt;/CmdType&gt;
  *     &lt;SN&gt;100&lt;/SN&gt;
@@ -328,7 +329,7 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
      */
     private String buildDeviceControlXml(String deviceId, String sn, int resolution, int snapNum) {
         StringBuilder xml = new StringBuilder(256);
-        xml.append("<?xml version=\"1.0\" encoding=\"GB2312\"?>\r\n");
+        xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Control>\r\n");
         xml.append("<CmdType>DeviceControl</CmdType>\r\n");
         xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : sn).append("</SN>\r\n");
