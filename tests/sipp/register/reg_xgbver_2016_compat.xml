@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A2.1-03                                                 -->
+<!-- 测试名称: 2016设备未携带X-GB-ver                                  -->
+<!-- 来源: 设计文档第13.9节, 2022版附录I                               -->
+<!-- 测试场景: 模拟2016版设备REGISTER(不携带X-GB-ver头域),            -->
+<!--           验证WVP仍能接受注册(向后兼容)                          -->
+<!-- 测试模式: UAC                                                    -->
+<!-- 说明: 2016版规范未定义X-GB-ver头域,设备不会发送该头域             -->
+<!--       WVP应按2016兼容模式处理,返回200 OK                        -->
+<!-- ================================================================ -->
+
+<scenario name="reg_xgbver_2016_compat">
+
+  <!-- 步骤1: 发送2016版REGISTER(无X-GB-ver头域) -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag03[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-2016
+      Expires: 3600
+
+    ]]>
+  </send>
+
+  <!-- 步骤2: 接收401 Challenge -->
+  <recv response="401" auth="true">
+  </recv>
+
+  <!-- 步骤3: 发送带Authorization的REGISTER(不携带X-GB-ver) -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag03[callNumber]
+      To: <sip:34020000001320000001@[remote_ip]:[remote_port]>
+      Call-ID: [call_id]
+      CSeq: [cseq] REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-2016
+      Expires: 3600
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收200 OK,验证WVP对2016设备的兼容性接受 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
