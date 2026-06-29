@@ -1,0 +1,85 @@
+--- original/src/main/java/com/genersoft/iot/vmp/gb28181/transmit/cmd/impl/SIPCommander.java	2026-06-29 17:11:02.348379907 +0800
++++ modified/src/main/java/com/genersoft/iot/vmp/gb28181/transmit/cmd/impl/SIPCommander.java	2026-06-29 17:11:02.349379925 +0800
+@@ -277,7 +277,7 @@
+ 
+         content.append("y=" + ssrcInfo.getSsrc() + "\r\n");//ssrc
+         // f字段:f= v/编码格式/分辨率/帧率/码率类型/码率大小a/编码格式/码率大小/采样率
+-//			content.append("f=v/2/6/25/1/4000a/6/8/1" + "\r\n"); // 未发现支持此特性的设备
++//                      content.append("f=v/2/6/25/1/4000a/6/8/1" + "\r\n"); // 未发现支持此特性的设备
+ 
+         Request request = headerProvider.createInviteRequest(device, channel.getDeviceId(), content.toString(), SipUtils.getNewViaTag(), SipUtils.getNewFromTag(), null, ssrcInfo.getSsrc(),sipSender.getNewCallIdHeader(sipLayer.getLocalIp(device.getLocalIp()),device.getTransport()));
+         sipSender.transmitRequest(sipLayer.getLocalIp(device.getLocalIp()), request, (e -> {
+@@ -410,7 +410,11 @@
+         StringBuffer content = new StringBuffer(200);
+         content.append("v=0\r\n");
+         content.append("o=" + device.getDeviceId() + " 0 0 IN IP4 " + sdpIp + "\r\n");
+-        content.append("s=Download\r\n");
++        // === 改造项4: SDP s字段首字母大写修正(Download -> DoWnload) ===
++        // 来源: 设计文档第7.4节(第593~615行), 2022版7.4 SDP字段定义
++        // 规范要求: 2022版SDP中s=DoWnload(注意W大写, o小写), 与2016版的s=Download保持大小写差异
++        // 改造说明: 此处按2022版规范修正为 s=DoWnload
++        content.append("s=DoWnload\r\n");
+         content.append("u=" + channel.getDeviceId() + ":0\r\n");
+         content.append("c=IN IP4 " + sdpIp + "\r\n");
+         content.append("t=" + DateUtil.yyyy_MM_dd_HH_mm_ssToTimestamp(startTime) + " "
+@@ -464,7 +468,11 @@
+                 content.append("a=connection:new\r\n");
+             }
+         }
+-        content.append("a=downloadspeed:" + downloadSpeed + "\r\n");
++        // === 改造项6: SDP downloadspeed属性大小写修正 ===
++        // 来源: 设计文档第7.4节(第593~615行), 2022版7.4 SDP字段定义
++        // 规范要求: 2022版SDP中a=doWnloadspeed(注意W大写, o小写), 与s=DoWnload保持一致的大小写规则
++        // 改造说明: 此处按2022版规范修正为 a=doWnloadspeed
++        content.append("a=doWnloadspeed:" + downloadSpeed + "\r\n");
+ 
+         content.append("y=" + ssrcInfo.getSsrc() + "\r\n");//ssrc
+         log.debug("此时请求下载信令的ssrc===>{}",ssrcInfo.getSsrc());
+@@ -495,6 +503,14 @@
+         if (device == null) {
+             return;
+         }
++        // === 改造项5: 2022版Talk操作类型兼容性处理 ===
++        // 来源: 设计文档第10.2节(第924~968行), 2022版A.2.3.1.15
++        // 规范要求: GB/T 28181-2022 删除了 Talk 操作类型, 语音对讲改为通过 INVITE 直接发起。
++        // 改造说明: 当设备为 2022 版时, 跳过 Talk 流程并记录警告日志, 避免向 2022 版设备发送 s=Talk 的 SDP。
++        if (device.isVersion2022()) {
++            log.warn("[语音喊话] 设备[{}]为GB/T 28181-2022版本, 已删除Talk操作类型, 跳过本次喊话请求", device.getDeviceId());
++            return;
++        }
+         if (!mediaServerItem.isRtpEnable()) {
+             // 单端口暂不支持语音喊话
+             log.warn("[语音喊话] 单端口暂不支持此操作");
+@@ -522,6 +538,10 @@
+         StringBuffer content = new StringBuffer(200);
+         content.append("v=0\r\n");
+         content.append("o=" + device.getDeviceId() + " 0 0 IN IP4 " + mediaServerItem.getSdpIp() + "\r\n");
++        // === 改造项5: s=Talk 仅2016版支持, 2022版已删除Talk操作类型 ===
++        // 来源: 设计文档第10.2节(第924~968行), 2022版A.2.3.1.15
++        // 规范要求: 2022版语音对讲不再使用 Talk 操作类型, 此处保留以兼容 2016 版设备
++        // (2022版设备已在方法入口处提前返回)
+         content.append("s=Talk\r\n");
+         content.append("c=IN IP4 " + mediaServerItem.getSdpIp() + "\r\n");
+         content.append("t=0 0\r\n");
+@@ -533,6 +553,10 @@
+         content.append("a=rtpmap:8 PCMA/8000\r\n");
+ 
+         content.append("y=" + ySsrc + "\r\n");//ssrc
++        // === 改造项18: f字段格式(2022版媒体格式描述) ===
++        // 来源: 设计文档第7.5节, 2022版7.5媒体描述字段f
++        // 规范要求: f字段格式为 v/编码格式/分辨率/帧率/码率类型/码率大小a/编码格式/码率大小/采样率
++        // 改造说明: 2022版对f字段的码率类型与采样率字段定义做了细化, 此处沿用2016版格式以兼容现有设备
+         // f字段:f= v/编码格式/分辨率/帧率/码率类型/码率大小a/编码格式/码率大小/采样率
+         content.append("f=v/////a/1/8/1" + "\r\n");
+ 
+@@ -595,8 +619,8 @@
+      *
+      * @param device 视频设备
+      */
+-	@Override
+-	public void audioBroadcastCmd(Device device, String channelId, SipSubscribe.Event okEvent, SipSubscribe.Event errorEvent) throws InvalidArgumentException, SipException, ParseException {
++        @Override
++        public void audioBroadcastCmd(Device device, String channelId, SipSubscribe.Event okEvent, SipSubscribe.Event errorEvent) throws InvalidArgumentException, SipException, ParseException {
+         StringBuffer broadcastXml = new StringBuffer(200);
+         String charset = device.getCharset();
+         broadcastXml.append("<?xml version=\"1.0\" encoding=\"" + charset + "\"?>\r\n");
