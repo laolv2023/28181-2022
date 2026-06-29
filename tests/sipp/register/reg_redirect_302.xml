@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- ================================================================ -->
+<!-- 测试用例: A2.2-01                                                 -->
+<!-- 测试名称: 注册重定向302响应                                       -->
+<!-- 来源: 设计文档第13.10节, RFC 3261 第21.3节                        -->
+<!-- 测试场景: 模拟WVP返回302 Moved Temporarily,设备跟随重定向        -->
+<!-- 测试模式: UAS + UAC混合模式                                      -->
+<!-- 说明: 本场景分为两段:                                            -->
+<!--       第一段(UAS): 模拟WVP返回302响应,Contact头域指向新地址      -->
+<!--       第二段(UAC): 模拟设备向新地址重新发起REGISTER              -->
+<!-- 实际部署时,通常通过两套SIPp实例分别扮演UAS/UAC,本场景描述流程。 -->
+<!-- ================================================================ -->
+
+<scenario name="reg_redirect_302">
+
+  <!-- 初始化变量: 用于存储重定向目标地址 -->
+  <Global variables="new_reg_host,new_reg_port" />
+
+  <!-- ============== 第一段: UAS模式,模拟WVP返回302 ============== -->
+
+  <!-- 步骤1: 接收设备发来的初始REGISTER -->
+  <recv request="REGISTER">
+    <action>
+      <ereg regexp="sip:([^@]+)@([^:>;]+):?(\d+)?" search_in="hdr" check_it="false" assign_to="1,2,3" />
+    </action>
+  </recv>
+
+  <!-- 步骤2: 返回302 Moved Temporarily,Contact指向新的注册服务器 -->
+  <send>
+    <![CDATA[
+      SIP/2.0 302 Moved Temporarily
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=[pid]SIPpTag07
+      [last_Call-ID:]
+      [last_CSeq:]
+      Contact: <sip:34020000002000000001@10.0.0.100:5060>
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- ============== 第二段: UAC模式,模拟设备跟随重定向 ============== -->
+
+  <!-- 步骤3: 设备向新地址(10.0.0.100:5060)重新发起REGISTER -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:10.0.0.100:5060 SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]redir
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag07b[callNumber]
+      To: <sip:34020000001320000001@10.0.0.100:5060>
+      Call-ID: [call_id]-redir
+      CSeq: 1 REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-Redirect
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤4: 接收新服务器返回的401 -->
+  <recv response="401" auth="true">
+  </recv>
+
+  <!-- 步骤5: 发送带Authorization的REGISTER到新服务器 -->
+  <send retrans="500">
+    <![CDATA[
+      REGISTER sip:10.0.0.100:5060 SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=z9hG4bK[callId]redir
+      From: <sip:34020000001320000001@[local_ip]:[local_port]>;tag=[pid]SIPpTag07b[callNumber]
+      To: <sip:34020000001320000001@10.0.0.100:5060>
+      Call-ID: [call_id]-redir
+      CSeq: 2 REGISTER
+      Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
+      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Max-Forwards: 70
+      User-Agent: WVP-Test-Simulator-Redirect
+      Expires: 3600
+      X-GB-ver: 2.0
+
+    ]]>
+  </send>
+
+  <!-- 步骤6: 接收200 OK,验证重定向注册成功 -->
+  <recv response="200" rtd="true">
+  </recv>
+
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+  <RecvRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
