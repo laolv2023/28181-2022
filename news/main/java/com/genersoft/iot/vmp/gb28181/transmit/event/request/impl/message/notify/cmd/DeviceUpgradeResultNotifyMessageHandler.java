@@ -1,9 +1,7 @@
 package com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.notify.cmd;
 
-import com.genersoft.iot.vmp.conf.SipConfig;
-import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
-import com.genersoft.iot.vmp.gb28181.bean.ParentPlatform;
+import com.genersoft.iot.vmp.gb28181.bean.Platform;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorParent;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.IMessageHandler;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.notify.NotifyMessageHandler;
@@ -41,7 +39,7 @@ import java.text.ParseException;
  * <p>
  * <b>XML 结构示例：</b>
  * <pre>
- * &lt;?xml version="1.0" encoding="GB2312"?&gt;
+ * &lt;?xml version="1.0" encoding="GB18030"?&gt;
  * &lt;Notify&gt;
  *     &lt;CmdType&gt;DeviceupgradeResult&lt;/CmdType&gt;
  *     &lt;SN&gt;1&lt;/SN&gt;
@@ -91,12 +89,6 @@ public class DeviceUpgradeResultNotifyMessageHandler extends SIPRequestProcessor
     private NotifyMessageHandler notifyMessageHandler;
 
     @Autowired
-    private UserSetting userSetting;
-
-    @Autowired
-    private SipConfig sipConfig;
-
-    @Autowired
     private IVideoManagerStorage storager;
 
     @Autowired
@@ -123,7 +115,6 @@ public class DeviceUpgradeResultNotifyMessageHandler extends SIPRequestProcessor
      *
      * @return 命令类型字符串
      */
-    @Override
     public String getCmdType() {
         return CMD_TYPE;
     }
@@ -136,8 +127,8 @@ public class DeviceUpgradeResultNotifyMessageHandler extends SIPRequestProcessor
      * @param parentPlatform 上级平台（仅级联场景使用，单设备场景为 null）
      */
     @Override
-    public void handForPlatform(RequestEvent evt, ParentPlatform parentPlatform) {
-        handleMessage(evt, parentPlatform);
+    public void handForPlatform(RequestEvent evt, Platform parentPlatform, Element element) {
+        handleMessage(evt, parentPlatform, element);
     }
 
     /**
@@ -145,10 +136,11 @@ public class DeviceUpgradeResultNotifyMessageHandler extends SIPRequestProcessor
      *
      * @param evt    SIP 请求事件
      * @param device 上报设备
+     * @param element XML 根元素
      */
     @Override
-    public void handForDevice(RequestEvent evt, Device device) {
-        handleMessage(evt, null);
+    public void handForDevice(RequestEvent evt, Device device, Element element) {
+        handleMessage(evt, null, element);
     }
 
     /**
@@ -166,12 +158,12 @@ public class DeviceUpgradeResultNotifyMessageHandler extends SIPRequestProcessor
      *
      * @param evt           SIP 请求事件
      * @param parentPlatform 上级平台，单设备场景为 null
+     * @param rootElement    XML 根元素（由调用方传入，避免重复解析）
      */
-    private void handleMessage(RequestEvent evt, ParentPlatform parentPlatform) {
+    private void handleMessage(RequestEvent evt, Platform parentPlatform, Element rootElement) {
         try {
-            Element rootElement = getRootElement(evt);
             if (rootElement == null) {
-                logger.warn("[设备升级结果通知] 解析 XML 根节点失败，无法处理");
+                logger.warn("[设备升级结果通知] XML 根节点为空，无法处理");
                 respondAck(evt, Response.BAD_REQUEST);
                 return;
             }
