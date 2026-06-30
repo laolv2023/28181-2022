@@ -119,6 +119,7 @@ public class SnapshotFinishedNotifyMessageHandler extends SIPRequestProcessorPar
      *
      * @return 命令类型字符串
      */
+    public String getCmdType() {
         return CMD_TYPE;
     }
 
