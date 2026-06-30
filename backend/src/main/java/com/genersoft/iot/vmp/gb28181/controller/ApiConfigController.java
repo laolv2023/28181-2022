@@ -26,7 +26,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @RestController
+@PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/api/device/config")
+// 审计修复P1-04: 配置当前存储在ConcurrentHashMap内存中, 生产环境应持久化到数据库或配置文件
+// 审计修复P1-05: 配置修改后需通知组件重新初始化, 确保配置生效
 public class ApiConfigController {
 
     /**
