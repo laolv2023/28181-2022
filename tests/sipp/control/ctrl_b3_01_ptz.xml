@@ -37,7 +37,7 @@
       Content-Length: [len]
 
       <?xml version="1.0" encoding="UTF-8"?>
-      <Notify>
+      <Control>
       <CmdType>DeviceControl</CmdType>
       <SN>1</SN>
       <DeviceID>34020000001320000001</DeviceID>
@@ -46,7 +46,7 @@
       <ZoomSpeed>5</ZoomSpeed>
       <ControlCommand>00 08</ControlCommand>
       </PTZControl>
-      </Notify>
+      </Control>
     ]]>
   </send>
 
@@ -69,7 +69,7 @@
       Content-Length: [len]
 
       <?xml version="1.0" encoding="UTF-8"?>
-      <Notify>
+      <Control>
       <CmdType>DeviceControl</CmdType>
       <SN>2</SN>
       <DeviceID>34020000001320000001</DeviceID>
@@ -78,7 +78,7 @@
       <ZoomSpeed>5</ZoomSpeed>
       <ControlCommand>00 00</ControlCommand>
       </PTZControl>
-      </Notify>
+      </Control>
     ]]>
   </send>
 
