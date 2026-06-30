@@ -2,7 +2,6 @@ package com.genersoft.iot.vmp.gb28181.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.ObjectUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,6 +66,7 @@ public final class MansrtspHelper {
      * @param scale   期望倍速
      * @return 实际使用的倍速（已 snap 到合法值）
      */
+    /** 追加Scale头部, 返回实际使用的倍速 */
     public static double appendScale(StringBuilder builder, double scale) {
         if (builder == null) {
             return DEFAULT_SCALE;
@@ -74,7 +74,7 @@ public final class MansrtspHelper {
         // 校验并 snap 到最接近的合法倍速
         double snapped = snapToAllowedScale(scale);
         builder.append(HEADER_SCALE).append(": ").append(formatScale(snapped)).append("\r\n");
-        logger.info("[MANSRTSP] 追加 Scale 头部, 期望={}, 实际={}", scale, snapped);
+        logger.debug("[MANSRTSP] 追加 Scale 头部, 期望={}, 实际={}", scale, snapped);
         return snapped;
     }
 
@@ -100,7 +100,7 @@ public final class MansrtspHelper {
         double snapped = snapToAllowedScale(Math.abs(scale));
         double reverseScale = -snapped;
         builder.append(HEADER_SCALE).append(": ").append(formatScale(reverseScale)).append("\r\n");
-        logger.info("[MANSRTSP] 追加反向 Scale 头部, 期望={}, 实际={}", scale, reverseScale);
+        logger.debug("[MANSRTSP] 追加反向 Scale 头部, 期望={}, 实际={}", scale, reverseScale);
         return reverseScale;
     }
 
