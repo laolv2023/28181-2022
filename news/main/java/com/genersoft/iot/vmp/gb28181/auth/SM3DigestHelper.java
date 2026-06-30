@@ -63,11 +63,15 @@ public final class SM3DigestHelper {
      * 当前实际使用的算法名称
      */
     private static final String ACTUAL_ALGORITHM;
+    /**
+     * SM3算法是否可用
+     */
 
     static {
         // 静态初始化块：检测 SM3 算法可用性
         boolean available = false;
         String algorithm = ALGORITHM_FALLBACK;
+        SM3_AVAILABLE = available;
 
         // 1. 先尝试 JDK 内置 SM3
         try {
@@ -95,7 +99,6 @@ public final class SM3DigestHelper {
             }
         }
 
-        SM3_AVAILABLE = available;
         ACTUAL_ALGORITHM = algorithm;
     }
 
@@ -213,14 +216,14 @@ public final class SM3DigestHelper {
      */
     public static String digestMd5(byte[] data) {
         if (data == null) {
-            return null;
+            return "";
         }
         try {
             java.security.MessageDigest md5 = java.security.MessageDigest.getInstance("MD5");
             return bytesToHex(md5.digest(data));
         } catch (java.security.NoSuchAlgorithmException e) {
             logger.error("[SM3] MD5算法不可用", e);
-            return null;
+            return "";
         }
     }
 
@@ -235,7 +238,7 @@ public final class SM3DigestHelper {
      */
     public static String digestWithFallback(byte[] data) {
         if (data == null) {
-            return null;
+            return "";
         }
         if (isSm3Available()) {
             return digest(data);
