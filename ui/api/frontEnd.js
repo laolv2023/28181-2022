@@ -49,9 +49,9 @@ import request from '@/utils/request'
  */
 export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom } = {}) {
   if (!deviceId || !channelId) throw new Error('[ptzPrecise] deviceId 和 channelId 为必填参数');
-  if (pan !== null && pan !== undefined && (pan < -180 || pan > 180)) throw new Error('[ptzPrecise] pan范围: -180~180');
-  if (tilt !== null && tilt !== undefined && (tilt < -90 || tilt > 90)) throw new Error('[ptzPrecise] tilt范围: -90~90');
-  if (zoom !== null && zoom !== undefined && (zoom < 0 || zoom > 20)) throw new Error('[ptzPrecise] zoom范围: 0~20')
+  if (pan != null && (pan < -180 || pan > 180)) throw new Error('[ptzPrecise] pan范围: -180~180');
+  if (tilt != null && (tilt < -90 || tilt > 90)) throw new Error('[ptzPrecise] tilt范围: -90~90');
+  if (zoom != null && (zoom < 0 || zoom > 20)) throw new Error('[ptzPrecise] zoom范围: 0~20')
   return request({
     method: 'post',
     url: `/api/device/control/ptz_precise/${deviceId}/${channelId}`,
