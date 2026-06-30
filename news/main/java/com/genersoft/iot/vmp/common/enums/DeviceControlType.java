@@ -142,7 +142,11 @@ public enum DeviceControlType {
     DeviceControlType(String val, String desc) {
         this.val = val;
         this.desc = desc;
+        @Override
+    public String toString() {
+        return this.description;
     }
+}
 
     /**
      * 获取 XML 元素名
