@@ -53,8 +53,8 @@
   <recv request="MESSAGE" rtd="true">
     <action>
       <ereg regexp="HomePosition" search_in="body" assign_to="home_position_elem" />
-      <ereg regexp="<Enabled>1</Enabled>" search_in="body" assign_to="enabled_val" />
-      <ereg regexp="<PresetID>1</PresetID>" search_in="body" assign_to="preset_val" />
+      <ereg regexp="&lt;Enabled&gt;1&lt;/Enabled&gt;" search_in="body" assign_to="enabled_val" />
+      <ereg regexp="&lt;PresetID&gt;1&lt;/PresetID&gt;" search_in="body" assign_to="preset_val" />
     </action>
   </recv>
 
