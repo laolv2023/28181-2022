@@ -89,7 +89,7 @@ public final class GBProtocolVersionHelper {
         if (version == null || version.isEmpty()) {
             return false;
         }
-        return version.trim().startsWith("1");
+        return version.trim().equals("1.0");
     }
 
     /**
