@@ -49,7 +49,7 @@ apply_patches() {
         [ -f "$patch_file" ] || continue
         local name=$(basename "$patch_file")
         log "  应用: $name"
-        if patch -p3 -d "$WVP_DIR" --fuzz=3 < "$patch_file"; then
+        if patch -p3 -d "$WVP_DIR" --fuzz=1 < "$patch_file"; then
             count=$((count + 1))
         else
             warn "  $name 应用失败（可能已应用或上下文不匹配）"
@@ -97,7 +97,7 @@ revert_merge() {
     log "── 回退合并 ──"
     for patch_file in "$PATCH_DIR"/*.patch; do
         log "  回退补丁: $(basename "$patch_file")"
-        patch -p3 -d "$WVP_DIR" --reverse --fuzz=3 < "$patch_file" 2>/dev/null || true
+        patch -p3 -d "$WVP_DIR" --reverse --fuzz=1 < "$patch_file" 2>/dev/null || true
     done
     while IFS= read -r -d '' file; do
         local target="$WVP_DIR/${file#$SRC_DIR/}"
