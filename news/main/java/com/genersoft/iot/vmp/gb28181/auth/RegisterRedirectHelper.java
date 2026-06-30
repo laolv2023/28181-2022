@@ -121,6 +121,7 @@ public final class RegisterRedirectHelper {
      * @return 重定向后的 Contact URI 字符串；无 Contact 头部时返回 null
      */
     @SuppressWarnings("unchecked")
+    /** 处理302重定向响应, 返回新的注册地址 */
     public static String handle302Response(Response response, Device device) {
         if (response == null) {
             logger.warn("[注册重定向] 响应对象为空，无法处理");
