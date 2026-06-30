@@ -138,8 +138,8 @@ public final class SM3DigestHelper {
      * @return 16 进制摘要字符串（小写），SM3 长度为 64；输入为空返回空字符串
      */
     public static String digest(byte[] data) {
-        if (data == null || data.length == 0) {
-            return "";
+        if (data == null) {
+            return null;
         }
         try {
             MessageDigest md = MessageDigest.getInstance(ACTUAL_ALGORITHM);
@@ -180,13 +180,15 @@ public final class SM3DigestHelper {
             return false;
         }
         String actualHex = digest(data);
-        if (actualHex.isEmpty()) {
+        if (actualHex == null || actualHex.isEmpty()) {
             return false;
         }
-        // 审计修复P1-03: 使用常量时间比较防止时序攻击
+        // 审计修复P1-03: 使用常量时间比较防止时序攻击, 大小写不敏感
+        String normalizedActual = actualHex.toLowerCase(java.util.Locale.ROOT);
+        String normalizedExpect = expectHex.trim().toLowerCase(java.util.Locale.ROOT);
         return java.security.MessageDigest.isEqual(
-                actualHex.getBytes(java.nio.charset.StandardCharsets.UTF_8),
-                expectHex.trim().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                normalizedActual.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                normalizedExpect.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     /**
