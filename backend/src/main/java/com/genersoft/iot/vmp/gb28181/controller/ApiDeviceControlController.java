@@ -3,22 +3,14 @@ package com.genersoft.iot.vmp.gb28181.controller;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.genersoft.iot.vmp.gb28181.service.IDeviceService;
-import org.springframework.security.access.prepost.PreAuthorize;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
-import org.springframework.security.access.prepost.PreAuthorize;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
-import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.UUID;
-import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * WVP 设备控制与查询 API Controller —— GB/T 28181-2022 配套
@@ -77,7 +69,7 @@ public class ApiDeviceControlController {
      * @param zoom      变倍倍数，范围 0 ~ 20，精度 0.1
      * @return 操作结果
      */
-    @PostMapping("/ptz_precise/{deviceId}/{channelId}")/{deviceId}/{channelId}")
+    @PostMapping("/ptz_precise/{deviceId}/{channelId}")
     public WVPResult<?> ptzPrecise(
             @PathVariable String deviceId,
             @PathVariable String channelId,
@@ -383,7 +375,7 @@ public class ApiDeviceControlController {
      * @param channelId 通道编码
      * @return 查询结果
      */
-    @PostMapping("/ptz_precise/{deviceId}/{channelId}")_status_query/{deviceId}/{channelId}")
+    @PostMapping("/ptz_precise_status_query/{deviceId}/{channelId}")
     public WVPResult<?> queryPtzPreciseStatus(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
