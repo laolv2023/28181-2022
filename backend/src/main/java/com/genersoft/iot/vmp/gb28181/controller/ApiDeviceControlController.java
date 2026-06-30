@@ -40,6 +40,8 @@ import java.util.UUID;
  */
 @Slf4j
 @RestController
+// 注意: 需在 Spring Security 配置类上添加 @EnableGlobalMethodSecurity(prePostEnabled = true)
+// 否则 @PreAuthorize 注解不会生效
 @PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/api/device/control")
 public class ApiDeviceControlController {
@@ -110,7 +112,7 @@ public class ApiDeviceControlController {
      * @param action    跟踪模式，可选值: Auto, Manual
      * @return 操作结果
      */
-    @GetMapping("/target_track/{deviceId}/{channelId}")
+    @PostMapping("/target_track/{deviceId}/{channelId}")
     public WVPResult<?> targetTrack(
             @PathVariable String deviceId,
             @PathVariable String channelId,
@@ -155,6 +157,7 @@ public class ApiDeviceControlController {
     public WVPResult<?> formatSdcard(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
+        if (channelId == null || channelId.isEmpty()) return WVPResult.fail(400, "通道ID不能为空");
         if (deviceId == null || deviceId.isEmpty()) {
             return WVPResult.fail(400, "设备编码不能为空");
         }
@@ -226,6 +229,16 @@ public class ApiDeviceControlController {
             @RequestParam("file") MultipartFile file) {
         if (deviceId == null || deviceId.isEmpty()) {
             return WVPResult.fail(400, "设备编码不能为空");
+        }
+        // 文件类型白名单校验
+        String filename = file.getOriginalFilename();
+        if (filename == null || !filename.matches(".*\.(bin|img|zip)$")) {
+            return WVPResult.fail(400, "不支持的固件文件类型, 仅允许 .bin/.img/.zip");
+        }
+        // 文件大小校验 (≤100MB)
+        if (file.getSize() > 100 * 1024 * 1024) {
+            return WVPResult.fail(400, "固件文件超过100MB限制");
+        }
         }
         if (file == null || file.isEmpty()) {
             return WVPResult.fail(400, "固件文件不能为空");
