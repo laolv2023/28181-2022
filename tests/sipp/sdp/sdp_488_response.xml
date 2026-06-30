@@ -53,7 +53,7 @@
   <recv response="488" rtd="true">
     <action>
       <ereg regexp="SIP/2.0 488" search_in="status" assign_to="status_488" />
-      <ereg regexp="Warning:" search_in="hdr" assign_to="warning_hdr" assign_to="warning_present" />
+      <ereg regexp="Warning:" search_in="hdr" assign_to="warning_hdr" />
     </action>
   </recv>
 
