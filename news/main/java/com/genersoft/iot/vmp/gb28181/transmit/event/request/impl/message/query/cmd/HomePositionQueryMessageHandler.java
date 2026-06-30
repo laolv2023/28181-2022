@@ -87,7 +87,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
      * CmdType 字符串："HomepositionQuery"
      * </p>
      */
-    private final String cmdType = "HomepositionQuery";
+    private static final String cmdType = "HomepositionQuery";
 
     /**
      * 响应结果：成功
