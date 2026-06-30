@@ -112,6 +112,8 @@
       </el-button>
       <el-button size="small" @click="handleClose">关 闭</el-button>
     </div>
+  <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[10, 20, 50]" :page-size="pageSize" layout="total, sizes, prev, pager, next" :total="total">
+    </el-pagination>
   </el-dialog>
 </template>
 
@@ -142,7 +144,9 @@ export default {
 
   // ========== Data ==========
   data() {
+    abortController: null,
     return {
+      abortController: null,
       /** 当前激活标签页 */
       activeTab: 'homePosition',
       /** 查询加载状态 */
