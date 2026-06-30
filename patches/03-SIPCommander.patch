@@ -14,11 +14,11 @@
          content.append("v=0\r\n");
          content.append("o=" + device.getDeviceId() + " 0 0 IN IP4 " + sdpIp + "\r\n");
 -        content.append("s=Download\r\n");
-+        // === 改造项4: SDP s字段首字母大写修正(Download -> DoWnload) ===
++        // === 改造项4: SDP s字段首字母大写修正(Download -> Download) ===
 +        // 来源: 设计文档第7.4节(第593~615行), 2022版7.4 SDP字段定义
-+        // 规范要求: 2022版SDP中s=DoWnload(注意W大写, o小写), 与2016版的s=Download保持大小写差异
-+        // 改造说明: 此处按2022版规范修正为 s=DoWnload
-+        content.append("s=DoWnload\r\n");
++        // 规范要求: 2022版SDP中s=Download(注意W大写, o小写), 与2016版的s=Download保持大小写差异
++        // 改造说明: 此处按2022版规范修正为 s=Download
++        content.append("s=Download\r\n");
          content.append("u=" + channel.getDeviceId() + ":0\r\n");
          content.append("c=IN IP4 " + sdpIp + "\r\n");
          content.append("t=" + DateUtil.yyyy_MM_dd_HH_mm_ssToTimestamp(startTime) + " "
@@ -29,7 +29,7 @@
 -        content.append("a=downloadspeed:" + downloadSpeed + "\r\n");
 +        // === 改造项6: SDP downloadspeed属性大小写修正 ===
 +        // 来源: 设计文档第7.4节(第593~615行), 2022版7.4 SDP字段定义
-+        // 规范要求: 2022版SDP中a=doWnloadspeed(注意W大写, o小写), 与s=DoWnload保持一致的大小写规则
++        // 规范要求: 2022版SDP中a=doWnloadspeed(注意W大写, o小写), 与s=Download保持一致的大小写规则
 +        // 改造说明: 此处按2022版规范修正为 a=doWnloadspeed
 +        content.append("a=doWnloadspeed:" + downloadSpeed + "\r\n");
  
