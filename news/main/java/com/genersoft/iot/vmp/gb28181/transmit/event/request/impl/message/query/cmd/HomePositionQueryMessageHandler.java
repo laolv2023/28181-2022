@@ -186,7 +186,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
      * 处理流程：
      * <ol>
      *     <li>从 XML 根节点解析 DeviceID、SN</li>
-     *     <li>查询本地看守位配置（默认值或缓存）</li>
+     *     <li>查询本地看守位配置（默认值（实际应从设备响应XML中解析）或缓存）</li>
      *     <li>构造响应 XML 用于后续异步发送</li>
      *     <li>回复 200 OK 确认收到请求</li>
      * </ol>
@@ -206,7 +206,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
         String sn = XmlUtil.getText(element, "SN");
         log.info("[看守位信息查询] 解析请求: deviceId={}, sn={}", deviceId, sn);
 
-        // 查询本地看守位配置（此处使用默认值，实际项目应从设备配置缓存中读取）
+        // 查询本地看守位配置（此处使用默认值（实际应从设备响应XML中解析），实际项目应从设备配置缓存中读取）
         boolean enabled = DEFAULT_ENABLED;
         int presetId = DEFAULT_PRESET_ID;
         int resetTime = DEFAULT_RESET_TIME;
