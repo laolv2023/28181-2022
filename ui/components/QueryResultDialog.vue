@@ -144,8 +144,8 @@ export default {
 
   // ========== Data ==========
   data() {
-    abortController: null,
     return {
+      abortController: null,
             /** 当前激活标签页 */
       activeTab: 'homePosition',
       /** 查询加载状态 */
@@ -223,7 +223,7 @@ export default {
       }
       this.abortController = new AbortController()
     const signal = this.abortController.signal
-      const signal = this.abortController.signal
+      
 
       switch (this.activeTab) {
         case 'homePosition':
