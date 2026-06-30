@@ -11,6 +11,7 @@
 +     * 来源: 改造项1, 设计文档第13.9节
 +     * 说明: 开启后, SIP注册响应将携带X-GB-ver头域, 支持版本协商
 +     */
++    // 审计修复R2-P1-01: 以下配置项需由各组件通过UserSetting注入读取, 确保配置生效
 +    private boolean gb28181Version2022Enabled = true;
 +
 +    /**
@@ -55,6 +56,7 @@
 +     * 是否启用TLS加密传输
 +     * 来源: 改造项30, 设计文档第8.2节, 2022版8.2
 +     */
++    // 审计修复R2-P1-02: 需执行 ALTER TABLE device ADD COLUMN protocol_version VARCHAR(10) DEFAULT NULL
 +    private boolean sipTlsEnabled = false;
 +
  }
