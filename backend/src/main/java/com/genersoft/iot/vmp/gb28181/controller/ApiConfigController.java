@@ -42,6 +42,7 @@ public class ApiConfigController {
      *   - registerRedirectEnabled: true — 2022版新增注册重定向
      *   - tcpReconnectEnabled: false   — TCP 重连可选特性
      */
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ApiConfigController.class);
     private static final ConcurrentHashMap<String, Object> SECURITY_CONFIG = new ConcurrentHashMap<>();
 
     static {
@@ -141,9 +142,9 @@ public class ApiConfigController {
     private void saveConfigToFile() {
         try {
             java.util.Properties props = new java.util.Properties();
-            props.setProperty("sip.tls.enabled", String.valueOf(securityConfig.get("sipTlsEnabled")));
-            props.setProperty("sip.tls.algorithm", String.valueOf(securityConfig.get("tlsAlgorithm")));
-            props.setProperty("sm3.enabled", String.valueOf(securityConfig.get("sm3Enabled")));
+            props.setProperty("sip.tls.enabled", String.valueOf(SECURITY_CONFIG.get("sipTlsEnabled")));
+            props.setProperty("sip.tls.algorithm", String.valueOf(SECURITY_CONFIG.get("tlsAlgorithm")));
+            props.setProperty("sm3.enabled", String.valueOf(SECURITY_CONFIG.get("sm3Enabled")));
             java.io.File f = new java.io.File(CONFIG_FILE);
             f.getParentFile().mkdirs();
             try (java.io.FileOutputStream fos = new java.io.FileOutputStream(f)) {
@@ -165,9 +166,9 @@ public class ApiConfigController {
             try (java.io.FileInputStream fis = new java.io.FileInputStream(f)) {
                 props.load(fis);
             }
-            securityConfig.put("sipTlsEnabled", Boolean.parseBoolean(props.getProperty("sip.tls.enabled", "false")));
-            securityConfig.put("tlsAlgorithm", props.getProperty("sip.tls.algorithm", "SM2"));
-            securityConfig.put("sm3Enabled", Boolean.parseBoolean(props.getProperty("sm3.enabled", "true")));
+            SECURITY_CONFIG.put("sipTlsEnabled", Boolean.parseBoolean(props.getProperty("sip.tls.enabled", "false")));
+            SECURITY_CONFIG.put("tlsAlgorithm", props.getProperty("sip.tls.algorithm", "SM2"));
+            SECURITY_CONFIG.put("sm3Enabled", Boolean.parseBoolean(props.getProperty("sm3.enabled", "true")));
         } catch (Exception e) {
             logger.warn("[安全配置] 加载失败: {}", e.getMessage());
         }
