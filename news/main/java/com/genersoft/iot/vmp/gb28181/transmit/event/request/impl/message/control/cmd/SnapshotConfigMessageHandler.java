@@ -359,7 +359,7 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
             responseAck((SIPRequest) evt.getRequest(), Response.OK);
         } catch (SipException | InvalidArgumentException | ParseException e) {
             log.error("[图像抓拍配置] 回复 200 OK 异常: {}", e.getMessage());
-        } catch (Throwable t) {
+        } catch (Exception t) {
             log.error("[图像抓拍配置] 回复响应未知异常", t);
         }
     }
