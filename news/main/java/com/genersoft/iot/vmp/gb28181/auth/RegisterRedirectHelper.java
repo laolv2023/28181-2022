@@ -160,15 +160,25 @@ public final class RegisterRedirectHelper {
 
         // 更新设备本地保存的注册地址
         if (!ObjectUtils.isEmpty(host)) {
-            // 审计修复: Device 类有 transport 字段但无 registerPort 字段
-            // 仅更新 transport，registerPort 通过设备重新注册时自动获取
-            // 审计修复P1-03: Device类无setHost方法, 通过重新注册自动获取
             try {
                 if (!ObjectUtils.isEmpty(transport)) {
                     device.setTransport(transport);
                 }
-            } catch (Throwable t) {
-                logger.debug("[注册重定向] Device transport 字段更新忽略: {}", t.getMessage());
+                // 尝试更新 host 和 port（通过反射兼容不同版本的 Device 类）
+                try {
+                    java.lang.reflect.Method setHost = device.getClass().getMethod("setHost", String.class);
+                    setHost.invoke(device, host);
+                } catch (NoSuchMethodException ignored) {
+                    // Device 类无 setHost 方法，通过重新注册自动获取
+                }
+                try {
+                    java.lang.reflect.Method setPort = device.getClass().getMethod("setPort", int.class);
+                    setPort.invoke(device, Integer.parseInt(port));
+                } catch (NoSuchMethodException | NumberFormatException ignored) {
+                    // Device 类无 setPort 方法或 port 非数字
+                }
+            } catch (Exception e) {
+                logger.debug("[注册重定向] Device 地址更新忽略: {}", e.getMessage());
             }
         }
 
