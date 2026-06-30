@@ -186,11 +186,11 @@ public class SnapshotFinishedNotifyMessageHandler extends SIPRequestProcessorPar
             handleSnapshotResult(deviceId, sessionId, snapshotFileIds);
 
             // 回复 200 OK
-            respondAck(evt, Response.OK);
+            respondAck(evt, Response.SERVER_INTERNAL_ERROR);
 
         } catch (Exception e) {
             logger.error("[抓图完成通知] 处理异常", e);
-            respondAck(evt, Response.OK);
+            respondAck(evt, Response.SERVER_INTERNAL_ERROR);
         }
     }
 
@@ -271,7 +271,7 @@ public class SnapshotFinishedNotifyMessageHandler extends SIPRequestProcessorPar
             serverTransaction.sendResponse(response);
         } catch (ParseException | SipException | InvalidArgumentException e) {
             logger.error("[抓图完成通知] 回复 {} 响应异常", code, e);
-        } catch (Throwable t) {
+        } catch (Exception t) {
             logger.error("[抓图完成通知] 回复响应未知异常", t);
         }
     }
