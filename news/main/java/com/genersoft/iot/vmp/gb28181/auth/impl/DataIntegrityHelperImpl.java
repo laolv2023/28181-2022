@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class DataIntegrityHelperImpl implements DataIntegrityHelper {
+    // 注意: 当前实现使用 SM3 摘要替代 HMAC-SM3, 无密钥保护。
+    // 生产环境应引入密钥参数, 使用 HMAC-SM3 (HmacSM3) 进行带密钥的消息认证。
     private static final Logger logger = LoggerFactory.getLogger(DataIntegrityHelperImpl.class);
 
     @Override
