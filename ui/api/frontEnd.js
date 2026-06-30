@@ -40,7 +40,7 @@ export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom } = {}) {
   return request({
     method: 'get',
     url: `/api/device/control/ptz_precise/${deviceId}/${channelId}`,
-    params: { pan: pan ?? 0, tilt: tilt ?? 0, zoom: zoom ?? 1 },
+    params: { pan: pan ?? null, tilt: tilt ?? null, zoom: zoom ?? null },
     timeout: 10000  // PTZ 控制命令 10s 超时
   })
 }
