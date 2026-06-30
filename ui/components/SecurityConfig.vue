@@ -202,6 +202,11 @@ export default {
   },
 
   // ========== Methods ==========
+  created() {
+    // 审计修复P2-41: 从后端加载配置
+    this.loadConfig()
+  },
+
   methods: {
     /**
      * 保存配置
