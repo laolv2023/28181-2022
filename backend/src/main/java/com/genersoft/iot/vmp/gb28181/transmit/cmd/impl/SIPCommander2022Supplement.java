@@ -68,7 +68,6 @@ public class SIPCommander2022Supplement {
 
     // 固件上传目录（可配置化）
     // 审计修复P1-13: 固件上传需校验文件大小(≤100MB)、类型(.bin/.img/.zip)、路径遍历
-    private static final String // 审计修复P0-07: 固件上传需校验文件扩展名白名单(.bin/.img/.zip)和大小(≤100MB)
     private static final String FIRMWARE_UPLOAD_DIR = "/tmp/wvp/firmware";
 
     // ========================================================================
@@ -219,8 +218,7 @@ public class SIPCommander2022Supplement {
      */
     public String uploadFirmwareFileImpl(String deviceId, MultipartFile file) throws IOException {
         // 确保上传目录存在
-        Path uploadDir = Paths.get(// 审计修复P0-07: 固件上传需校验文件扩展名白名单(.bin/.img/.zip)和大小(≤100MB)
-    private static final String FIRMWARE_UPLOAD_DIR, deviceId);
+        Path uploadDir = Paths.get(FIRMWARE_UPLOAD_DIR, deviceId);
         Files.createDirectories(uploadDir);
 
         // 生成唯一文件名（保留原始扩展名）
@@ -235,6 +233,7 @@ public class SIPCommander2022Supplement {
         // 保存文件
         try (java.io.InputStream is = file.getInputStream()) {
             Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        }
 
         // 返回文件访问 URL（实际项目应返回可通过 HTTP 访问的完整 URL）
         String fileUrl = "/firmware/" + deviceId + "/" + savedName;
