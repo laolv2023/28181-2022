@@ -51,9 +51,9 @@
   <!-- 步骤3: 接收设备返回的目录项 Notify MESSAGE(可能多条) -->
   <recv request="MESSAGE" rtd="true">
     <action>
-      <ereg regexp="CmdType>Catalog<" search_in="body" assign_to="catalog_resp" />
-      <ereg regexp="SumNum>[0-9]+<" search_in="body" assign_to="sum_num" />
-      <ereg regexp="DeviceID>[0-9]{20}<" search_in="body" assign_to="item_device_id" />
+      <ereg regexp="CmdType&gt;Catalog&lt;" search_in="body" assign_to="catalog_resp" />
+      <ereg regexp="SumNum&gt;[0-9]+&lt;" search_in="body" assign_to="sum_num" />
+      <ereg regexp="DeviceID&gt;[0-9]{20}&lt;" search_in="body" assign_to="item_device_id" />
     </action>
   </recv>
 
