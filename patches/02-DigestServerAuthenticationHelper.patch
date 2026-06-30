@@ -78,7 +78,8 @@
 +                    response.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 +        }
 +
--        return mdString.equals(response);
+-        // 审计修复P2-13: 常量时间比较防止时序攻击
+        return java.security.MessageDigest.isEqual(mdString.getBytes(java.nio.charset.StandardCharsets.UTF_8), response.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 +        // 审计修复P1-07: 使用常量时间比较 MessageDigest.isEqual 防止时序攻击
 +        return MessageDigest.isEqual(
 +                mdString.getBytes(java.nio.charset.StandardCharsets.UTF_8),
