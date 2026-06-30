@@ -1,17 +1,28 @@
 package com.genersoft.iot.vmp.gb28181.transmit.cmd.impl;
 
 import com.genersoft.iot.vmp.gb28181.bean.Device;
+import com.genersoft.iot.vmp.gb28181.SipLayer;
+import com.genersoft.iot.vmp.gb28181.transmit.SIPSender;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
+import com.genersoft.iot.vmp.gb28181.transmit.cmd.SIPRequestHeaderProvider;
 import com.genersoft.iot.vmp.gb28181.utils.SipCharsetHelper;
+import com.genersoft.iot.vmp.utils.SipUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.sip.message.Message;
+import javax.sip.message.Request;
+import javax.sip.SipException;
+import javax.sip.InvalidArgumentException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.ParseException;
 import java.util.UUID;
 
 /**
@@ -37,7 +48,17 @@ import java.util.UUID;
  * @since 2026-06-29
  */
 @Slf4j
+@Component
 public class SIPCommander2022Supplement {
+
+    @Autowired
+    private SIPSender sipSender;
+
+    @Autowired
+    private SIPRequestHeaderProvider headerProvider;
+
+    @Autowired
+    private SipLayer sipLayer;
 
     // SN 序号（简单递增，生产环境应考虑线程安全和持久化）
     private static int snCounter = 0;
@@ -398,13 +419,23 @@ public class SIPCommander2022Supplement {
      * @param xml       GB/T 28181 格式的 XML 消息体
      */
     private void sendSipMessage(Device device, String channelId, String xml) {
-        // 实际集成代码:
-        //   SIPRequest request = messageFactory.createRequest(...);
-        //   ContentTypeHeader contentType = headerFactory.createContentTypeHeader("Application", "MANSCDP+xml");
-        //   request.setContent(xml, contentType);
-        //   sipSender.transmitRequest(device.getIp(), request);
-        //
-        // 来源: WVP 现有 SIPCommander.java 中的 sendMessage/sendControlMessage 模式
-        log.debug("[SIP发送] device={}, channel={}, xml={}", device.getDeviceId(), channelId, xml);
+        try {
+            Request request = headerProvider.createMessageRequest(
+                    device, xml,
+                    SipUtils.getNewViaTag(),
+                    SipUtils.getNewFromTag(),
+                    null,
+                    sipSender.getNewCallIdHeader(
+                            sipLayer.getLocalIp(device.getLocalIp()),
+                            device.getTransport()
+                    )
+            );
+            sipSender.transmitRequest(
+                    sipLayer.getLocalIp(device.getLocalIp()),
+                    request
+            );
+        } catch (SipException | ParseException | InvalidArgumentException e) {
+            log.error("[SIP发送] 消息发送失败: device={}, channelId={}", device.getDeviceId(), channelId, e);
+        }
     }
 }
