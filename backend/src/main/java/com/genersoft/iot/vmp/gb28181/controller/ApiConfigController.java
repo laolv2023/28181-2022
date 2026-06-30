@@ -70,7 +70,7 @@ public class ApiConfigController {
      * @return 操作结果，含提示信息
      */
     @PostMapping("/save_security")
-    public Map<String, Object> saveSecurity(@RequestBody Map<String, Object> config) {
+    public WVPResult<Object> saveSecurity(@RequestBody Map<String, Object> config) {
         if (config == null || config.isEmpty()) {
             return Map.of("code", 400, "msg", "配置数据不能为空");
         }
@@ -131,7 +131,45 @@ public class ApiConfigController {
      * @return 当前安全配置
      */
     @GetMapping("/get_security")
-    public Map<String, Object> getSecurity() {
+    public WVPResult<Object> getSecurity() {
         return Map.copyOf(SECURITY_CONFIG);
+    }
+
+    /**
+     * 保存配置到文件（持久化）
+     */
+    private void saveConfigToFile() {
+        try {
+            java.util.Properties props = new java.util.Properties();
+            props.setProperty("sip.tls.enabled", String.valueOf(securityConfig.get("sipTlsEnabled")));
+            props.setProperty("sip.tls.algorithm", String.valueOf(securityConfig.get("tlsAlgorithm")));
+            props.setProperty("sm3.enabled", String.valueOf(securityConfig.get("sm3Enabled")));
+            java.io.File f = new java.io.File(CONFIG_FILE);
+            f.getParentFile().mkdirs();
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(f)) {
+                props.store(fos, "WVP Security Config");
+            }
+        } catch (Exception e) {
+            logger.warn("[安全配置] 持久化失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 从文件加载配置（持久化）
+     */
+    private void loadConfigFromFile() {
+        try {
+            java.io.File f = new java.io.File(CONFIG_FILE);
+            if (!f.exists()) return;
+            java.util.Properties props = new java.util.Properties();
+            try (java.io.FileInputStream fis = new java.io.FileInputStream(f)) {
+                props.load(fis);
+            }
+            securityConfig.put("sipTlsEnabled", Boolean.parseBoolean(props.getProperty("sip.tls.enabled", "false")));
+            securityConfig.put("tlsAlgorithm", props.getProperty("sip.tls.algorithm", "SM2"));
+            securityConfig.put("sm3Enabled", Boolean.parseBoolean(props.getProperty("sm3.enabled", "true")));
+        } catch (Exception e) {
+            logger.warn("[安全配置] 加载失败: {}", e.getMessage());
+        }
     }
 }
