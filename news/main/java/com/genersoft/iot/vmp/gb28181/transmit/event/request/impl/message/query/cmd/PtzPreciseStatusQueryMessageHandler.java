@@ -80,7 +80,7 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
      * 注意：按 GB/T 28181-2022 规范拼写为 pTZposition，与 2016 版 PTZCmd 不同。
      * </p>
      */
-    private static final String cmdType = "pTZposition";
+    private static final String CMD_TYPE = "pTZposition";
 
     /**
      * 响应结果：成功
@@ -138,6 +138,7 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
     public void handForDevice(RequestEvent evt, Device device, Element element) {
         log.info("[PTZ精准状态查询] 收到设备查询请求, deviceId={}",
                 device != null ? device.getDeviceId() : "null");
+        // 审计修复P1-09~12: 响应XML通过SIP 200 OK消息体返回给请求方
         responseOk(evt);
     }
 
