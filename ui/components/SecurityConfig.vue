@@ -46,7 +46,8 @@
       >
         <!-- 改造项2: SM3 摘要算法 -->
         <!-- 来源: 后端改造项2, 设计文档第8.3节 -->
-        <el-form-item label="SM3 摘要算法">
+        <el-form-item label="SM3"
+      ><el-tooltip content="SM3为国密摘要算法, 启用后SIP信令摘要认证使用SM3替代MD5" placement="top"><i class="el-icon-info"></i></el-tooltip 摘要算法">
           <el-switch v-model="config.sm3DigestEnabled" active-text="启用" inactive-text="禁用" />
           <div class="form-item-tip">
             启用后，SIP 信令摘要认证优先使用 SM3 算法（国密），同时兼容 MD5（2016版设备）
