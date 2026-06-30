@@ -16,7 +16,7 @@ echo "  WVP GB/T 28181-2022 Java 单元测试"
 echo "═══════════════════════════════════════════"
 
 # 编译测试类
-CP="$WVP_SRC/src/main/java:$(find "$WVP_SRC" -name '*.jar' -path '*/lib/*' 2>/dev/null | tr '\n' ':'):$TESTS_DIR"
+CP="$WVP_SRC/src/main/java:$(find "$WVP_SRC" -name '*.jar' -path '*/lib/*'  | tr '\n' ':'):$TESTS_DIR"
 
 mkdir -p /tmp/wvp-tests
 
@@ -24,7 +24,7 @@ for test_file in $(find "$TESTS_DIR" -name '*Test.java' | sort); do
     name=$(basename "$test_file" .java)
     echo -n "  [$name] ... "
     # 编译
-    if javac -cp "$CP" "$test_file" -d /tmp/wvp-tests 2>/dev/null; then
+    if javac -cp "$CP" "$test_file" -d /tmp/wvp-tests ; then
         # 运行 — 根据测试文件包名确定完整类名
         pkg=$(grep -m1 '^package ' "$test_file" | sed 's/package //;s/;//')
         if [ -n "$pkg" ]; then
@@ -32,7 +32,7 @@ for test_file in $(find "$TESTS_DIR" -name '*Test.java' | sort); do
         else
             full_class="$name"
         fi
-        if java -cp "$CP:/tmp/wvp-tests" org.junit.platform.console.ConsoleLauncher --select-class "$full_class" 2>/dev/null; then
+        if java -cp "$CP:/tmp/wvp-tests" org.junit.platform.console.ConsoleLauncher --select-class "$full_class" ; then
             echo "PASS"
             PASS=$((PASS + 1))
         else
