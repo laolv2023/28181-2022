@@ -98,7 +98,7 @@ public final class TcpReconnectHelper {
                 ip, port, maxRetries, intervalMs);
 
         long startTime = System.currentTimeMillis();
-        long totalTimeoutMs = (long) maxRetries * intervalMs + DEFAULT_CONNECT_TIMEOUT_MS;
+        long totalTimeoutMs = (long) maxRetries * (intervalMs + DEFAULT_CONNECT_TIMEOUT_MS);
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             if (System.currentTimeMillis() - startTime > totalTimeoutMs) { logger.warn("[TCP重连] 总体超时, 终止重连"); return false; }
             boolean connected = isPortReachable(ip, port, DEFAULT_CONNECT_TIMEOUT_MS);
