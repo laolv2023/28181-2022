@@ -53,9 +53,9 @@ public enum DeviceControlType {
     ALARM("AlarmCmd", "告警控制"),
 
     /**
-     * 强制关键帧（IFameCmd）
+     * 强制关键帧（IFrameCmd）
      */
-    I_FRAME("IFameCmd", "强制关键帧"),
+    I_FRAME("IFrameCmd", "强制关键帧"),
 
     /**
      * 拉框放大（DragZoomIn）
