@@ -30,8 +30,8 @@
 +        // === 改造项6: SDP downloadspeed属性大小写修正 ===
 +        // 来源: 设计文档第7.4节(第593~615行), 2022版7.4 SDP字段定义
 +        // 规范要求: 2022版SDP中a=downloadspeed, 全小写
-+        // 改造说明: 此处按2022版规范修正为 a=doWnloadspeed
-+        content.append("a=doWnloadspeed:" + downloadSpeed + "\r\n");
++        // 改造说明: 此处按2022版规范修正为 a=downloadspeed
++        content.append("a=downloadspeed:" + downloadSpeed + "\r\n");
  
          content.append("y=" + ssrcInfo.getSsrc() + "\r\n");//ssrc
          log.debug("此时请求下载信令的ssrc===>{}",ssrcInfo.getSsrc());
