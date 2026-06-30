@@ -19,7 +19,7 @@
 +	 * @return true表示设备支持2022版协议
 +	 */
 +	public boolean isVersion2022() {
-+		return "2.0".equals(protocolVersion);
++		return com.genersoft.iot.vmp.gb28181.utils.GBProtocolVersionHelper.isVersion2022(protocolVersion);
 +	}
 +
      public boolean checkWgs84() {
