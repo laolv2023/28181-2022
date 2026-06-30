@@ -178,6 +178,7 @@ public enum DeviceControlType {
      * @param rootElement XML 根节点
      * @return 命中的命令类型枚举；如果未命中返回 null
      */
+    /** 从XML根元素获取设备控制类型 */
     public static DeviceControlType typeOf(Element rootElement) {
         if (rootElement == null) {
             return null;
