@@ -246,12 +246,12 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
 
         // 字段校验：分辨率范围 0~4
         if (resolution == null || !isValidResolution(resolution)) {
-            log.warn("[图像抓拍配置] 分辨率非法, resolution={}, 使用默认值 {}", resolution, DEFAULT_RESOLUTION);
+            log.warn("[图像抓拍配置] 分辨率非法, resolution={}, 使用默认值（应从设备响应中解析） {}", resolution, DEFAULT_RESOLUTION);
             resolution = DEFAULT_RESOLUTION;
         }
         // 字段校验：抓拍数量范围 1~10
         if (snapNum == null || !isValidSnapNum(snapNum)) {
-            log.warn("[图像抓拍配置] 抓拍数量非法, snapNum={}, 使用默认值 {}", snapNum, DEFAULT_SNAP_NUM);
+            log.warn("[图像抓拍配置] 抓拍数量非法, snapNum={}, 使用默认值（应从设备响应中解析） {}", snapNum, DEFAULT_SNAP_NUM);
             snapNum = DEFAULT_SNAP_NUM;
         }
 
