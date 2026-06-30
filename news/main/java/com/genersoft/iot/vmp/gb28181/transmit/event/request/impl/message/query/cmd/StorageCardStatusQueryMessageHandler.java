@@ -230,7 +230,7 @@ public class StorageCardStatusQueryMessageHandler extends SIPRequestProcessorPar
         xml.append("<CmdType>").append(cmdType).append("</CmdType>\r\n");
         xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : SipCharsetHelper.escapeXml(sn)).append("</SN>\r\n");
         xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
-        xml.append("<Resend(result</Result>\r\n");
+        xml.append("<Result>").append(result).append("</Result>\r\n");
         xml.append("<StorageCard>\r\n");
         xml.append("<Status>").append(status).append("</Status>\r\n");
         xml.append("<Capacity>").append(capacity).append("</Capacity>\r\n");
