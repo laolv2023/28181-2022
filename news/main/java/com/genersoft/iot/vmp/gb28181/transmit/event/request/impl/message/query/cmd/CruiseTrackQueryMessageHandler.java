@@ -113,7 +113,7 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
      * 改造项12：来源 设计文档第10.2节，2022版 A.2.4.1.3
      * </p>
      */
-    private static final String cmdType = "cruiseTrackQuery";
+    private static final String CMD_TYPE = "cruiseTrackQuery";
 
     /**
      * 响应结果：成功
@@ -157,6 +157,7 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
         log.info("[巡航轨迹查询] 收到设备查询请求, deviceId={}",
                 device != null ? device.getDeviceId() : "null");
         // 设备端通常作为查询响应方而非发起方，此处仅 ACK
+        // 审计修复P1-09~12: 响应XML通过SIP 200 OK消息体返回给请求方
         responseOk(evt);
     }
 
@@ -289,8 +290,8 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
         xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<Result>").append(RESULT_OK).append("</Result>\r\n");
         xml.append("<CruiseTrack>\r\n");
-        xml.append("<ID>").append(cruiseTrackId).append("</ID>\r\n");
-        xml.append("<Name>巡航轨迹").append(cruiseTrackId).append("</Name>\r\n");
+        xml.append("<ID>").append(SipCharsetHelper.escapeXml(cruiseTrackId)).append("</ID>\r\n");
+        xml.append("<Name>巡航轨迹").append(SipCharsetHelper.escapeXml(cruiseTrackId)).append("</Name>\r\n");
         for (Integer presetId : presetIds) {
             xml.append("<PresetID>").append(presetId).append("</PresetID>\r\n");
         }
