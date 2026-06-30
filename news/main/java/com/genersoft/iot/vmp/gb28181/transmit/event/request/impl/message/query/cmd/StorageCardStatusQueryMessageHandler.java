@@ -136,7 +136,7 @@ public class StorageCardStatusQueryMessageHandler extends SIPRequestProcessorPar
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-        queryMessageHandler.addHandler(cmdType, this);
+        queryMessageHandler.addHandler(CMD_TYPE, this);
         log.info("[存储卡状态查询] 处理器注册成功, CmdType={}", cmdType);
     }
 
@@ -156,6 +156,8 @@ public class StorageCardStatusQueryMessageHandler extends SIPRequestProcessorPar
         log.info("[存储卡状态查询] 收到设备查询请求, deviceId={}",
                 device != null ? device.getDeviceId() : "null");
         // 审计修复P1-09~12: 响应XML通过SIP 200 OK消息体返回给请求方
+        // 设置响应消息体为XML内容
+        try { evt.getResponse().setContent(responseXml.getBytes("GB18030"), evt.getResponse().getContentTypeHeader()); } catch (Exception ex) { logger.warn("设置响应内容失败", ex); }
         responseOk(evt);
     }
 
@@ -256,7 +258,7 @@ public class StorageCardStatusQueryMessageHandler extends SIPRequestProcessorPar
             responseAck((SIPRequest) evt.getRequest(), Response.OK);
         } catch (SipException | InvalidArgumentException | ParseException e) {
             log.error("[存储卡状态查询] 回复 200 OK 异常: {}", e.getMessage());
-        } catch (Throwable t) {
+        } catch (Exception t) {
             log.error("[存储卡状态查询] 回复响应未知异常", t);
         }
     }
