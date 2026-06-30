@@ -19,7 +19,7 @@ echo "════════════════════════�
 for scenario in $(find "$TESTS_DIR" -name '*.xml' | sort); do
     name=$(basename "$scenario" .xml)
     echo -n "  [$name] ... "
-    if sipp "$WVP_ADDR" -sf "$scenario" -m 1 -timeout 10s -timeout_error 2>/dev/null; then
+    if sipp "$WVP_ADDR" -sf "$scenario" -m 1 -timeout 10s -timeout_error 2>&1 | tee -a "$SCRIPT_DIR/sipp_stderr.log"; then
         echo "PASS"
         PASS=$((PASS + 1))
     else
