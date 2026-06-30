@@ -180,7 +180,7 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
         String sn = XmlUtil.getText(element, "SN");
         log.info("[PTZ精准状态查询] 解析请求: deviceId={}, sn={}", deviceId, sn);
 
-        // 查询本地 PTZ 状态缓存（此处使用默认值，实际项目应从设备状态缓存中读取）
+        // 查询本地 PTZ 状态缓存（此处使用默认值（实际应从设备响应XML中解析），实际项目应从设备状态缓存中读取）
         double pan = DEFAULT_PAN;
         double tilt = DEFAULT_TILT;
         double zoom = DEFAULT_ZOOM;
@@ -217,9 +217,9 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
         xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<Result>").append(result).append("</Result>\r\n");
         // Pan/Tilt/Zoom 保留两位小数
-        xml.append("<Pan>").append(String.format("%.2f", pan)).append("</Pan>\r\n");
-        xml.append("<Tilt>").append(String.format("%.2f", tilt)).append("</Tilt>\r\n");
-        xml.append("<Zoom>").append(String.format("%.2f", zoom)).append("</Zoom>\r\n");
+        xml.append("<Pan>").append(String.format(java.util.Locale.ROOT, "%.2f", pan)).append("</Pan>\r\n");
+        xml.append("<Tilt>").append(String.format(java.util.Locale.ROOT, "%.2f", tilt)).append("</Tilt>\r\n");
+        xml.append("<Zoom>").append(String.format(java.util.Locale.ROOT, "%.2f", zoom)).append("</Zoom>\r\n");
         xml.append("</Response>\r\n");
         return xml.toString();
         // 审计修复P1-16~19: 响应XML通过SIP响应消息返回给请求方, 非主动下发
