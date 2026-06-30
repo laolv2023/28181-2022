@@ -113,7 +113,7 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
      * 改造项12：来源 设计文档第10.2节，2022版 A.2.4.1.3
      * </p>
      */
-    private final String cmdType = "cruiseTrackQuery";
+    private static final String cmdType = "cruiseTrackQuery";
 
     /**
      * 响应结果：成功
