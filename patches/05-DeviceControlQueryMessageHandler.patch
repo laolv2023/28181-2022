@@ -1,5 +1,5 @@
---- original/src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/control/cmd/DeviceControlQueryMessageHandler.java	2026-06-29 17:11:02.349379925 +0800
-+++ modified/src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/control/cmd/DeviceControlQueryMessageHandler.java	2026-06-29 17:11:02.349379925 +0800
+--- original/src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/control/cmd/DeviceControlQueryMessageHandler.java  2026-06-29 17:11:02.349379925 +0800
++++ modified/src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/control/cmd/DeviceControlQueryMessageHandler.java  2026-06-29 17:11:02.349379925 +0800
 @@ -134,6 +134,30 @@
                  case HOME_POSITION:
                      handleHomePositionCmd(channel, rootElement, request, DeviceControlType.HOME_POSITION);
@@ -82,7 +82,17 @@
 +        String zoom = ptzPreciseElement != null ? getText(ptzPreciseElement, "Zoom") : null;
 +        log.info("[deviceControl] 命令: PTZ精准控制, 设备: {}({}), 通道: {}, Pan: {}, Tilt: {}, Zoom: {}",
 +                device.getName(), device.getDeviceId(), channel.getGbId(), pan, tilt, zoom);
-+        // TODO: 后续接入 cmder.ptzPreciseCmd() SIP命令下发方法(待扩展)
++        // 向设备下发 PTZ 精准控制 SIP 命令
++        if (channel != null && channel.getDeviceId() != null) {
++            try {
++                cmder2022.ptzPreciseCmd(device, channel.getGbId(),
++                        pan != null ? Double.parseDouble(pan) : 0,
++                        tilt != null ? Double.parseDouble(tilt) : 0,
++                        zoom != null ? Double.parseDouble(zoom) : 0);
++            } catch (Exception e) {
++                log.warn("[命令转发] PTZ精准控制下发失败: {}", e.getMessage());
++            }
++        }
 +        try {
 +            responseAck(request, Response.OK);
 +        } catch (SipException | InvalidArgumentException | ParseException e) {
@@ -121,7 +131,14 @@
 +        String sdCardIndex = formatElement != null ? getText(formatElement, "SDCardIndex") : null;
 +        log.info("[deviceControl] 命令: 存储卡格式化, 设备: {}({}), 通道: {}, SDCardIndex: {}",
 +                device.getName(), device.getDeviceId(), channel.getGbId(), sdCardIndex);
-+        // TODO: 后续接入 cmder.formatSdCardCmd() SIP命令下发方法(待扩展)
++        // 向设备下发存储卡格式化 SIP 命令
++        if (channel != null && channel.getDeviceId() != null) {
++            try {
++                cmder2022.formatSdcardCmd(device, channel.getGbId());
++            } catch (Exception e) {
++                log.warn("[命令转发] 存储卡格式化下发失败: {}", e.getMessage());
++            }
++        }
 +        try {
 +            responseAck(request, Response.OK);
 +        } catch (SipException | InvalidArgumentException | ParseException e) {
@@ -160,7 +177,14 @@
 +        String action = trackElement != null ? getText(trackElement, "Action") : null;
 +        log.info("[deviceControl] 命令: 目标跟踪, 设备: {}({}), 通道: {}, Action: {}",
 +                device.getName(), device.getDeviceId(), channel.getGbId(), action);
-+        // TODO: 后续接入 cmder.targetTrackCmd() SIP命令下发方法(待扩展)
++        // 向设备下发目标跟踪 SIP 命令
++        if (channel != null && channel.getDeviceId() != null) {
++            try {
++                cmder2022.targetTrackCmd(device, channel.getGbId(), action);
++            } catch (Exception e) {
++                log.warn("[命令转发] 目标跟踪下发失败: {}", e.getMessage());
++            }
++        }
 +        try {
 +            responseAck(request, Response.OK);
 +        } catch (SipException | InvalidArgumentException | ParseException e) {
@@ -209,7 +233,14 @@
 +        String manufacturer = upgradeElement != null ? getText(upgradeElement, "Manufacturer") : null;
 +        log.info("[deviceControl] 命令: 设备软件升级, 设备: {}({}), 通道: {}, FirmWare: {}, FileuRL: {}, Manufacturer: {}",
 +                device.getName(), device.getDeviceId(), channel.getGbId(), firmWare, fileUrl, manufacturer);
-+        // TODO: 后续接入 cmder.deviceUpgradeCmd() SIP命令下发方法(待扩展)
++        // 向设备下发软件升级 SIP 命令
++        if (channel != null && channel.getDeviceId() != null) {
++            try {
++                cmder2022.deviceUpgradeCmd(device, channel.getGbId(), firmWare, fileUrl, manufacturer);
++            } catch (Exception e) {
++                log.warn("[命令转发] 设备软件升级下发失败: {}", e.getMessage());
++            }
++        }
 +        try {
 +            responseAck(request, Response.OK);
 +        } catch (SipException | InvalidArgumentException | ParseException e) {
