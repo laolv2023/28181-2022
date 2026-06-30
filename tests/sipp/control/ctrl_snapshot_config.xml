@@ -36,7 +36,7 @@
       Content-Length: [len]
 
       <?xml version="1.0" encoding="UTF-8"?>
-      <Notify>
+      <Control>
       <CmdType>DeviceControl</CmdType>
       <SN>1</SN>
       <DeviceID>34020000001320000001</DeviceID>
@@ -44,7 +44,7 @@
       <resolution>3</resolution>
       <snapNum>1</snapNum>
       </SnapConfig>
-      </Notify>
+      </Control>
     ]]>
   </send>
 
