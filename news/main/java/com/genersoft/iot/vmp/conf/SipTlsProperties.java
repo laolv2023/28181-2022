@@ -300,11 +300,12 @@ public class SipTlsProperties {
 
     @Override
     public String toString() {
+        // 审计修复S1: 脱敏处理, 不输出密钥库/信任库文件路径, 防止日志泄露
         return "SipTlsProperties{" +
                 "enabled=" + enabled +
-                ", keyStore='" + keyStore + '\'' +
+                ", keyStore=" + (keyStore != null ? "[已配置]" : "[未配置]") +
                 ", keyStoreType='" + keyStoreType + '\'' +
-                ", trustStore='" + trustStore + '\'' +
+                ", trustStore=" + (trustStore != null ? "[已配置]" : "[未配置]") +
                 ", trustStoreType='" + trustStoreType + '\'' +
                 ", serverPort=" + serverPort +
                 ", needClientAuth=" + needClientAuth +
