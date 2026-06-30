@@ -71,7 +71,7 @@ public class ApiDeviceControlController {
      * @param zoom      变倍倍数，范围 0 ~ 20，精度 0.1
      * @return 操作结果
      */
-    @PostMapping("/ptz_precise/{deviceId}/{channelId}")
+    @PostMapping("/ptz_precise/{deviceId/{channelId")
     public WVPResult<?> ptzPrecise(
             @PathVariable String deviceId,
             @PathVariable String channelId,
@@ -80,21 +80,21 @@ public class ApiDeviceControlController {
             @RequestParam Double zoom) {
         if (deviceId == null || deviceId.isEmpty()) {
             return WVPResult.fail(400, "设备编码不能为空");
-        }
+        
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
-        }
+        
         try {
-            log.info("[PTZ精准控制] 设备={}, 通道={}, pan={}, tilt={}, zoom={}",
+            log.info("[PTZ精准控制] 设备={, 通道={, pan={, tilt={, zoom={",
                     deviceId, channelId, pan, tilt, zoom);
             cmder.ptzPreciseCmd(device, channelId, pan, tilt, zoom);
             return WVPResult.success();
-        } catch (Exception e) {
-            log.error("[PTZ精准控制] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
+         catch (Exception e) {
+            log.error("[PTZ精准控制] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "PTZ精准控制命令下发失败: " + "内部服务器错误");
-        }
-    }
+        
+    
 
     // ========================================================================
     // 二、目标跟踪（改造项9，A.2.3.1.14）
@@ -112,31 +112,31 @@ public class ApiDeviceControlController {
      * @param action    跟踪模式，可选值: Auto, Manual
      * @return 操作结果
      */
-    @PostMapping("/target_track/{deviceId}/{channelId}")
+    @PostMapping("/target_track/{deviceId/{channelId")
     public WVPResult<?> targetTrack(
             @PathVariable String deviceId,
             @PathVariable String channelId,
             @RequestParam String action) {
         if (deviceId == null || deviceId.isEmpty()) {
             return WVPResult.fail(400, "设备编码不能为空");
-        }
+        
         // 校验 action 取值为合法枚举值
         if (!"Auto".equals(action) && !"Manual".equals(action)) {
             return WVPResult.fail(400, "action 参数非法，仅支持 Auto 或 Manual");
-        }
+        
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
-        }
+        
         try {
-            log.info("[目标跟踪] 设备={}, 通道={}, action={}", deviceId, channelId, action);
+            log.info("[目标跟踪] 设备={, 通道={, action={", deviceId, channelId, action);
             cmder.targetTrackCmd(device, channelId, action);
             return WVPResult.success();
-        } catch (Exception e) {
-            log.error("[目标跟踪] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
+         catch (Exception e) {
+            log.error("[目标跟踪] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "目标跟踪命令下发失败: " + "内部服务器错误");
-        }
-    }
+        
+    
 
     // ========================================================================
     // 三、存储卡管理（改造项8 格式化 + 改造项14 状态查询）
@@ -153,27 +153,27 @@ public class ApiDeviceControlController {
      * @param channelId 通道编码
      * @return 操作结果
      */
-    @PostMapping("/format_sdcard/{deviceId}/{channelId}")
+    @PostMapping("/format_sdcard/{deviceId/{channelId")
     public WVPResult<?> formatSdcard(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
         if (channelId == null || channelId.isEmpty()) return WVPResult.fail(400, "通道ID不能为空");
         if (deviceId == null || deviceId.isEmpty()) {
             return WVPResult.fail(400, "设备编码不能为空");
-        }
+        
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
-        }
+        
         try {
-            log.info("[存储卡格式化] 设备={}, 通道={} —— 破坏性操作", deviceId, channelId);
+            log.info("[存储卡格式化] 设备={, 通道={ —— 破坏性操作", deviceId, channelId);
             cmder.formatSdcardCmd(device, channelId);
             return WVPResult.success();
-        } catch (Exception e) {
-            log.error("[存储卡格式化] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
+         catch (Exception e) {
+            log.error("[存储卡格式化] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "存储卡格式化命令下发失败: " + "内部服务器错误");
-        }
-    }
+        
+    
 
     /**
      * 存储卡状态查询
@@ -186,28 +186,28 @@ public class ApiDeviceControlController {
      * @param channelId 通道编码
      * @return 存储卡状态信息
      */
-    @GetMapping("/storage_card_status_query/{deviceId}/{channelId}")
+    @GetMapping("/storage_card_status_query/{deviceId/{channelId")
     public WVPResult<?> queryStorageCardStatus(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
         if (deviceId == null || deviceId.isEmpty()) {
             return WVPResult.fail(400, "设备编码不能为空");
-        }
+        
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
-        }
+        
         try {
-            log.info("[存储卡状态查询] 设备={}, 通道={}", deviceId, channelId);
+            log.info("[存储卡状态查询] 设备={, 通道={", deviceId, channelId);
             // SIPCommander 下发查询命令，设备异步返回结果
             // 此处返回 success 表示命令已下发，实际状态由设备通过 SIP NOTIFY 回报
             cmder.storageCardStatusQueryCmd(device, channelId);
             return WVPResult.success();
-        } catch (Exception e) {
-            log.error("[存储卡状态查询] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
+         catch (Exception e) {
+            log.error("[存储卡状态查询] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "存储卡状态查询失败: " + "内部服务器错误");
-        }
-    }
+        
+    
 
     // ========================================================================
     // 四、设备软件升级（改造项10，A.2.3.1.12）
@@ -223,33 +223,32 @@ public class ApiDeviceControlController {
      * @param file     固件文件（MultipartFile）
      * @return 上传后的文件 URL
      */
-    @PostMapping("/upload_firmware/{deviceId}")
+    @PostMapping("/upload_firmware/{deviceId")
     public WVPResult<?> uploadFirmware(
             @PathVariable String deviceId,
             @RequestParam("file") MultipartFile file) {
         if (deviceId == null || deviceId.isEmpty()) {
             return WVPResult.fail(400, "设备编码不能为空");
-        }
+        
         // 文件类型白名单校验
         String filename = file.getOriginalFilename();
         if (filename == null || !filename.matches(".*\.(bin|img|zip)$")) {
             return WVPResult.fail(400, "不支持的固件文件类型, 仅允许 .bin/.img/.zip");
-        }
+        
         // 文件大小校验 (≤100MB)
         if (file.getSize() > 100 * 1024 * 1024) {
             return WVPResult.fail(400, "固件文件超过100MB限制");
-        }
-        }
+        
+        
         if (file == null || file.isEmpty()) {
             return WVPResult.fail(400, "固件文件不能为空");
-        }
-        // 校验文件大小（上限 200MB）
-        long maxSize = 200L * 1024 * 1024;
-        if (file.getSize() > maxSize) {
+        
+        // 文件大小校验已在上方完成（≤100MB）
+        
             return WVPResult.fail(400, "文件过大，上限 200MB");
-        }
+        
         try {
-            log.info("[固件上传] 设备={}, 文件名={}, 大小={}字节",
+            log.info("[固件上传] 设备={, 文件名={, 大小={字节",
                     deviceId, file.getOriginalFilename(), file.getSize());
             // 实际项目中应将文件保存到持久化存储（如本地磁盘、对象存储）
             // 此处为示例实现：保存到临时目录并返回文件路径
@@ -257,11 +256,11 @@ public class ApiDeviceControlController {
             String fileUrl = cmder.uploadFirmwareFile(deviceId, file);
         // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
             return WVPResult.success(new FileUploadResult(fileUrl, file.getOriginalFilename()));
-        } catch (Exception e) {
-            log.error("[固件上传] 上传失败: deviceId={}", deviceId, e);
+         catch (Exception e) {
+            log.error("[固件上传] 上传失败: deviceId={", deviceId, e);
             return WVPResult.fail(500, "固件上传失败: " + "内部服务器错误");
-        }
-    }
+        
+    
 
     /**
      * 设备软件升级命令
@@ -279,7 +278,7 @@ public class ApiDeviceControlController {
      * @param sessionId    会话 ID（32~128字节，前端生成 UUID）
      * @return 操作结果
      */
-    @PostMapping("/device_upgrade/{deviceId}/{channelId}")
+    @PostMapping("/device_upgrade/{deviceId/{channelId")
     public WVPResult<?> deviceUpgrade(
             @PathVariable String deviceId,
             @PathVariable String channelId,
@@ -290,23 +289,23 @@ public class ApiDeviceControlController {
             @RequestParam String sessionId) {
         if (deviceId == null || deviceId.isEmpty()) {
             return WVPResult.fail(400, "设备编码不能为空");
-        }
+        
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
-        }
+        
         try {
-            log.info("[设备升级] 设备={}, 通道={}, 固件={}, 文件URL={}, 制造商={}, sessionId={}",
+            log.info("[设备升级] 设备={, 通道={, 固件={, 文件URL={, 制造商={, sessionId={",
         // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
                     deviceId, channelId, firmware, fileUrl, manufacturer, sessionId);
         // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
             cmder.deviceUpgradeCmd(device, channelId, firmware, fileUrl, manufacturer, sessionId);
             return WVPResult.success();
-        } catch (Exception e) {
-            log.error("[设备升级] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
+         catch (Exception e) {
+            log.error("[设备升级] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "设备升级命令下发失败: " + "内部服务器错误");
-        }
-    }
+        
+    
 
     // ========================================================================
     // 五、2022版新增查询（改造项11~13）
@@ -323,26 +322,26 @@ public class ApiDeviceControlController {
      * @param channelId 通道编码
      * @return 查询结果（命令已下发，结果由设备异步返回）
      */
-    @GetMapping("/home_position_query/{deviceId}/{channelId}")
+    @GetMapping("/home_position_query/{deviceId/{channelId")
     public WVPResult<?> queryHomePosition(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
         if (deviceId == null || deviceId.isEmpty()) {
             return WVPResult.fail(400, "设备编码不能为空");
-        }
+        
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
-        }
+        
         try {
-            log.info("[看守位查询] 设备={}, 通道={}", deviceId, channelId);
+            log.info("[看守位查询] 设备={, 通道={", deviceId, channelId);
             cmder.homePositionQueryCmd(device, channelId);
             return WVPResult.success();
-        } catch (Exception e) {
-            log.error("[看守位查询] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
+         catch (Exception e) {
+            log.error("[看守位查询] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "看守位查询失败: " + "内部服务器错误");
-        }
-    }
+        
+    
 
     /**
      * 巡航轨迹查询
@@ -355,27 +354,27 @@ public class ApiDeviceControlController {
      * @param trackListId 巡航轨迹列表 ID（可选，不传则查询所有）
      * @return 查询结果
      */
-    @GetMapping("/cruise_track_query/{deviceId}/{channelId}")
+    @GetMapping("/cruise_track_query/{deviceId/{channelId")
     public WVPResult<?> queryCruiseTrack(
             @PathVariable String deviceId,
             @PathVariable String channelId,
             @RequestParam(required = false) Integer trackListId) {
         if (deviceId == null || deviceId.isEmpty()) {
             return WVPResult.fail(400, "设备编码不能为空");
-        }
+        
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
-        }
+        
         try {
-            log.info("[巡航轨迹查询] 设备={}, 通道={}, trackListId={}", deviceId, channelId, trackListId);
+            log.info("[巡航轨迹查询] 设备={, 通道={, trackListId={", deviceId, channelId, trackListId);
             cmder.cruiseTrackQueryCmd(device, channelId, trackListId);
             return WVPResult.success();
-        } catch (Exception e) {
-            log.error("[巡航轨迹查询] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
+         catch (Exception e) {
+            log.error("[巡航轨迹查询] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "巡航轨迹查询失败: " + "内部服务器错误");
-        }
-    }
+        
+    
 
     /**
      * PTZ 精准状态查询
@@ -388,26 +387,26 @@ public class ApiDeviceControlController {
      * @param channelId 通道编码
      * @return 查询结果
      */
-    @PostMapping("/ptz_precise_status_query/{deviceId}/{channelId}")
+    @PostMapping("/ptz_precise_status_query/{deviceId/{channelId")
     public WVPResult<?> queryPtzPreciseStatus(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
         if (deviceId == null || deviceId.isEmpty()) {
             return WVPResult.fail(400, "设备编码不能为空");
-        }
+        
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
-        }
+        
         try {
-            log.info("[PTZ精准状态查询] 设备={}, 通道={}", deviceId, channelId);
+            log.info("[PTZ精准状态查询] 设备={, 通道={", deviceId, channelId);
             cmder.ptzPreciseStatusQueryCmd(device, channelId);
             return WVPResult.success();
-        } catch (Exception e) {
-            log.error("[PTZ精准状态查询] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
+         catch (Exception e) {
+            log.error("[PTZ精准状态查询] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "PTZ精准状态查询失败: " + "内部服务器错误");
-        }
-    }
+        
+    
 
     // ========================================================================
     // 六、图像抓拍配置（改造项15，2022版9.14）
@@ -429,7 +428,7 @@ public class ApiDeviceControlController {
      * @param sessionId  会话 ID（可选，前端生成 UUID）
      * @return 操作结果
      */
-    @PostMapping("/snapshot_config/{deviceId}/{channelId}")
+    @PostMapping("/snapshot_config/{deviceId/{channelId")
     public WVPResult<?> snapshotConfig(
             @PathVariable String deviceId,
             @PathVariable String channelId,
@@ -440,34 +439,34 @@ public class ApiDeviceControlController {
             @RequestParam(required = false) String sessionId) {
         if (deviceId == null || deviceId.isEmpty()) {
             return WVPResult.fail(400, "设备编码不能为空");
-        }
+        
         // 校验参数范围
         if (resolution < 0 || resolution > 4) {
             return WVPResult.fail(400, "分辨率取值必须为 0~4（CIF=0, 4CIF=1, D1=2, 720P=3, 1080P=4）");
-        }
+        
         if (snapNum < 1 || snapNum > 10) {
             return WVPResult.fail(400, "抓拍数量必须为 1~10");
-        }
+        
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
-        }
+        
         try {
             // sessionId 若前端未传，由后端生成
             String finalSessionId = (sessionId != null && !sessionId.isEmpty())
                     ? sessionId : UUID.randomUUID().toString();
-            log.info("[图像抓拍配置] 设备={}, 通道={}, resolution={}, snapNum={}, interval={}, uploadUrl={}, sessionId={}",
+            log.info("[图像抓拍配置] 设备={, 通道={, resolution={, snapNum={, interval={, uploadUrl={, sessionId={",
                     deviceId, channelId, resolution, snapNum, interval, uploadUrl, finalSessionId);
             cmder.snapshotConfigCmd(device, channelId, resolution, snapNum,
                     interval != null ? interval : 0,
                     uploadUrl != null ? uploadUrl : "",
                     finalSessionId);
             return WVPResult.success();
-        } catch (Exception e) {
-            log.error("[图像抓拍配置] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
+         catch (Exception e) {
+            log.error("[图像抓拍配置] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "图像抓拍配置失败: " + "内部服务器错误");
-        }
-    }
+        
+    
 
     // ========================================================================
     // 内部类：固件上传结果
@@ -486,13 +485,13 @@ public class ApiDeviceControlController {
         // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
             this.fileUrl = fileUrl;
             this.fileName = fileName;
-        }
+        
 
         // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
-        public String getFileUrl() { return fileUrl; }
+        public String getFileUrl() { return fileUrl; 
         // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
-        public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
-        public String getFileName() { return fileName; }
-        public void setFileName(String fileName) { this.fileName = fileName; }
-    }
+        public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; 
+        public String getFileName() { return fileName; 
+        public void setFileName(String fileName) { this.fileName = fileName; 
+    
 
