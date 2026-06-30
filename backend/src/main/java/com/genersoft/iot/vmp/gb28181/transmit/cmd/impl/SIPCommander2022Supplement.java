@@ -183,7 +183,7 @@ public class SIPCommander2022Supplement {
      * 设备软件升级命令
      *
      * <p>XML 元素名: Deviceupgrade（D大写、u小写，来源 spec_2022.txt 行2551）</p>
-     * <p>字段大小写: FirmWare(W大写)、FileuRL(u小写)、sessionID(s小写)</p>
+     * <p>字段大小写: FirmWare(W大写)、FileURL(u小写)、sessionID(s小写)</p>
      *
      * 来源: 后端改造项10, 设计文档第10.1节, 2022版A.2.3.1.12
      */
