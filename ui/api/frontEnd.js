@@ -299,7 +299,7 @@ export function saveSecurityConfig(config) {
 export function getSecurityConfig() {
   return request({
     method: 'get',
-    url: '/api/device/config/security',
+    url: '/api/device/config/get_security',
     timeout: 10000
   })
 }
