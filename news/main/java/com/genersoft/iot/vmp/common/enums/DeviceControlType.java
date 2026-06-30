@@ -144,7 +144,7 @@ public enum DeviceControlType {
         this.desc = desc;
         @Override
     public String toString() {
-        return this.description;
+        return this.desc;
     }
 }
 
