@@ -8,7 +8,7 @@
 <!-- 测试场景: 验证设备注册后发送MESSAGE心跳                          -->
 <!-- 测试模式: UAC                                                    -->
 <!-- 说明: GB/T 28181规定,设备注册后应周期性发送MESSAGE消息          -->
-<!--       作为心跳(Keepalive)。心跳Content-Type为Application/MANSRTSP, -->
+<!--       作为心跳(Keepalive)。心跳Content-Type为Application/MANSCDP+xml, -->
 <!--       Body为:                                                    -->
 <!--         <?xml version="1.0"?>                                    -->
 <!--         <Notify>                                                 -->
@@ -55,7 +55,7 @@
       Call-ID: [call_id]
       CSeq: [cseq] REGISTER
       Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
-      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Authorization: [authentication username=34020000001320000001 password=test12345]
       Max-Forwards: 70
       User-Agent: WVP-Test-Simulator-B204
       Expires: 3600
@@ -82,7 +82,7 @@
       Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
       Max-Forwards: 70
       User-Agent: WVP-Test-Simulator-B204
-      Content-Type: Application/MANSRTSP
+      Content-Type: Application/MANSCDP+xml
       Content-Length: [len]
 
       <?xml version="1.0"?>
