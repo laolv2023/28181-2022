@@ -56,7 +56,7 @@
 +        } catch (NoSuchAlgorithmException e) {
 +            log.debug("[Digest认证] 当前运行环境不支持SM3算法, 跳过SM3验证: {}", e.getMessage());
 +        }
-+        if (!mdString.equals(response) && sm3 != null) {
++        if (!java.security.MessageDigest.isEqual(mdString.getBytes(java.nio.charset.StandardCharsets.UTF_8), response.getBytes(java.nio.charset.StandardCharsets.UTF_8)) && sm3 != null) {
 +            // SM3摘要验证
 +            // 审计修复S2: 使用UTF-8字符集替代平台默认字符集, 保证跨环境一致性
 +            byte[] sm3bytes = sm3.digest(A1.getBytes(java.nio.charset.StandardCharsets.UTF_8));
