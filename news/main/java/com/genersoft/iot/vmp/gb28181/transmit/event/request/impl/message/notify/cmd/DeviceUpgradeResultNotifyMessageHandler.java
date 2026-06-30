@@ -201,8 +201,8 @@ public class DeviceUpgradeResultNotifyMessageHandler extends SIPRequestProcessor
 
         } catch (Exception e) {
             logger.error("[设备升级结果通知] 处理异常", e);
-            // 异常情况下尽量回复 200 OK，避免设备端反复重发
-            respondAck(evt, Response.OK);
+            // 审计修复P1-15: 系统异常回复 500, 避免掩盖服务端故障
+            respondAck(evt, Response.SERVER_INTERNAL_ERROR);
         }
     }
 
