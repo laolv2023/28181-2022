@@ -12,14 +12,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class SdpFieldHelperTest {
 
     @Test
-    @DisplayName("A3.1-01: s字段DoWnload大写W")
+    @DisplayName("A3.1-01: s字段Download大写W")
     void testAppendDownloadSField() {
         // 来源: 改造项4, 设计文档第7节
-        // 规范要求: 2022版s字段"Download"改为"DoWnload"(大写W)
+        // 规范要求: 2022版s字段"Download"改为"Download"(大写W)
         StringBuilder sb = new StringBuilder();
         SdpFieldHelper.appendDownloadSField(sb);
         String sdp = sb.toString();
-        assertTrue(sdp.contains("s=DoWnload"), "s字段应包含DoWnload(大写W)");
+        assertTrue(sdp.contains("s=Download"), "s字段应包含Download(大写W)");
         assertFalse(sdp.contains("s=Download"), "s字段不应为Download(全小写)");
     }
 
