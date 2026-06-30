@@ -137,7 +137,7 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-        queryMessageHandler.addHandler(cmdType, this);
+        queryMessageHandler.addHandler(CMD_TYPE, this);
         log.info("[巡航轨迹查询] 处理器注册成功, CmdType={}", cmdType);
     }
 
@@ -325,7 +325,7 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
             responseAck((SIPRequest) evt.getRequest(), Response.OK);
         } catch (SipException | InvalidArgumentException | ParseException e) {
             log.error("[巡航轨迹查询] 回复 200 OK 异常: {}", e.getMessage());
-        } catch (Throwable t) {
+        } catch (Exception t) {
             log.error("[巡航轨迹查询] 回复响应未知异常", t);
         }
     }
