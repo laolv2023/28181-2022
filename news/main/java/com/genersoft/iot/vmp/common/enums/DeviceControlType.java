@@ -114,7 +114,7 @@ public enum DeviceControlType {
      * 改造项10：设备软件升级<br>
      * 来源：设计文档第10.1节（第898~923行），2022版A.2.3.1.12<br>
      * 规范要求：2022版新增设备软件升级命令，XML元素名为 Deviceupgrade（小写u）<br>
-     * XML字段：FirmWare、FileuRL、Manufacturer、sessionID
+     * XML字段：FirmWare、FileURL、Manufacturer、sessionID
      * </p>
      */
     DEVICE_UPGRADE("Deviceupgrade", "设备软件升级");
