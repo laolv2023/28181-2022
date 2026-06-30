@@ -40,9 +40,9 @@
       <SN>1</SN>
       <DeviceID>34020000001320000001</DeviceID>
       <PTzPrecisectrl>
-      <Pan>10.5</Pan>
+      <pan>10.5</pan>
       <Tilt>20.3</Tilt>
-      <Zoom>1.5</Zoom>
+      <zoom>1.5</zoom>
       </PTzPrecisectrl>
       </Control>
     ]]>
