@@ -79,16 +79,16 @@ public final class SdpFieldHelper {
         StringBuilder sb = new StringBuilder("f=");
         // 视频段
         sb.append(MEDIA_TYPE_VIDEO).append("/");
-        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(videoCodec))).append("/");
-        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(resolution))).append("/");
-        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(frameRate))).append("/");
-        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(bitrateType))).append("/");
-        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(bitrateSize)));
+        sb.append(emptyIfNull(videoCodec)).append("/");
+        sb.append(emptyIfNull(resolution)).append("/");
+        sb.append(emptyIfNull(frameRate)).append("/");
+        sb.append(emptyIfNull(bitrateType)).append("/");
+        sb.append(emptyIfNull(bitrateSize));
         // 音频段
         sb.append(" ").append(MEDIA_TYPE_AUDIO).append("/");
-        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(audioCodec))).append("/");
-        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(audioBitrate))).append("/");
-        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(sampleRate)));
+        sb.append(emptyIfNull(audioCodec)).append("/");
+        sb.append(emptyIfNull(audioBitrate)).append("/");
+        sb.append(emptyIfNull(sampleRate));
         return sb.toString();
     }
 
