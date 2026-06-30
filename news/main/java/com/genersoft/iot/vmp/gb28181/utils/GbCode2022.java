@@ -282,7 +282,8 @@ public final class GbCode2022 {
             return false;
         }
         // 校验采集位置码（第 14 位）
-        String capturePositionCode = gbCode.substring(13, 14);
+        // 审计修复P2-13: 采集位置码取 2 位以支持 1~10 范围, 确保边界值 10 可被校验通过
+        String capturePositionCode = gbCode.substring(13, 15);
         if (!isValidCapturePositionCode(capturePositionCode)) {
             return false;
         }
