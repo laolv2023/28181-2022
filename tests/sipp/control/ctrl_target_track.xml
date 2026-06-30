@@ -35,14 +35,14 @@
       Content-Length: [len]
 
       <?xml version="1.0" encoding="UTF-8"?>
-      <Notify>
+      <Control>
       <CmdType>DeviceControl</CmdType>
       <SN>1</SN>
       <DeviceID>34020000001320000001</DeviceID>
       <TargetTrack>
       <action>Auto</action>
       </TargetTrack>
-      </Notify>
+      </Control>
     ]]>
   </send>
 
