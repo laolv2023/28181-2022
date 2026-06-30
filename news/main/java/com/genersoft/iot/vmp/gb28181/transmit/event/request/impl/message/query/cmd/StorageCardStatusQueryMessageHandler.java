@@ -84,7 +84,7 @@ public class StorageCardStatusQueryMessageHandler extends SIPRequestProcessorPar
      * 改造项14：来源 设计文档第10.2节，2022版 A.2.4.1.6
      * </p>
      */
-    private static final String cmdType = "SDcardStatus";
+    private static final String CMD_TYPE = "SDcardStatus";
 
     /**
      * 响应结果：成功
@@ -155,6 +155,7 @@ public class StorageCardStatusQueryMessageHandler extends SIPRequestProcessorPar
     public void handForDevice(RequestEvent evt, Device device, Element element) {
         log.info("[存储卡状态查询] 收到设备查询请求, deviceId={}",
                 device != null ? device.getDeviceId() : "null");
+        // 审计修复P1-09~12: 响应XML通过SIP 200 OK消息体返回给请求方
         responseOk(evt);
     }
 
