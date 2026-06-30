@@ -16,6 +16,8 @@ package com.genersoft.iot.vmp.gb28181.utils;
  */
 public class ExtensionApplicationHandler {
 
+    private ExtensionApplicationHandler() {}
+
     /**
      * 处理扩展应用消息
      * <p>
@@ -25,11 +27,11 @@ public class ExtensionApplicationHandler {
      * @return 处理结果, true表示处理成功
      */
     public boolean handleExtensionApplication(String xmlContent) {
-        if (xmlContent == null || xmlContent.isEmpty()) {
+        if (xmlContent == null || xmlContent.trim().isEmpty()) {
             return false;
         }
         // 扩展应用为资料性内容, 此处仅提供入口框架
         // 实际部署时根据业务需求实现具体逻辑
-        return true;
+        return false; // 桩实现, 未实际处理
     }
 }
