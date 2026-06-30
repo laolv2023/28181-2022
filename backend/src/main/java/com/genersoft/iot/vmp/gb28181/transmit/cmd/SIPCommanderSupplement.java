@@ -100,7 +100,7 @@ public interface SIPCommanderSupplement {
      * <p>XML 元素名: DeviceUpgrade，核心字段:</p>
      * <ul>
      *   <li>FirmWare: 固件文件名</li>
-     *   <li>FileuRL: 固件文件下载地址</li>
+     *   <li>FileURL: 固件文件下载地址</li>
      *   <li>manufacturer: 设备制造商</li>
      *   <li>sessionID: 会话标识（32~128字节）</li>
      * </ul>
