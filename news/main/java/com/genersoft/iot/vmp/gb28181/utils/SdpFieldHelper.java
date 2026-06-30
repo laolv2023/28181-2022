@@ -345,6 +345,7 @@ public final class SdpFieldHelper {
      * @param value 原始值
      * @return 非空原值或空字符串
      */
+    /** 空值返回空字符串 */
     private static String emptyIfNull(String value) {
         return value == null ? "" : value;
     }
@@ -358,6 +359,7 @@ public final class SdpFieldHelper {
      * @param speed 原始倍速
      * @return 格式化后的倍速字符串
      */
+    /** 倍速格式化: 整数显示为整数, 小数保留 */
     private static String formatSpeed(double speed) {
         if (speed == (long) speed) {
             return String.valueOf((long) speed);
