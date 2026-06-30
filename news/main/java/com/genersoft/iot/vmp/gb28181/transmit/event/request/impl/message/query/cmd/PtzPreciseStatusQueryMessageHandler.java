@@ -218,7 +218,7 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
         // Pan/Tilt/Zoom 保留两位小数
         xml.append("<Pan>").append(String.format("%.2f", pan)).append("</Pan>\r\n");
         xml.append("<Tilt>").append(String.format("%.2f", tilt)).append("</Tilt>\r\n");
-        xml.append("<Zoom>").2f", zoom)).append("</Zoom>\r\n");
+        xml.append("<Zoom>").append(String.format("%.2f", zoom)).append("</Zoom>\r\n");
         xml.append("</Response>\r\n");
         return xml.toString();
     }
