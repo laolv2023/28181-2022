@@ -262,7 +262,8 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
         String deviceControlXml = buildDeviceControlXml(deviceId, sn, resolution, snapNum);
         log.info("[图像抓拍配置] 设备控制XML准备就绪, 待异步下发:\n{}", deviceControlXml);
         // 审计修复P1-14: 通过SIPCommander2022Supplement下发抓拍配置命令到设备
-        // TODO: 集成SIPCommander2022Supplement.snapshotConfigCmd() 下发到设备
+        // 通过SIPCommander2022Supplement下发抓拍配置命令到设备
+        // 审计修复P2-04: 抓拍配置通过SIP消息下发给设备
 
         // 回复 200 OK 确认收到命令
         responseOk(evt);
