@@ -71,7 +71,6 @@ public final class SM3DigestHelper {
         // 静态初始化块：检测 SM3 算法可用性
         boolean available = false;
         String algorithm = ALGORITHM_FALLBACK;
-        SM3_AVAILABLE = available;
 
         // 1. 先尝试 JDK 内置 SM3
         try {
@@ -100,6 +99,7 @@ public final class SM3DigestHelper {
         }
 
         ACTUAL_ALGORITHM = algorithm;
+        SM3_AVAILABLE = available;
     }
 
     /**
