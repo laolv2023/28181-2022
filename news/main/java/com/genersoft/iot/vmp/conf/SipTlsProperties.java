@@ -258,9 +258,6 @@ public class SipTlsProperties {
      *
      * @param serverPort TLS 监听端口
      */
-    public void setServerPort(int serverPort) {
-        this.serverPort = serverPort;
-    }
 
     /**
      * 获取是否需要客户端证书认证
