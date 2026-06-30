@@ -14,6 +14,7 @@
  
  import javax.sip.RequestEvent;
  import javax.sip.SipException;
++        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
 +// === 改造项1: 引入SipFactory用于创建X-GB-ver自定义头域 ===
 +// 来源: 设计文档第13.9节, 2022版附录I
 +import javax.sip.SipFactory;
@@ -29,15 +30,19 @@
          // 添加Expires头
          response.addHeader(request.getExpires());
  
++        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
 +        // === 改造项1: SIP注册响应添加X-GB-ver版本标识头域 ===
 +        // 来源: 设计文档第13.9节(第1598~1611行), 2022版附录I
++        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
 +        // 规范要求: SIP注册及其响应消息头部带上扩展字段X-GB-ver用于表示版本号
 +        try {
 +            Header gbVerHeader = SipFactory.getInstance()
 +                    .createHeaderFactory()
++        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
 +                    .createHeader("X-GB-ver", GBProtocolVersionHelper.GB_PROTOCOL_VERSION);
 +            response.addHeader(gbVerHeader);
 +        } catch (ParseException e) {
++        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
 +            log.warn("[注册响应] 添加X-GB-ver头域失败: {}", e.getMessage());
 +        }
 +
@@ -48,6 +53,7 @@
              String transport = reqViaHeader.getTransport();
              device.setTransport("TCP".equalsIgnoreCase(transport) ? "TCP" : "UDP");
  
++        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
 +            // === 改造项1: 解析注册请求中的X-GB-ver头域, 记录设备协议版本 ===
 +            // 来源: 设计文档第13.9节, 2022版附录I
 +            // 注册续订场景同样需要更新协议版本号
@@ -61,15 +67,19 @@
          response.addHeader(request.getHeader(ContactHeader.NAME));
          response.addHeader(request.getExpires());
  
++        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
 +        // === 改造项1: SIP注册响应添加X-GB-ver版本标识头域 ===
 +        // 来源: 设计文档第13.9节(第1598~1611行), 2022版附录I
++        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
 +        // 规范要求: SIP注册及其响应消息头部带上扩展字段X-GB-ver用于表示版本号
 +        try {
 +            Header gbVerHeader = SipFactory.getInstance()
 +                    .createHeaderFactory()
++        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
 +                    .createHeader("X-GB-ver", GBProtocolVersionHelper.GB_PROTOCOL_VERSION);
 +            response.addHeader(gbVerHeader);
 +        } catch (ParseException e) {
++        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
 +            log.warn("[注册响应] 添加X-GB-ver头域失败: {}", e.getMessage());
 +        }
 +
@@ -80,6 +90,7 @@
          String transport = reqViaHeader.getTransport();
          device.setTransport("TCP".equalsIgnoreCase(transport) ? "TCP" : "UDP");
  
++        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
 +        // === 改造项1: 解析注册请求中的X-GB-ver头域, 记录设备协议版本 ===
 +        // 来源: 设计文档第13.9节, 2022版附录I
 +        // 在调用 deviceService.online 之前设置, 确保设备入库时携带协议版本号
