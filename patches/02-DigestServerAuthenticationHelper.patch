@@ -78,7 +78,7 @@
 +                    response.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 +        }
 +
-         return mdString.equals(response);
+-        return mdString.equals(response);
 +        return MessageDigest.isEqual(
 +                mdString.getBytes(java.nio.charset.StandardCharsets.UTF_8),
 +                response.getBytes(java.nio.charset.StandardCharsets.UTF_8));
