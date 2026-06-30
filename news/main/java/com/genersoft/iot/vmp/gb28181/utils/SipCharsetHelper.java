@@ -90,7 +90,7 @@ public final class SipCharsetHelper {
      */
     public static String getDefaultCharsetName() {
         // 2016版设备使用gb2312, 2022版使用gb18030
-        return isVersion2022 ? DEFAULT_CHARSET : "gb2312";
+        return DEFAULT_CHARSET;
     }
 
     /**
@@ -233,9 +233,7 @@ public final class SipCharsetHelper {
     public static String escapeXml(String input) {
         if (input == null) return "";
         // 移除空字符
-        input = input.replace("\u0000", "") {
-            return "";
-        }
+        input = input.replace("\u0000", "");
         StringBuilder sb = new StringBuilder(input.length());
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
