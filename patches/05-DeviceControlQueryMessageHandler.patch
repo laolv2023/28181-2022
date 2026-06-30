@@ -205,7 +205,7 @@
 +     * <pre>
 +     * &lt;Deviceupgrade&gt;
 +     *   &lt;FirmWare&gt;...&lt;/FirmWare&gt;
-+     *   &lt;FileuRL&gt;...&lt;/FileuRL&gt;
++     *   &lt;FileURL&gt;...&lt;/FileURL&gt;
 +     *   &lt;Manufacturer&gt;...&lt;/Manufacturer&gt;
 +     * &lt;/Deviceupgrade&gt;
 +     * </pre>
@@ -233,9 +233,9 @@
 +        // 解析设备软件升级参数
 +        Element upgradeElement = rootElement.element(type.getVal());
 +        String firmWare = upgradeElement != null ? getText(upgradeElement, "FirmWare") : null;
-+        String fileUrl = upgradeElement != null ? getText(upgradeElement, "FileuRL") : null;
++        String fileUrl = upgradeElement != null ? getText(upgradeElement, "FileURL") : null;
 +        String manufacturer = upgradeElement != null ? getText(upgradeElement, "Manufacturer") : null;
-+        log.info("[deviceControl] 命令: 设备软件升级, 设备: {}({}), 通道: {}, FirmWare: {}, FileuRL: {}, Manufacturer: {}",
++        log.info("[deviceControl] 命令: 设备软件升级, 设备: {}({}), 通道: {}, FirmWare: {}, FileURL: {}, Manufacturer: {}",
 +                device.getName(), device.getDeviceId(), channel.getGbId(), firmWare, fileUrl, manufacturer);
 +        // 向设备下发软件升级 SIP 命令
 +        if (channel != null && channel.getDeviceId() != null) {
