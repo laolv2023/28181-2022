@@ -30,6 +30,7 @@ import java.security.cert.X509Certificate;
  *
  * @author wvp-upgrade
  */
+ * 审计修复P1-06: 此接口为可选功能(宜支持), 生产环境按需提供实现类
 public interface CertAuthHelper {
 
     /**
