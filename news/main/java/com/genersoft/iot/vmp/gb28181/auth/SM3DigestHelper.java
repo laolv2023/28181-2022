@@ -93,7 +93,7 @@ public final class SM3DigestHelper {
                 algorithm = ALGORITHM_SM3;
                 logger.info("[SM3] BouncyCastle SM3 算法加载成功");
             } catch (Throwable t) {
-                logger.warn("[SM3] BouncyCastle SM3 不可用，回退到 SHA-256。原因：{}", t.getMessage());
+                logger.error("[SM3] BouncyCastle SM3 不可用。原因：{}", t.getMessage());
                 logger.warn("[SM3] 请引入 bouncycastle 依赖以启用 SM3 算法：<dependency><groupId>org.bouncycastle</groupId><artifactId>bcprov-jdk15on</artifactId></dependency>");
             }
         }
