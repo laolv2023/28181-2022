@@ -98,7 +98,7 @@ public final class TcpReconnectHelper {
                 ip, port, maxRetries, intervalMs);
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
-            boolean connected = tryConnect(ip, port, DEFAULT_CONNECT_TIMEOUT_MS);
+            boolean connected = isPortReachable(ip, port, DEFAULT_CONNECT_TIMEOUT_MS);
             if (connected) {
                 logger.info("[TCP重连] 第 {} 次重连成功, ip={}, port={}", attempt, ip, port);
                 return true;
@@ -134,7 +134,16 @@ public final class TcpReconnectHelper {
      * @param timeoutMs    连接超时毫秒
      * @return true 表示连接成功
      */
-    private static boolean tryConnect(String ip, int port, int timeoutMs) {
+    public static boolean isPortReachable(String ip, int port, int timeoutMs) {
+        if (ip == null || ip.isEmpty()) {
+            return false;
+        }
+        if (port <= 0 || port > 65535) {
+            return false;
+        }
+        if (timeoutMs <= 0) {
+            timeoutMs = DEFAULT_CONNECT_TIMEOUT_MS;
+        }
         Socket socket = new Socket();
         try {
             socket.connect(new InetSocketAddress(ip, port), timeoutMs);
