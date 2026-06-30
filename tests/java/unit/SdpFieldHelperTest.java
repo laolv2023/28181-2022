@@ -19,8 +19,8 @@ class SdpFieldHelperTest {
         StringBuilder sb = new StringBuilder();
         SdpFieldHelper.appendDownloadSField(sb);
         String sdp = sb.toString();
-        assertTrue(sdp.contains("s=Download"), "s字段应包含Download(大写W)");
-        assertFalse(sdp.contains("s=Download"), "s字段不应为Download(全小写)");
+        assertTrue(sdp.contains("s=Download"), "s字段应包含Download");
+        assertFalse(sdp.contains("s=download"), "s字段不应为全小写download");
     }
 
     @Test
