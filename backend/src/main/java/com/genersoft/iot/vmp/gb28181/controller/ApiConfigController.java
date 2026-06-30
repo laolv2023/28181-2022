@@ -42,8 +42,8 @@ public class ApiConfigController {
      *   - registerRedirectEnabled: true — 2022版新增注册重定向
      *   - tcpReconnectEnabled: false   — TCP 重连可选特性
      */
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ApiConfigController.class);
-    private static final ConcurrentHashMap<String, Object> SECURITY_CONFIG = new ConcurrentHashMap<>();
+    private static final String CONFIG_FILE = System.getProperty("user.home") + "/.wvp/security-config.properties";
+        private static final ConcurrentHashMap<String, Object> SECURITY_CONFIG = new ConcurrentHashMap<>();
 
     static {
         // 初始化默认配置
@@ -73,7 +73,7 @@ public class ApiConfigController {
     @PostMapping("/save_security")
     public WVPResult<Object> saveSecurity(@RequestBody Map<String, Object> config) {
         if (config == null || config.isEmpty()) {
-            return Map.of("code", 400, "msg", "配置数据不能为空");
+            return WVPResult.success(Map.of("code", 400, "msg", "配置数据不能为空");
         }
 
         // 逐一校验并存储配置项
@@ -118,7 +118,7 @@ public class ApiConfigController {
         }
 
         log.info("[安全配置] 配置已保存，部分配置需重启服务后生效");
-        return Map.of(
+        return WVPResult.success(Map.of(
                 "code", 0,
                 "msg", "配置已保存，部分配置需重启服务后生效"
         );
@@ -144,14 +144,14 @@ public class ApiConfigController {
             java.util.Properties props = new java.util.Properties();
             props.setProperty("sip.tls.enabled", String.valueOf(SECURITY_CONFIG.get("sipTlsEnabled")));
             props.setProperty("sip.tls.algorithm", String.valueOf(SECURITY_CONFIG.get("tlsAlgorithm")));
-            props.setProperty("sm3.enabled", String.valueOf(SECURITY_CONFIG.get("sm3Enabled")));
+            props.setProperty("sm3.enabled", String.valueOf(SECURITY_CONFIG.get("sm3DigestEnabled")));
             java.io.File f = new java.io.File(CONFIG_FILE);
             f.getParentFile().mkdirs();
             try (java.io.FileOutputStream fos = new java.io.FileOutputStream(f)) {
                 props.store(fos, "WVP Security Config");
             }
         } catch (Exception e) {
-            logger.warn("[安全配置] 持久化失败: {}", e.getMessage());
+            log.warn("[安全配置] 持久化失败: {}", e.getMessage());
         }
     }
 
@@ -168,9 +168,9 @@ public class ApiConfigController {
             }
             SECURITY_CONFIG.put("sipTlsEnabled", Boolean.parseBoolean(props.getProperty("sip.tls.enabled", "false")));
             SECURITY_CONFIG.put("tlsAlgorithm", props.getProperty("sip.tls.algorithm", "SM2"));
-            SECURITY_CONFIG.put("sm3Enabled", Boolean.parseBoolean(props.getProperty("sm3.enabled", "true")));
+            SECURITY_CONFIG.put("sm3DigestEnabled", Boolean.parseBoolean(props.getProperty("sm3.enabled", "true")));
         } catch (Exception e) {
-            logger.warn("[安全配置] 加载失败: {}", e.getMessage());
+            log.warn("[安全配置] 加载失败: {}", e.getMessage());
         }
     }
 }
