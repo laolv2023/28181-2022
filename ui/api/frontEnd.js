@@ -1,4 +1,11 @@
 /**
+ * 前端 API 层 — 错误处理指导:
+ * 调用方应使用 try/catch 捕获异常, 并在 catch 中:
+ * 1. 记录错误日志
+ * 2. 向用户展示友好错误消息
+ * 3. 根据业务需要进行重试或回退
+ */
+/**
  * WVP 前端 API 扩展 —— GB/T 28181-2022 配套接口
  *
  * 依据: 《WVP前端UI改造方案》第四节 API 汇总
@@ -36,7 +43,10 @@ import request from '@/utils/request'
  * @returns {Promise} 后端响应
  */
 export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom } = {}) {
-  if (!deviceId || !channelId) throw new Error('[ptzPrecise] deviceId 和 channelId 为必填参数')
+  if (!deviceId || !channelId) throw new Error('[ptzPrecise] deviceId 和 channelId 为必填参数');
+  if (pan !== null && pan !== undefined && (pan < -180 || pan > 180)) throw new Error('[ptzPrecise] pan范围: -180~180');
+  if (tilt !== null && tilt !== undefined && (tilt < -90 || tilt > 90)) throw new Error('[ptzPrecise] tilt范围: -90~90');
+  if (zoom !== null && zoom !== undefined && (zoom < 0 || zoom > 20)) throw new Error('[ptzPrecise] zoom范围: 0~20')
   return request({
     method: 'post',
     url: `/api/device/control/ptz_precise/${deviceId}/${channelId}`,
@@ -277,6 +287,14 @@ export function saveSecurityConfig(config) {
     method: 'post',
     url: '/api/device/config/save_security',
     data: config,
+    timeout: 10000
+  })
+}
+
+export function getSecurityConfig() {
+  return request({
+    method: 'get',
+    url: '/api/device/config/security',
     timeout: 10000
   })
 }
