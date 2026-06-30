@@ -169,7 +169,7 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-        controlMessageHandler.addHandler(cmdType, this);
+        controlMessageHandler.addHandler(CMD_TYPE, this);
         log.info("[图像抓拍配置] 处理器注册成功, CmdType={}", cmdType);
     }
 
