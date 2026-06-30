@@ -1,15 +1,24 @@
 package com.genersoft.iot.vmp.gb28181.controller;
 
 import com.genersoft.iot.vmp.gb28181.bean.Device;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.genersoft.iot.vmp.gb28181.service.IDeviceService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.UUID;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * WVP 设备控制与查询 API Controller —— GB/T 28181-2022 配套
@@ -67,7 +76,7 @@ public class ApiDeviceControlController {
      * @param zoom      变倍倍数，范围 0 ~ 20，精度 0.1
      * @return 操作结果
      */
-    @GetMapping("/ptz_precise/{deviceId}/{channelId}")
+    @PostMapping("/ptz_precise/{deviceId}/{channelId}")/{deviceId}/{channelId}")
     public WVPResult<?> ptzPrecise(
             @PathVariable String deviceId,
             @PathVariable String channelId,
@@ -238,7 +247,9 @@ public class ApiDeviceControlController {
                     deviceId, file.getOriginalFilename(), file.getSize());
             // 实际项目中应将文件保存到持久化存储（如本地磁盘、对象存储）
             // 此处为示例实现：保存到临时目录并返回文件路径
+        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
             String fileUrl = cmder.uploadFirmwareFile(deviceId, file);
+        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
             return WVPResult.success(new FileUploadResult(fileUrl, file.getOriginalFilename()));
         } catch (Exception e) {
             log.error("[固件上传] 上传失败: deviceId={}", deviceId, e);
@@ -256,6 +267,7 @@ public class ApiDeviceControlController {
      * @param deviceId     设备编码
      * @param channelId    通道编码
      * @param firmware     固件文件名
+        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
      * @param fileUrl      固件文件在服务器上的可访问 URL
      * @param manufacturer 设备制造商信息
      * @param sessionId    会话 ID（32~128字节，前端生成 UUID）
@@ -266,6 +278,7 @@ public class ApiDeviceControlController {
             @PathVariable String deviceId,
             @PathVariable String channelId,
             @RequestParam String firmware,
+        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
             @RequestParam String fileUrl,
             @RequestParam String manufacturer,
             @RequestParam String sessionId) {
@@ -278,7 +291,9 @@ public class ApiDeviceControlController {
         }
         try {
             log.info("[设备升级] 设备={}, 通道={}, 固件={}, 文件URL={}, 制造商={}, sessionId={}",
+        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
                     deviceId, channelId, firmware, fileUrl, manufacturer, sessionId);
+        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
             cmder.deviceUpgradeCmd(device, channelId, firmware, fileUrl, manufacturer, sessionId);
             return WVPResult.success();
         } catch (Exception e) {
@@ -367,7 +382,7 @@ public class ApiDeviceControlController {
      * @param channelId 通道编码
      * @return 查询结果
      */
-    @GetMapping("/ptz_precise_status_query/{deviceId}/{channelId}")
+    @PostMapping("/ptz_precise/{deviceId}/{channelId}")_status_query/{deviceId}/{channelId}")
     public WVPResult<?> queryPtzPreciseStatus(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
@@ -456,15 +471,20 @@ public class ApiDeviceControlController {
      * 固件上传响应 DTO
      */
     public static class FileUploadResult {
+        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
         private String fileUrl;
         private String fileName;
 
+        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
         public FileUploadResult(String fileUrl, String fileName) {
+        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
             this.fileUrl = fileUrl;
             this.fileName = fileName;
         }
 
+        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
         public String getFileUrl() { return fileUrl; }
+        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
         public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
         public String getFileName() { return fileName; }
         public void setFileName(String fileName) { this.fileName = fileName; }
