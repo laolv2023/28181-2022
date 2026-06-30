@@ -35,16 +35,16 @@
       Content-Length: [len]
 
       <?xml version="1.0" encoding="UTF-8"?>
-      <Notify>
+      <Control>
       <CmdType>DeviceControl</CmdType>
       <SN>1</SN>
       <DeviceID>34020000001320000001</DeviceID>
       <PTzPrecisectrl>
-      <pan>10.5</pan>
+      <Pan>10.5</Pan>
       <Tilt>20.3</Tilt>
-      <zoom>1.5</zoom>
+      <Zoom>1.5</Zoom>
       </PTzPrecisectrl>
-      </Notify>
+      </Control>
     ]]>
   </send>
 
