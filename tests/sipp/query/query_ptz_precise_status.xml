@@ -51,9 +51,9 @@
   <!-- 步骤3: 接收设备返回的PTZ精准状态 Notify MESSAGE -->
   <recv request="MESSAGE" rtd="true">
     <action>
-      <ereg regexp="<Pan>10\.5</Pan>" search_in="body" assign_to="pan_val" />
-      <ereg regexp="<Tilt>20\.3</Tilt>" search_in="body" assign_to="tilt_val" />
-      <ereg regexp="<Zoom>1\.5</Zoom>" search_in="body" assign_to="zoom_val" />
+      <ereg regexp="&lt;Pan&gt;10\.5&lt;/Pan&gt;" search_in="body" assign_to="pan_val" />
+      <ereg regexp="&lt;Tilt&gt;20\.3&lt;/Tilt&gt;" search_in="body" assign_to="tilt_val" />
+      <ereg regexp="&lt;Zoom&gt;1\.5&lt;/Zoom&gt;" search_in="body" assign_to="zoom_val" />
     </action>
   </recv>
 
