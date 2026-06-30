@@ -33,13 +33,13 @@ class SdpFieldHelperTest {
     }
 
     @Test
-    @DisplayName("A3.2-01: a=doWnloadspeed大写W")
+    @DisplayName("A3.2-01: a=downloadspeed大写W")
     void testAppendDownloadSpeed() {
-        // 来源: 改造项6, 2022版a=downloadspeed改为a=doWnloadspeed(大写W)
+        // 来源: 改造项6, 2022版a=downloadspeed改为a=downloadspeed(大写W)
         StringBuilder sb = new StringBuilder();
         SdpFieldHelper.appendDownloadSpeed(sb, 4.0);
         String sdp = sb.toString();
-        assertTrue(sdp.contains("a=doWnloadspeed:"), "应包含a=doWnloadspeed(大写W)");
+        assertTrue(sdp.contains("a=downloadspeed:"), "应包含a=downloadspeed(大写W)");
         assertFalse(sdp.contains("a=downloadspeed:"), "不应为a=downloadspeed(全小写)");
     }
 
