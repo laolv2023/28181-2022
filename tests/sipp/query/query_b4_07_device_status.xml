@@ -52,10 +52,10 @@
   <!-- 步骤3: 接收设备返回的设备状态 Notify MESSAGE -->
   <recv request="MESSAGE" rtd="true">
     <action>
-      <ereg regexp="CmdType>DeviceStatus<" search_in="body" assign_to="status_resp" />
-      <ereg regexp="Online>ON<" search_in="body" assign_to="online_val" />
-      <ereg regexp="Status>OK<" search_in="body" assign_to="status_val" />
-      <ereg regexp="CPU>[0-9]+<" search_in="body" assign_to="cpu_val" />
+      <ereg regexp="CmdType&gt;DeviceStatus&lt;" search_in="body" assign_to="status_resp" />
+      <ereg regexp="Online&gt;ON&lt;" search_in="body" assign_to="online_val" />
+      <ereg regexp="Status&gt;OK&lt;" search_in="body" assign_to="status_val" />
+      <ereg regexp="CPU&gt;[0-9]+&lt;" search_in="body" assign_to="cpu_val" />
     </action>
   </recv>
 
