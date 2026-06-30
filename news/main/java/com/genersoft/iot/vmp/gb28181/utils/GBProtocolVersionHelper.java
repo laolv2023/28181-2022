@@ -195,6 +195,7 @@ public final class GBProtocolVersionHelper {
      * @param userIdentity 用户身份标识
      */
     public static void addMonitorUserIdentityHeader(javax.sip.message.Request request, String userIdentity) {
+        if (request == null || userIdentity == null) return;
         try {
             javax.sip.header.Header header = javax.sip.SipFactory.getInstance()
                     .createHeaderFactory()
