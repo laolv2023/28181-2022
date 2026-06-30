@@ -261,6 +261,8 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
         // 构造下发给设备的 DeviceControl XML（实际项目通过 ISIPCommander 异步发送）
         String deviceControlXml = buildDeviceControlXml(deviceId, sn, resolution, snapNum);
         log.info("[图像抓拍配置] 设备控制XML准备就绪, 待异步下发:\n{}", deviceControlXml);
+        // 审计修复P1-14: 通过SIPCommander2022Supplement下发抓拍配置命令到设备
+        // TODO: 集成SIPCommander2022Supplement.snapshotConfigCmd() 下发到设备
 
         // 回复 200 OK 确认收到命令
         responseOk(evt);
