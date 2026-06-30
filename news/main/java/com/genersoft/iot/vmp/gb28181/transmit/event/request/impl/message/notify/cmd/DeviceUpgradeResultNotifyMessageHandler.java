@@ -225,7 +225,13 @@ public class DeviceUpgradeResultNotifyMessageHandler extends SIPRequestProcessor
             Device device = storager.queryVideoDevice(deviceId);
             if (device != null && !ObjectUtils.isEmpty(firmware)) {
                 // 更新设备固件版本
-                device.setFirmware(firmware);
+                // 验证设备身份一致性
+        if (!deviceId.equals(device.getDeviceId())) {
+            logger.warn("[设备升级结果] 设备ID不一致, 忽略");
+            return;
+        }
+        // 仅更新固件版本字段, 不覆盖整个设备对象
+        device.setFirmware(firmware);
                 deviceService.updateDevice(device);
                 logger.info("[设备升级结果通知] 设备 {} 固件版本更新为 {}", deviceId, firmware);
             }
@@ -273,7 +279,7 @@ public class DeviceUpgradeResultNotifyMessageHandler extends SIPRequestProcessor
             serverTransaction.sendResponse(response);
         } catch (ParseException | SipException | InvalidArgumentException e) {
             logger.error("[设备升级结果通知] 回复 {} 响应异常", code, e);
-        } catch (Throwable t) {
+        } catch (Exception t) {
             // 兜底捕获，避免线程因响应失败而终止
             logger.error("[设备升级结果通知] 回复响应未知异常", t);
         }
