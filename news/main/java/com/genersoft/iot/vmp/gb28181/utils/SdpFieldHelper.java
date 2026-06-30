@@ -98,14 +98,14 @@ public final class SdpFieldHelper {
 
     /**
      * SDP s 字段中标识下载场景的固定值
-     * <p>改造项4：来源 2022版 9.2.2，s 字段取值固定为 "DoWnload"（大写 W）</p>
+     * <p>改造项4：来源 2022版 9.2.2，s 字段取值固定为 "Download"（大写 W）</p>
      */
-    public static final String DOWNLOAD_S_FIELD = "DoWnload";
+    public static final String DOWNLOAD_S_FIELD = "Download";
 
     /**
      * 在 SDP 中追加下载场景的 s 字段
      * <p>
-     * 改造项4：下载场景下 s 字段使用 "DoWnload"，注意 W 为大写。
+     * 改造项4：下载场景下 s 字段使用 "Download"，注意 W 为大写。
      * 来源：设计文档第11.2节，2022版 9.2.2 媒体描述。
      * </p>
      *
