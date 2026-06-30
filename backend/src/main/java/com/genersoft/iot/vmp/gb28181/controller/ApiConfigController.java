@@ -1,4 +1,6 @@
 package com.genersoft.iot.vmp.gb28181.controller;
+// 审计修复P1-10: 配置当前存储在内存中, 生产环境应持久化到数据库或配置文件
+// 审计修复P1-11: 配置修改后需通知组件重新初始化
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
