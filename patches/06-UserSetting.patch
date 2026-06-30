@@ -1,6 +1,6 @@
 --- original/src/main/java/com/genersoft/iot/vmp/conf/UserSetting.java	2026-06-29 17:11:02.349379925 +0800
 +++ modified/src/main/java/com/genersoft/iot/vmp/conf/UserSetting.java	2026-06-29 17:11:02.349379925 +0800
-@@ -256,4 +256,57 @@
+@@ -256,4 +256,59 @@
       */
      private int alarmKeepDays = 7;
  
