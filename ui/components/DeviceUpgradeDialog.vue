@@ -155,6 +155,7 @@ export default {
   // ========== Data ==========
   data() {
     return {
+      timer: null,
       /**
        * 升级表单
        */
@@ -252,7 +253,7 @@ export default {
      * 文件选择变化事件
      *
      * 来源: 后端改造项10, 设备软件升级文件选择
-     * 校验: 文件类型（.bin/.img/.zip）、空文件、大小限制（200MB）
+     * 校验: 文件类型（.bin/.img/.zip）、空文件、大小限制（50MB）
      *
      * @param {Object} file - Element UI el-upload 的 file 对象
      * @param {Array}  fileList - 当前文件列表
@@ -282,10 +283,10 @@ export default {
         fileList.splice(0, 1)
         return
       }
-      // 校验文件大小（上限 200MB）
-      const MAX_SIZE = 200 * 1024 * 1024
+      // 校验文件大小（上限 50MB）
+      const MAX_SIZE = 50 * 1024 * 1024
       if (rawFile.size > MAX_SIZE) {
-        this.$message.error(`文件过大：${(rawFile.size / 1024 / 1024).toFixed(1)}MB，上限 200MB`)
+        this.$message.error(`文件过大：${(rawFile.size / 1024 / 1024).toFixed(1)}MB，上限 50MB`)
         fileList.splice(0, 1)
         return
       }
