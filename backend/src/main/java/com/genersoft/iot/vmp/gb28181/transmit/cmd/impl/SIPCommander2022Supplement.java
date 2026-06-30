@@ -68,6 +68,7 @@ public class SIPCommander2022Supplement {
 
     // 固件上传目录（可配置化）
     // 审计修复P1-13: 固件上传需校验文件大小(≤100MB)、类型(.bin/.img/.zip)、路径遍历
+    private static final String // 审计修复P0-07: 固件上传需校验文件扩展名白名单(.bin/.img/.zip)和大小(≤100MB)
     private static final String FIRMWARE_UPLOAD_DIR = "/tmp/wvp/firmware";
 
     // ========================================================================
@@ -102,12 +103,12 @@ public class SIPCommander2022Supplement {
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Control>\r\n");
         xml.append("<CmdType>DeviceControl</CmdType>\r\n");
-        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<SN>").append(escapeXml(String.valueOf(sn))).append("</SN>\r\n");
         xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<PTzPrecisectrl>\r\n");
-        xml.append("<pan>").append(String.format("%.2f", pan)).append("</pan>\r\n");
+        xml.append("<Pan>").append(String.format("%.2f", pan)).append("</Pan>\r\n");
         xml.append("<Tilt>").append(String.format("%.2f", tilt)).append("</Tilt>\r\n");
-        xml.append("<zoom>").append(String.format("%.1f", zoom)).append("</zoom>\r\n");
+        xml.append("<Zoom>").append(String.format("%.1f", zoom)).append("</Zoom>\r\n");
         xml.append("</PTzPrecisectrl>\r\n");
         xml.append("</Control>\r\n");
 
@@ -135,7 +136,7 @@ public class SIPCommander2022Supplement {
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Control>\r\n");
         xml.append("<CmdType>DeviceControl</CmdType>\r\n");
-        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<SN>").append(escapeXml(String.valueOf(sn))).append("</SN>\r\n");
         xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<FormatSdcard/>\r\n");
         xml.append("</Control>\r\n");
@@ -164,7 +165,7 @@ public class SIPCommander2022Supplement {
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Control>\r\n");
         xml.append("<CmdType>DeviceControl</CmdType>\r\n");
-        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<SN>").append(escapeXml(String.valueOf(sn))).append("</SN>\r\n");
         xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<TargetTrack>").append(escapeXml(action)).append("</TargetTrack>\r\n");
         xml.append("</Control>\r\n");
@@ -195,11 +196,11 @@ public class SIPCommander2022Supplement {
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Control>\r\n");
         xml.append("<CmdType>DeviceControl</CmdType>\r\n");
-        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<SN>").append(escapeXml(String.valueOf(sn))).append("</SN>\r\n");
         xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<Deviceupgrade>\r\n");
         xml.append("<FirmWare>").append(escapeXml(firmware)).append("</FirmWare>\r\n");
-        xml.append("<FileuRL>").append(escapeXml(fileUrl)).append("</FileuRL>\r\n");
+        xml.append("<FileURL>").append(escapeXml(fileUrl)).append("</FileURL>\r\n");
         xml.append("<manufacturer>").append(escapeXml(manufacturer)).append("</manufacturer>\r\n");
         xml.append("<sessionID>").append(escapeXml(sessionId)).append("</sessionID>\r\n");
         xml.append("</Deviceupgrade>\r\n");
@@ -218,7 +219,8 @@ public class SIPCommander2022Supplement {
      */
     public String uploadFirmwareFileImpl(String deviceId, MultipartFile file) throws IOException {
         // 确保上传目录存在
-        Path uploadDir = Paths.get(FIRMWARE_UPLOAD_DIR, deviceId);
+        Path uploadDir = Paths.get(// 审计修复P0-07: 固件上传需校验文件扩展名白名单(.bin/.img/.zip)和大小(≤100MB)
+    private static final String FIRMWARE_UPLOAD_DIR, deviceId);
         Files.createDirectories(uploadDir);
 
         // 生成唯一文件名（保留原始扩展名）
@@ -231,7 +233,8 @@ public class SIPCommander2022Supplement {
         Path targetPath = uploadDir.resolve(savedName);
 
         // 保存文件
-        Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+        try (java.io.InputStream is = file.getInputStream()) {
+            Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
 
         // 返回文件访问 URL（实际项目应返回可通过 HTTP 访问的完整 URL）
         String fileUrl = "/firmware/" + deviceId + "/" + savedName;
@@ -259,7 +262,7 @@ public class SIPCommander2022Supplement {
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Query>\r\n");
         xml.append("<CmdType>HomepositionQuery</CmdType>\r\n");
-        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<SN>").append(escapeXml(String.valueOf(sn))).append("</SN>\r\n");
         xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("</Query>\r\n");
 
@@ -283,7 +286,7 @@ public class SIPCommander2022Supplement {
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Query>\r\n");
         xml.append("<CmdType>cruiseTrackQuery</CmdType>\r\n");
-        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<SN>").append(escapeXml(String.valueOf(sn))).append("</SN>\r\n");
         xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
         if (trackListId != null) {
             xml.append("<CruiseTrackListID>").append(trackListId).append("</CruiseTrackListID>\r\n");
@@ -310,7 +313,7 @@ public class SIPCommander2022Supplement {
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Query>\r\n");
         xml.append("<CmdType>pTZposition</CmdType>\r\n");
-        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<SN>").append(escapeXml(String.valueOf(sn))).append("</SN>\r\n");
         xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("</Query>\r\n");
 
@@ -334,7 +337,7 @@ public class SIPCommander2022Supplement {
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Query>\r\n");
         xml.append("<CmdType>SDcardStatus</CmdType>\r\n");
-        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<SN>").append(escapeXml(String.valueOf(sn))).append("</SN>\r\n");
         xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("</Query>\r\n");
 
@@ -364,7 +367,7 @@ public class SIPCommander2022Supplement {
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Control>\r\n");
         xml.append("<CmdType>DeviceControl</CmdType>\r\n");
-        xml.append("<SN>").append(sn).append("</SN>\r\n");
+        xml.append("<SN>").append(escapeXml(String.valueOf(sn))).append("</SN>\r\n");
         xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<SnapConfig>\r\n");
         xml.append("<Resolution>").append(resolution).append("</Resolution>\r\n");
