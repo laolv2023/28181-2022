@@ -142,7 +142,9 @@ public enum DeviceControlType {
     DeviceControlType(String val, String desc) {
         this.val = val;
         this.desc = desc;
-        @Override
+    }
+
+    @Override
     public String toString() {
         return this.desc;
     }
