@@ -141,6 +141,7 @@ public final class GBProtocolVersionHelper {
      * @param request SIP 请求对象
      * @return 对端协议版本号字符串；未携带则返回 GB_PROTOCOL_VERSION_2016
      */
+    /** 解析SIP请求中的X-GB-ver头域, 返回协议版本号 */
     public static String parseGbVerHeader(Request request) {
         if (request == null) {
             return GB_PROTOCOL_VERSION_2016;
