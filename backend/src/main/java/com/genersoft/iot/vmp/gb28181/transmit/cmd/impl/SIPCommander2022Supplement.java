@@ -61,12 +61,13 @@ public class SIPCommander2022Supplement {
     private SipLayer sipLayer;
 
     // SN 序号（简单递增，生产环境应考虑线程安全和持久化）
-    private static int snCounter = 0;
+    private static final java.util.concurrent.atomic.AtomicInteger snCounter = new java.util.concurrent.atomic.AtomicInteger(0);
     private static synchronized int nextSn() {
-        return ++snCounter;
+        return snCounter.incrementAndGet();
     }
 
     // 固件上传目录（可配置化）
+    // 审计修复P1-13: 固件上传需校验文件大小(≤100MB)、类型(.bin/.img/.zip)、路径遍历
     private static final String FIRMWARE_UPLOAD_DIR = "/tmp/wvp/firmware";
 
     // ========================================================================
