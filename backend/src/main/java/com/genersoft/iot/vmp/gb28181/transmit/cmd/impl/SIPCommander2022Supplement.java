@@ -99,9 +99,9 @@ public class SIPCommander2022Supplement {
             throw new IllegalArgumentException("device不能为null");
         }
         // PTZ参数范围校验
-        if (pan != null && (pan < -180 || pan > 180)) throw new IllegalArgumentException("pan范围: -180~180");
-        if (tilt != null && (tilt < -90 || tilt > 90)) throw new IllegalArgumentException("tilt范围: -90~90");
-        if (zoom != null && (zoom < 0 || zoom > 20)) throw new IllegalArgumentException("zoom范围: 0~20");
+        if (pan < -180 || pan > 180) throw new IllegalArgumentException("pan范围: -180~180");
+        if (tilt < -90 || tilt > 90) throw new IllegalArgumentException("tilt范围: -90~90");
+        if (zoom < 0 || zoom > 20) throw new IllegalArgumentException("zoom范围: 0~20");
         int sn = nextSn();
         String deviceId = device.getDeviceId();
 
