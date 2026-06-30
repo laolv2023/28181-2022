@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * WVP 安全配置 API Controller —— GB/T 28181-2022 配套
