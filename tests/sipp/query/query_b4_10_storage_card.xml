@@ -53,10 +53,10 @@
   <!-- 步骤3: 接收设备返回的存储卡状态 Notify MESSAGE -->
   <recv request="MESSAGE" rtd="true">
     <action>
-      <ereg regexp="CmdType>StorageCardStatus<" search_in="body" assign_to="card_resp" />
-      <ereg regexp="Capacity>[0-9]+<" search_in="body" assign_to="capacity_val" />
-      <ereg regexp="RemainSpace>[0-9]+<" search_in="body" assign_to="remain_val" />
-      <ereg regexp="StorageCardStatus>OK<" search_in="body" assign_to="card_status" />
+      <ereg regexp="CmdType&gt;StorageCardStatus&lt;" search_in="body" assign_to="card_resp" />
+      <ereg regexp="Capacity&gt;[0-9]+&lt;" search_in="body" assign_to="capacity_val" />
+      <ereg regexp="RemainSpace&gt;[0-9]+&lt;" search_in="body" assign_to="remain_val" />
+      <ereg regexp="StorageCardStatus&gt;OK&lt;" search_in="body" assign_to="card_status" />
     </action>
   </recv>
 
