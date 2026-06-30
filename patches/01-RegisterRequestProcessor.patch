@@ -43,7 +43,7 @@
 +            response.addHeader(gbVerHeader);
 +        } catch (ParseException e) {
 +        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
-+            log.warn("[注册响应] 添加X-GB-ver头域失败: {}", e.getMessage());
++            log.error("[注册响应] 添加X-GB-ver头域失败: {}", e.getMessage());
 +        }
 +
          return response;
@@ -80,7 +80,7 @@
 +            response.addHeader(gbVerHeader);
 +        } catch (ParseException e) {
 +        // 审计修复P2-37: 建议使用GBProtocolVersionHelper.addGbVerHeader()统一管理X-GB-ver头域
-+            log.warn("[注册响应] 添加X-GB-ver头域失败: {}", e.getMessage());
++            log.error("[注册响应] 添加X-GB-ver头域失败: {}", e.getMessage());
 +        }
 +
          if (device == null) {
