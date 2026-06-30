@@ -146,8 +146,7 @@ export default {
   data() {
     abortController: null,
     return {
-      abortController: null,
-      /** 当前激活标签页 */
+            /** 当前激活标签页 */
       activeTab: 'homePosition',
       /** 查询加载状态 */
       queryLoading: false,
@@ -176,9 +175,9 @@ export default {
 
   beforeDestroy() {
     // 组件销毁时取消进行中的请求，防止内存泄漏和状态污染
-    if (this._abortController) {
-      this._abortController.abort()
-      this._abortController = null
+    if (this.abortController) {
+      this.abortController.abort()
+      this.abortController = null
     }
   },
   methods: {
@@ -219,11 +218,12 @@ export default {
      */
     queryCurrentTab() {
       // 取消上一个未完成的请求，防止快速切换标签页时数据覆盖
-      if (this._abortController) {
-        this._abortController.abort()
+      if (this.abortController) {
+        this.abortController.abort()
       }
-      this._abortController = new AbortController()
-      const signal = this._abortController.signal
+      this.abortController = new AbortController()
+    const signal = this.abortController.signal
+      const signal = this.abortController.signal
 
       switch (this.activeTab) {
         case 'homePosition':
