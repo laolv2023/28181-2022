@@ -95,7 +95,7 @@ public final class SM3DigestHelper {
             } catch (Throwable t) {
                 logger.error("[SM3] BouncyCastle SM3 不可用。原因：{}", t.getMessage());
             // SM3 不可用时不静默降级, 调用方应通过 digestMd5() 显式回退
-                logger.warn("[SM3] 请引入 bouncycastle 依赖以启用 SM3 算法：<dependency><groupId>org.bouncycastle</groupId><artifactId>bcprov-jdk15on</artifactId></dependency>");
+                logger.warn("[SM3] 请引入 bouncycastle 依赖以启用 SM3 算法：<dependency><groupId>org.bouncycastle</groupId><artifactId>bcprov-jdk18on</artifactId></dependency>");
             }
         }
 
@@ -242,6 +242,7 @@ public final class SM3DigestHelper {
      * @param data 原始数据
      * @return 摘要十六进制字符串（SM3 为 64 字符, MD5 为 32 字符）
      */
+    //** 摘要计算(SM3优先, 不可用时回退MD5) */
     public static String digestWithFallback(byte[] data) {
         if (data == null) {
             return "";
