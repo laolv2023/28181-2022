@@ -140,7 +140,7 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
                 device != null ? device.getDeviceId() : "null");
         // 审计修复P1-09~12: 响应XML通过SIP 200 OK消息体返回给请求方
         // 设置响应消息体为XML内容
-        try { evt.getResponse().setContent(responseXml.getBytes("GB18030"), evt.getResponse().getContentTypeHeader()); } catch (Exception ex) { logger.warn("设置响应内容失败", ex); }
+        try { evt.getResponse().setContent(responseXml.getBytes("GB18030"), evt.getResponse().getContentTypeHeader()); } catch (Exception ex) { log.warn("设置响应内容失败", ex); }
         responseOk(evt);
     }
 
