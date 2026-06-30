@@ -45,7 +45,7 @@
       Call-ID: [call_id]
       CSeq: [cseq] REGISTER
       Contact: <sip:34020000001320000001@[local_ip]:[local_port]>
-      Authorization: [authentication username=34020000001320000001 password=12345678]
+      Authorization: [authentication username=34020000001320000001 password=test12345]
       Max-Forwards: 70
       User-Agent: WVP-Test-Simulator-B205
       Expires: 0
