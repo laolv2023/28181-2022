@@ -26,7 +26,7 @@
      /** to hex converter */
      private static final char[] toHex = { '0', '1', '2', '3', '4', '5', '6',
              '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-@@ -63,6 +79,18 @@
+@@ -63,6 +79,12 @@
      public DigestServerAuthenticationHelper()
              throws NoSuchAlgorithmException {
          messageDigest = MessageDigest.getInstance(DEFAULT_ALGORITHM);
@@ -39,7 +39,7 @@
      }
  
      public static String toHexString(byte[] b) {
-@@ -231,6 +259,31 @@
+@@ -231,6 +259,44 @@
          log.debug("mdString: {}", mdString);
          String response = authHeader.getResponse();
          log.debug("response: {}", response);
@@ -78,9 +78,7 @@
 +                    response.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 +        }
 +
--        // 审计修复P2-13: 常量时间比较防止时序攻击
-        return java.security.MessageDigest.isEqual(mdString.getBytes(java.nio.charset.StandardCharsets.UTF_8), response.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-+        // 审计修复P1-07: 使用常量时间比较 MessageDigest.isEqual 防止时序攻击
+         return mdString.equals(response);
 +        return MessageDigest.isEqual(
 +                mdString.getBytes(java.nio.charset.StandardCharsets.UTF_8),
 +                response.getBytes(java.nio.charset.StandardCharsets.UTF_8));
