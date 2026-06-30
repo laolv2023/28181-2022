@@ -176,3 +176,5 @@ methods: {
   }
 }
 ```
+
+<!-- 新增CSS: .ptz-precise-controls { display: flex; gap: 8px; } -->
