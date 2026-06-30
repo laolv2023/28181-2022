@@ -205,6 +205,7 @@ public class SipTlsProperties {
      *
      * @return 信任库密码
      */
+    /** @return 信任库密码, 应从安全配置获取 */
     public String getTrustStorePassword() {
         return trustStorePassword;
     }
@@ -243,6 +244,7 @@ public class SipTlsProperties {
      */
     // 审计修复R4-P2-04: 端口范围校验
     public void setServerPort(int serverPort) {
+        // 注意: TLS端口与非TLS端口不应相同
         if (serverPort < 1 || serverPort > 65535) {
             throw new IllegalArgumentException("TLS端口必须在1-65535范围内");
         }
@@ -317,28 +319,28 @@ public class SipTlsProperties {
                 '}';
     }
 
-    // 审计修复P2-22: 提供 char[] 形式的密码访问器, 避免字符串密码常驻内存无法及时回收
+    // 审计修复P2-22: 提供 char[] /* 注意: String到char[]转换在String不可变时效果有限 */ 形式的密码访问器, 避免字符串密码常驻内存无法及时回收
     /**
-     * 获取密钥库密码的 char[] 形式
+     * 获取密钥库密码的 char[] /* 注意: String到char[]转换在String不可变时效果有限 */ 形式
      * <p>
      * 审计修复P2-22: 调用方使用后应调用 Arrays.fill(password, '\0') 清空敏感数据
      * </p>
      *
      * @return 密钥库密码字符数组, 未配置时返回 null
      */
-    public char[] getKeyStorePasswordChars() {
+    public char[] /* 注意: String到char[]转换在String不可变时效果有限 */ getKeyStorePasswordChars() {
         return keyStorePassword != null ? keyStorePassword.toCharArray() : null;
     }
 
     /**
-     * 获取信任库密码的 char[] 形式
+     * 获取信任库密码的 char[] /* 注意: String到char[]转换在String不可变时效果有限 */ 形式
      * <p>
      * 审计修复P2-22: 调用方使用后应调用 Arrays.fill(password, '\0') 清空敏感数据
      * </p>
      *
      * @return 信任库密码字符数组, 未配置时返回 null
      */
-    public char[] getTrustStorePasswordChars() {
+    public char[] /* 注意: String到char[]转换在String不可变时效果有限 */ getTrustStorePasswordChars() {
         return trustStorePassword != null ? trustStorePassword.toCharArray() : null;
     }
 }
