@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sip.header.Header;
+import javax.sip.header.ExtensionHeader;
 import javax.sip.message.Request;
 import javax.sip.SipFactory;
 
@@ -150,7 +151,7 @@ public final class GBProtocolVersionHelper {
                 // 未携带 X-GB-ver 头部，按规范默认回退到 2016 版
                 return GB_PROTOCOL_VERSION_2016;
             }
-            String value = header.getHeaderValue();
+            String value = ((ExtensionHeader) header).getValue();
             if (value == null || value.trim().isEmpty()) {
                 return GB_PROTOCOL_VERSION_2016;
             }
@@ -201,7 +202,7 @@ public final class GBProtocolVersionHelper {
                     .createHeaderFactory()
                     .createHeader(HEADER_MONITOR_USER_IDENTITY, userIdentity);
             request.addHeader(header);
-        } catch (java.text.ParseException e) {
+        } catch (Exception e) {
             logger.warn("[Monitor-user-Identity] 添加头域失败: {}", e.getMessage());
         }
     }
