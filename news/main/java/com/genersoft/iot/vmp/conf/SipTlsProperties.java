@@ -241,6 +241,14 @@ public class SipTlsProperties {
      *
      * @return TLS 监听端口
      */
+    // 审计修复R4-P2-04: 端口范围校验
+    public void setServerPort(int serverPort) {
+        if (serverPort < 1 || serverPort > 65535) {
+            throw new IllegalArgumentException("TLS端口必须在1-65535范围内");
+        }
+        this.serverPort = serverPort;
+    }
+
     public int getServerPort() {
         return serverPort;
     }
