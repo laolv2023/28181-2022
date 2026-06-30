@@ -73,6 +73,7 @@ public final class TcpReconnectHelper {
      * @return 重连成功返回 true；全部失败返回 false
      */
     // 审计修复P2-18: 此方法为同步阻塞调用, 生产环境应从工作线程调用, 避免阻塞SIP信令线程
+    /** TCP媒体通道重连 */
     public static boolean reconnectTcpMedia(String ip, int port, int maxRetries, long intervalMs) {
         // 参数校验与规范强制对齐
         if (ObjectUtils.isEmpty(ip)) {
@@ -98,7 +99,7 @@ public final class TcpReconnectHelper {
                 ip, port, maxRetries, intervalMs);
 
         long startTime = System.currentTimeMillis();
-        long totalTimeoutMs = (long) maxRetries * (intervalMs + DEFAULT_CONNECT_TIMEOUT_MS);
+        long totalTimeoutMs = (long) maxRetries * (intervalMs + DEFAULT_CONNECT_TIMEOUT_MS) + DEFAULT_CONNECT_TIMEOUT_MS;
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             if (System.currentTimeMillis() - startTime > totalTimeoutMs) { logger.warn("[TCP重连] 总体超时, 终止重连"); return false; }
             boolean connected = isPortReachable(ip, port, DEFAULT_CONNECT_TIMEOUT_MS);
@@ -125,6 +126,7 @@ public final class TcpReconnectHelper {
      * @param port 目标端口
      * @return 重连成功返回 true；失败返回 false
      */
+    /** TCP媒体通道重连 */
     public static boolean reconnectTcpMedia(String ip, int port) {
         return reconnectTcpMedia(ip, port, DEFAULT_MAX_RETRIES, DEFAULT_INTERVAL_MS);
     }
