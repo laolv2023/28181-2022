@@ -157,7 +157,7 @@ public final class SipMessageFilter {
                 return false;
             }
         } catch (Throwable t) {
-            logger.debug("[SIP过滤] 读取消息体异常: {}", t.getMessage());
+            logger.warn("[SIP过滤] 读取消息体异常: {}", t.getMessage());
         }
 
         // 4. 校验 X-GB-ver 头部（改造项1，2022版 7.1，可选）
@@ -165,10 +165,10 @@ public final class SipMessageFilter {
             Header gbVerHeader = request.getHeader(GBProtocolVersionHelper.HEADER_X_GB_VER);
             if (gbVerHeader != null) {
                 // 头部存在则记录版本号，便于后续协议版本协商
-                logger.debug("[SIP过滤] X-GB-ver: {}", gbVerHeader);
+                logger.warn("[SIP过滤] X-GB-ver: {}", gbVerHeader);
             }
         } catch (Throwable t) {
-            logger.debug("[SIP过滤] X-GB-ver 头部解析异常: {}", t.getMessage());
+            logger.warn("[SIP过滤] X-GB-ver 头部解析异常: {}", t.getMessage());
         }
 
         return true;
