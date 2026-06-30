@@ -75,19 +75,20 @@ public final class SdpFieldHelper {
                                      String bitrateType, String bitrateSize,
                                      String audioCodec, String audioBitrate, String sampleRate) {
         // 改造项18：f 字段构造，使用 v/ 与 a/ 分段
+        // 审计修复P2-10: 对所有字符串参数进行 XML 转义, 防止注入
         StringBuilder sb = new StringBuilder("f=");
         // 视频段
         sb.append(MEDIA_TYPE_VIDEO).append("/");
-        sb.append(emptyIfNull(videoCodec)).append("/");
-        sb.append(emptyIfNull(resolution)).append("/");
-        sb.append(emptyIfNull(frameRate)).append("/");
-        sb.append(emptyIfNull(bitrateType)).append("/");
-        sb.append(emptyIfNull(bitrateSize));
+        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(videoCodec))).append("/");
+        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(resolution))).append("/");
+        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(frameRate))).append("/");
+        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(bitrateType))).append("/");
+        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(bitrateSize)));
         // 音频段
         sb.append(" ").append(MEDIA_TYPE_AUDIO).append("/");
-        sb.append(emptyIfNull(audioCodec)).append("/");
-        sb.append(emptyIfNull(audioBitrate)).append("/");
-        sb.append(emptyIfNull(sampleRate));
+        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(audioCodec))).append("/");
+        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(audioBitrate))).append("/");
+        sb.append(SipCharsetHelper.escapeXml(emptyIfNull(sampleRate)));
         return sb.toString();
     }
 
@@ -286,7 +287,8 @@ public final class SdpFieldHelper {
         StringBuilder uField = new StringBuilder("u=");
         uField.append(downloadType);
         if (!ObjectUtils.isEmpty(downloadUrl)) {
-            uField.append(":").append(downloadUrl);
+            // 审计修复P2-09: 转义 downloadUrl 中的 XML 特殊字符, 防止注入
+            uField.append(":").append(SipCharsetHelper.escapeXml(downloadUrl));
         }
         sdpBuilder.append(uField).append("\r\n");
     }
