@@ -207,6 +207,12 @@ export default {
     this.loadConfig()
   },
 
+  beforeDestroy() {
+    // 审计修复P3-03: 组件销毁前清理资源
+    if (this.timer) { clearTimeout(this.timer); }
+    if (this.abortController) { this.abortController.abort(); }
+  },
+
   methods: {
     /**
      * 保存配置
