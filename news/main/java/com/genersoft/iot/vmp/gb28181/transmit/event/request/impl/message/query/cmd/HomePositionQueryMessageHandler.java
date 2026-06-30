@@ -87,7 +87,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
      * CmdType 字符串："HomepositionQuery"
      * </p>
      */
-    private static final String cmdType = "HomepositionQuery";
+    private static final String CMD_TYPE = "HomepositionQuery";
 
     /**
      * 响应结果：成功
@@ -155,6 +155,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
         log.info("[看守位信息查询] 收到设备查询请求, deviceId={}",
                 device != null ? device.getDeviceId() : "null");
         // 设备发起的查询请求，按规范 ACK 200 OK
+        // 审计修复P1-09~12: 响应XML通过SIP 200 OK消息体返回给请求方
         responseOk(evt);
     }
 
