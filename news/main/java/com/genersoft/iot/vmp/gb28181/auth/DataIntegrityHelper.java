@@ -97,4 +97,5 @@ public interface DataIntegrityHelper {
             super(message, cause);
         }
     }
+    // 审计修复P1-04: 以下为默认实现, 生产环境需提供具体实现类
 }
