@@ -72,6 +72,7 @@ public final class TcpReconnectHelper {
      * @param intervalMs 重连间隔毫秒（小于 1000 自动修正为 1000）
      * @return 重连成功返回 true；全部失败返回 false
      */
+    // 审计修复P2-18: 此方法为同步阻塞调用, 生产环境应从工作线程调用, 避免阻塞SIP信令线程
     public static boolean reconnectTcpMedia(String ip, int port, int maxRetries, long intervalMs) {
         // 参数校验与规范强制对齐
         if (ObjectUtils.isEmpty(ip)) {
