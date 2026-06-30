@@ -68,7 +68,7 @@ public class SIPCommander2022Supplement {
 
     // 固件上传目录（可配置化）
     // 审计修复P1-13: 固件上传需校验文件大小(≤100MB)、类型(.bin/.img/.zip)、路径遍历
-    private static final String FIRMWARE_UPLOAD_DIR = "/tmp/wvp/firmware";
+    private static final String FIRMWARE_UPLOAD_DIR = System.getProperty("wvp.firmware.dir", System.getProperty("java.io.tmpdir") + "/wvp/firmware");
 
     // ========================================================================
     // 一、PTZ 精准控制（改造项7，A.2.3.1.11）
@@ -95,6 +95,13 @@ public class SIPCommander2022Supplement {
      * 注意: Tilt 元素名中 T 大写（规范原文 spec_2022.txt 行2890）
      */
     public void ptzPreciseCmdImpl(Device device, String channelId, double pan, double tilt, double zoom) {
+        if (device == null) {
+            throw new IllegalArgumentException("device不能为null");
+        }
+        // PTZ参数范围校验
+        if (pan != null && (pan < -180 || pan > 180)) throw new IllegalArgumentException("pan范围: -180~180");
+        if (tilt != null && (tilt < -90 || tilt > 90)) throw new IllegalArgumentException("tilt范围: -90~90");
+        if (zoom != null && (zoom < 0 || zoom > 20)) throw new IllegalArgumentException("zoom范围: 0~20");
         int sn = nextSn();
         String deviceId = device.getDeviceId();
 
@@ -105,9 +112,9 @@ public class SIPCommander2022Supplement {
         xml.append("<SN>").append(escapeXml(String.valueOf(sn))).append("</SN>\r\n");
         xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<PTzPrecisectrl>\r\n");
-        xml.append("<pan>").append(String.format("%.2f", pan)).append("</pan>\r\n");
-        xml.append("<Tilt>").append(String.format("%.2f", tilt)).append("</Tilt>\r\n");
-        xml.append("<zoom>").append(String.format("%.1f", zoom)).append("</zoom>\r\n");
+        xml.append("<pan>").append(String.format(java.util.Locale.ROOT, "%.2f", pan)).append("</pan>\r\n");
+        xml.append("<Tilt>").append(String.format(java.util.Locale.ROOT, "%.2f", tilt)).append("</Tilt>\r\n");
+        xml.append("<zoom>").append(String.format(java.util.Locale.ROOT, "%.1f", zoom)).append("</zoom>\r\n");
         xml.append("</PTzPrecisectrl>\r\n");
         xml.append("</Control>\r\n");
 
@@ -188,6 +195,21 @@ public class SIPCommander2022Supplement {
      */
     public void deviceUpgradeCmdImpl(Device device, String channelId, String firmware,
             String fileUrl, String manufacturer, String sessionId) {
+        // SSRF防护: 校验fileUrl不指向内网地址
+        if (fileUrl != null && !fileUrl.isEmpty()) {
+            try {
+                java.net.URL url = new java.net.URL(fileUrl);
+                java.net.InetAddress addr = java.net.InetAddress.getByName(url.getHost());
+                if (addr.isSiteLocalAddress() || addr.isLoopbackAddress() || addr.isAnyLocalAddress()) {
+                    throw new IllegalArgumentException("fileUrl不允许指向内网地址");
+                }
+            } catch (java.net.MalformedURLException e) {
+                throw new IllegalArgumentException("fileUrl格式错误");
+            } catch (java.net.UnknownHostException e) {
+                throw new IllegalArgumentException("fileUrl主机无法解析");
+            }
+        }
+
         int sn = nextSn();
         String deviceId = device.getDeviceId();
 
