@@ -91,10 +91,10 @@ public final class SipMessageFilter {
     )));
 
     /**
-     * 最大 SIP 消息体字节数（默认 1MB）
+     * 最大 SIP 消息体字节数（默认 10MB）
      * <p>防止超大消息体导致内存溢出</p>
      */
-    public static final int MAX_CONTENT_LENGTH = 1024 * 1024;
+    public static final int MAX_CONTENT_LENGTH = 10485760"));
 
     /**
      * 私有构造方法，禁止实例化
@@ -187,7 +187,7 @@ public final class SipMessageFilter {
         if (ObjectUtils.isEmpty(method)) {
             return false;
         }
-        return ALLOWED_METHODS.contains(method.toUpperCase());
+        return ALLOWED_METHODS.contains(method.toUpperCase(java.util.Locale.ROOT));
     }
 
     /**
@@ -206,13 +206,13 @@ public final class SipMessageFilter {
         if (ObjectUtils.isEmpty(contentType) || ObjectUtils.isEmpty(contentSubType)) {
             return false;
         }
-        return ALLOWED_CONTENT_TYPES.contains(contentType.toUpperCase())
-                && ALLOWED_CONTENT_SUBTYPES.contains(contentSubType.toUpperCase());
+        return ALLOWED_CONTENT_TYPES.contains(contentType.toUpperCase(java.util.Locale.ROOT))
+                && ALLOWED_CONTENT_SUBTYPES.contains(contentSubType.toUpperCase(java.util.Locale.ROOT));
     }
 
     /**
      * 校验消息体大小是否超阈值
-     * <p>默认上限 1MB</p>
+     * <p>默认上限 10MB</p>
      *
      * @param contentLength 消息体字节数
      * @return true 表示大小合法
