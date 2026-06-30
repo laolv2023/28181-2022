@@ -105,9 +105,9 @@ public class SIPCommander2022Supplement {
         xml.append("<SN>").append(escapeXml(String.valueOf(sn))).append("</SN>\r\n");
         xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<PTzPrecisectrl>\r\n");
-        xml.append("<Pan>").append(String.format("%.2f", pan)).append("</Pan>\r\n");
+        xml.append("<pan>").append(String.format("%.2f", pan)).append("</pan>\r\n");
         xml.append("<Tilt>").append(String.format("%.2f", tilt)).append("</Tilt>\r\n");
-        xml.append("<Zoom>").append(String.format("%.1f", zoom)).append("</Zoom>\r\n");
+        xml.append("<zoom>").append(String.format("%.1f", zoom)).append("</zoom>\r\n");
         xml.append("</PTzPrecisectrl>\r\n");
         xml.append("</Control>\r\n");
 
@@ -217,14 +217,26 @@ public class SIPCommander2022Supplement {
      * 来源: 后端改造项10配套, 设计文档第10.1节
      */
     public String uploadFirmwareFileImpl(String deviceId, MultipartFile file) throws IOException {
+        // 路径遍历防护: deviceId 只允许字母和数字
+        if (deviceId == null || !deviceId.matches("^[a-zA-Z0-9]{1,32}$")) {
+            throw new IllegalArgumentException("非法的 deviceId");
+        }
         // 确保上传目录存在
         Path uploadDir = Paths.get(FIRMWARE_UPLOAD_DIR, deviceId);
         Files.createDirectories(uploadDir);
 
-        // 生成唯一文件名（保留原始扩展名）
+        // 文件类型白名单校验
         String originalName = file.getOriginalFilename();
+        if (originalName == null || !originalName.matches(".*\.(bin|img|zip)$")) {
+            throw new IllegalArgumentException("不支持的固件文件类型, 仅允许 .bin/.img/.zip");
+        }
+        // 文件大小校验 (≤100MB)
+        if (file.getSize() > 100 * 1024 * 1024) {
+            throw new IllegalArgumentException("固件文件超过100MB限制");
+        }
+        // 生成唯一文件名（保留原始扩展名）
         String ext = "";
-        if (originalName != null && originalName.contains(".")) {
+        if (originalName.contains(".")) {
             ext = originalName.substring(originalName.lastIndexOf("."));
         }
         String savedName = UUID.randomUUID().toString() + ext;
