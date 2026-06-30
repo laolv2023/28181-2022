@@ -55,7 +55,7 @@
     注意: SM3摘要计算步骤需在外部完成。建议方式:
     1. 解析401响应中的realm、nonce、algorithm
     2. 调用Python gmssl库或OpenSSL EVP_sm3计算:
-       HA1 = SM3("34020000001320000001:" + realm + ":12345678")
+       HA1 = SM3("34020000001320000001:" + realm + ":test12345")
        HA2 = SM3("REGISTER:sip:[remote_ip]:[remote_port]")
        Response = SM3(HA1 + ":" + nonce + ":" + HA2)
     3. 将Response注入到下方Authorization头域的response字段
