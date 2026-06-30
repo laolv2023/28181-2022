@@ -117,7 +117,7 @@ public final class SipCharsetHelper {
             throw new IllegalArgumentException("待编码字符串不能为 null");
         }
         try {
-            return text.getBytes(DEFAULT_CHARSET);
+            return text.getBytes(DEFAULT_CHARSET_OBJ);
         } catch (UnsupportedEncodingException e) {
             // 理论上不会发生，DEFAULT_CHARSET_OBJ 已经在静态块兜底
             logger.warn("[字符集] GB 18030 编码异常，降级使用 UTF-8", e);
