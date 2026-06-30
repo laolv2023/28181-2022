@@ -2,6 +2,7 @@
 # run_all.sh — 全量测试入口
 # 审计修复P1-20: 收集退出码, 有失败时返回非零
 set -uo pipefail
+trap 'echo "测试中断: $BASH_COMMAND" >&2' ERR
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 OVERALL_FAIL=0
