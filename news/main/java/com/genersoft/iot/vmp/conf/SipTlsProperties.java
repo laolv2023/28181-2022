@@ -311,4 +311,29 @@ public class SipTlsProperties {
                 ", needClientAuth=" + needClientAuth +
                 '}';
     }
+
+    // 审计修复P2-22: 提供 char[] 形式的密码访问器, 避免字符串密码常驻内存无法及时回收
+    /**
+     * 获取密钥库密码的 char[] 形式
+     * <p>
+     * 审计修复P2-22: 调用方使用后应调用 Arrays.fill(password, '\0') 清空敏感数据
+     * </p>
+     *
+     * @return 密钥库密码字符数组, 未配置时返回 null
+     */
+    public char[] getKeyStorePasswordChars() {
+        return keyStorePassword != null ? keyStorePassword.toCharArray() : null;
+    }
+
+    /**
+     * 获取信任库密码的 char[] 形式
+     * <p>
+     * 审计修复P2-22: 调用方使用后应调用 Arrays.fill(password, '\0') 清空敏感数据
+     * </p>
+     *
+     * @return 信任库密码字符数组, 未配置时返回 null
+     */
+    public char[] getTrustStorePasswordChars() {
+        return trustStorePassword != null ? trustStorePassword.toCharArray() : null;
+    }
 }
