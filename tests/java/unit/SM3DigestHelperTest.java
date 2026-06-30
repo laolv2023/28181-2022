@@ -195,7 +195,7 @@ class SM3DigestHelperTest {
     void testNullInput() {
         // digest(null) - 应当不抛 NPE,允许返回 null 或抛 IllegalArgumentException
         String nullResult = assertDoesNotThrow(
-                () -> SM3DigestHelper.digest(null),
+                () -> SM3DigestHelper.digest((byte[]) null),
                 "digest(null) 不应抛出未捕获异常");
         // 若返回 null 也可接受; 若返回值则长度必须为 64
         if (nullResult != null) {
