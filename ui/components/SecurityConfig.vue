@@ -216,6 +216,12 @@ export default {
   },
 
   methods: {
+    async loadConfig() {
+      try {
+        const res = await getSecurityConfig();
+        if (res && res.data) Object.assign(this.config, res.data);
+      } catch (e) { console.warn("配置加载失败", e); }
+    },
     /**
      * 保存配置
      *
