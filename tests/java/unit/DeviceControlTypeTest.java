@@ -61,7 +61,7 @@ class DeviceControlTypeTest {
         assertEquals("RecordCmd", DeviceControlType.RECORD.getVal());
         assertEquals("GuardCmd", DeviceControlType.GUARD.getVal());
         assertEquals("AlarmCmd", DeviceControlType.ALARM.getVal());
-        assertEquals("IFameCmd", DeviceControlType.I_FRAME.getVal());
+        assertEquals("IFrameCmd", DeviceControlType.I_FRAME.getVal());
         assertEquals("DragZoomIn", DeviceControlType.DRAG_ZOOM_IN.getVal());
         assertEquals("DragZoomOut", DeviceControlType.DRAG_ZOOM_OUT.getVal());
         assertEquals("HomePosition", DeviceControlType.HOME_POSITION.getVal());
