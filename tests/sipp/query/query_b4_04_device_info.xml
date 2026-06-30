@@ -52,10 +52,10 @@
   <!-- 步骤3: 接收设备返回的设备信息 Notify MESSAGE -->
   <recv request="MESSAGE" rtd="true">
     <action>
-      <ereg regexp="CmdType>DeviceInfo<" search_in="body" assign_to="devinfo_resp" />
-      <ereg regexp="Manufacturer>[^<]+<" search_in="body" assign_to="manufacturer" />
-      <ereg regexp="Model>[^<]+<" search_in="body" assign_to="model" />
-      <ereg regexp="FirmwareVersion>[^<]+<" search_in="body" assign_to="firmware" />
+      <ereg regexp="CmdType&gt;DeviceInfo&lt;" search_in="body" assign_to="devinfo_resp" />
+      <ereg regexp="Manufacturer&gt;[^&lt;]+&lt;" search_in="body" assign_to="manufacturer" />
+      <ereg regexp="Model&gt;[^&lt;]+&lt;" search_in="body" assign_to="model" />
+      <ereg regexp="FirmwareVersion&gt;[^&lt;]+&lt;" search_in="body" assign_to="firmware" />
     </action>
   </recv>
 
