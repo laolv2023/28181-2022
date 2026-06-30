@@ -38,7 +38,7 @@ import request from '@/utils/request'
 export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom } = {}) {
   if (!deviceId || !channelId) throw new Error('[ptzPrecise] deviceId 和 channelId 为必填参数')
   return request({
-    method: 'get',
+    method: 'post',
     url: `/api/device/control/ptz_precise/${deviceId}/${channelId}`,
     params: { pan: pan ?? null, tilt: tilt ?? null, zoom: zoom ?? null },
     timeout: 10000  // PTZ 控制命令 10s 超时
