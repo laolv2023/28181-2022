@@ -74,7 +74,8 @@ public final class GBProtocolVersionHelper {
         if (version == null || version.isEmpty()) {
             return false;
         }
-        return version.trim().startsWith("2");
+        // 审计修复P2-04: 严格匹配 "2.0", 避免误判 "2.1"/"20" 等异常版本号
+        return version.trim().equals("2.0");
     }
 
     /**
@@ -165,19 +166,17 @@ public final class GBProtocolVersionHelper {
      * <p>
      * 改造项1：根据本端版本与对端版本协商，取较小主版本号作为最终版本，确保兼容性。
      * </p>
+     * <p>
+     * 审计修复P3-02: 合并重复的 negotiate 方法, 统一使用 negotiateVersion
+     * </p>
      *
      * @param remoteVersion 对端协议版本号
      * @return 协商后协议版本号（"2.0" 或 "1.0"）
+     * @see #negotiateVersion(String)
      */
+    @Deprecated
     public static String negotiate(String remoteVersion) {
-        if (remoteVersion == null || remoteVersion.trim().isEmpty()) {
-            return GB_PROTOCOL_VERSION_2016;
-        }
-        // 双方都为 2.0 才走 2022 流程，否则降级
-        if (isVersion2022(remoteVersion) && isVersion2022(GB_PROTOCOL_VERSION)) {
-            return GB_PROTOCOL_VERSION;
-        }
-        return GB_PROTOCOL_VERSION_2016;
+        return negotiateVersion(remoteVersion);
     }
 
     // === 改造项27: Monitor-user-Identity头域支持 ===
