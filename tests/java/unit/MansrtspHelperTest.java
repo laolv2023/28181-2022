@@ -20,8 +20,10 @@ class MansrtspHelperTest {
             StringBuilder sb = new StringBuilder();
             MansrtspHelper.appendScale(sb, validScale);
             String result = sb.toString();
-            assertTrue(result.contains("Scale:" + validScale) || result.contains("Scale: " + validScale),
-                "合法scale值" + validScale + "应被接受");
+            // 整数倍速可能格式化为 "1" 而非 "1.0"
+            String scaleStr = (validScale == (long) validScale) ? String.valueOf((long) validScale) : String.valueOf(validScale);
+            assertTrue(result.contains("Scale: " + scaleStr),
+                "合法scale值" + validScale + "应被接受, 实际: " + result);
         }
     }
 
