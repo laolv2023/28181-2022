@@ -144,7 +144,7 @@ public final class SipMessageFilter {
                     return false;
                 }
             }
-        } catch (Throwable t) {
+        } catch (Exception t) {
             // 解析异常不阻断流程，仅记录告警
             logger.debug("[SIP过滤] Content-Type 解析异常: {}", t.getMessage());
         }
@@ -156,7 +156,7 @@ public final class SipMessageFilter {
                 logger.debug("[SIP过滤] 消息体过大: {} bytes, 上限 {}", rawContent.length, MAX_CONTENT_LENGTH);
                 return false;
             }
-        } catch (Throwable t) {
+        } catch (Exception t) {
             logger.debug("[SIP过滤] 读取消息体异常: {}", t.getMessage());
         }
 
@@ -167,7 +167,7 @@ public final class SipMessageFilter {
                 // 头部存在则记录版本号，便于后续协议版本协商
                 logger.debug("[SIP过滤] X-GB-ver: {}", gbVerHeader);
             }
-        } catch (Throwable t) {
+        } catch (Exception t) {
             logger.debug("[SIP过滤] X-GB-ver 头部解析异常: {}", t.getMessage());
         }
 
