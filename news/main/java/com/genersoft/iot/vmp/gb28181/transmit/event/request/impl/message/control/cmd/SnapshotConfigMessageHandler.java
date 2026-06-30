@@ -85,7 +85,7 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
      * 也可被非标准上游直接以 CmdType="SnapConfig" 调用。
      * </p>
      */
-    private final String cmdType = "SnapConfig";
+    private static final String cmdType = "SnapConfig";
 
     /**
      * 抓拍配置 XML 元素名
