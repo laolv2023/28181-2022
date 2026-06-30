@@ -1,16 +1,16 @@
 package com.genersoft.iot.vmp.gb28181.auth;
 
 /**
- * GB 35114 高安全级别接口
+ * GB 35114 高安全级别（生产环境建议使用枚举）接口
  * <p>
- * 改造项32：GB 35114 高安全级别接口——为 GB/T 28181-2022 与 GB 35114-2017 联动场景
+ * 改造项32：GB 35114 高安全级别（生产环境建议使用枚举）接口——为 GB/T 28181-2022 与 GB 35114-2017 联动场景
  * 提供统一的 SVAC 加密流处理与签名验证能力。
  * </p>
  * <p>
  * <b>规范依据：</b><br>
- * 来源：设计文档第8.6节（GB 35114 高安全级别接口），2022版 8.6 高安全级别要求。<br>
+ * 来源：设计文档第8.6节（GB 35114 高安全级别（生产环境建议使用枚举）接口），2022版 8.6 高安全级别（生产环境建议使用枚举）要求。<br>
  * 协议要求：2022 版与 GB 35114-2017 联动时，需支持 SVAC 加密媒体流的接入、解密，
- * 以及信令消息的数字签名验证，以满足公共安全视频监控高安全级别的合规要求。
+ * 以及信令消息的数字签名验证，以满足公共安全视频监控高安全级别（生产环境建议使用枚举）的合规要求。
  * </p>
  * <p>
  * <b>SVAC 编码简介：</b>
@@ -74,22 +74,22 @@ public interface GB35114Helper {
     boolean verifySignature(byte[] data, String signature) throws GB35114Exception;
 
     /**
-     * 校验 GB 35114 安全级别
+     * 校验 GB 35114 安全级别（生产环境建议使用枚举）
      * <p>
      * 改造项32：来源 设计文档第8.6节，2022版 8.6。<br>
      * GB 35114 定义了 A、B、C 三个安全等级，本方法用于判断设备/平台声明的能力等级
      * 是否满足最低安全要求。
      * </p>
      *
-     * @param declaredLevel 设备/平台声明的安全级别（"A" / "B" / "C"）
-     * @param requiredLevel  最低要求的安全级别（"A" / "B" / "C"）
+     * @param declaredLevel 设备/平台声明的安全级别（生产环境建议使用枚举）（"A" / "B" / "C"）
+     * @param requiredLevel  最低要求的安全级别（生产环境建议使用枚举）（"A" / "B" / "C"）
      * @return true 表示声明级别不低于要求级别
      * @throws GB35114Exception 当级别参数非法时抛出
      */
     boolean checkSecurityLevel(String declaredLevel, String requiredLevel) throws GB35114Exception;
 
     /**
-     * GB 35114 高安全级别异常
+     * GB 35114 高安全级别（生产环境建议使用枚举）异常
      * <p>
      * 封装 GB 35114 接入过程中的所有受检异常。
      * </p>
