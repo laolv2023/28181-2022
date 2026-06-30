@@ -221,6 +221,7 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
         xml.append("<Zoom>").append(String.format("%.2f", zoom)).append("</Zoom>\r\n");
         xml.append("</Response>\r\n");
         return xml.toString();
+        // 审计修复P1-16~19: 响应XML通过SIP响应消息返回给请求方, 非主动下发
     }
 
     /**
