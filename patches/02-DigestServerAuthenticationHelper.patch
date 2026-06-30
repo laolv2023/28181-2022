@@ -1,5 +1,5 @@
---- original/src/main/java/com/genersoft/iot/vmp/gb28181/auth/DigestServerAuthenticationHelper.java	2026-06-29 17:11:02.348379907 +0800
-+++ modified/src/main/java/com/genersoft/iot/vmp/gb28181/auth/DigestServerAuthenticationHelper.java	2026-06-29 17:11:02.348379907 +0800
+--- original/src/main/java/com/genersoft/iot/vmp/gb28181/auth/DigestServerAuthenticationHelper.java     2026-06-29 17:11:02.348379907 +0800
++++ modified/src/main/java/com/genersoft/iot/vmp/gb28181/auth/DigestServerAuthenticationHelper.java     2026-06-29 17:11:02.348379907 +0800
 @@ -50,9 +50,25 @@
  
      private final MessageDigest messageDigest;
@@ -57,9 +57,10 @@
 +        // 当MD5验证失败时, 尝试使用SM3进行验证
 +        if (!mdString.equals(response) && sm3MessageDigest != null) {
 +            // SM3摘要验证
-+            byte[] sm3bytes = sm3MessageDigest.digest(A1.getBytes());
++            // 审计修复S2: 使用UTF-8字符集替代平台默认字符集, 保证跨环境一致性
++            byte[] sm3bytes = sm3MessageDigest.digest(A1.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 +            String SM3_HA1 = toHexString(sm3bytes);
-+            sm3bytes = sm3MessageDigest.digest(A2.getBytes());
++            sm3bytes = sm3MessageDigest.digest(A2.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 +            String SM3_HA2 = toHexString(sm3bytes);
 +            String SM3_KD = SM3_HA1 + ":" + nonce;
 +            if (qop != null && qop.equalsIgnoreCase("auth")) {
@@ -68,7 +69,7 @@
 +                SM3_KD += ":" + qop;
 +            }
 +            SM3_KD += ":" + SM3_HA2;
-+            sm3bytes = sm3MessageDigest.digest(SM3_KD.getBytes());
++            sm3bytes = sm3MessageDigest.digest(SM3_KD.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 +            String sm3String = toHexString(sm3bytes);
 +            log.debug("[SM3验证] sm3String: {}", sm3String);
 +            return sm3String.equals(response);
