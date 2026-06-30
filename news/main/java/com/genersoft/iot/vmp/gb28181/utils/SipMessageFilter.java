@@ -121,7 +121,7 @@ public final class SipMessageFilter {
      */
     public static boolean isSipMessageValid(RequestEvent evt) {
         if (evt == null || evt.getRequest() == null) {
-            logger.warn("[SIP过滤] 请求事件或 Request 对象为空");
+            logger.debug("[SIP过滤] 请求事件或 Request 对象为空");
             return false;
         }
         Request request = evt.getRequest();
@@ -129,7 +129,7 @@ public final class SipMessageFilter {
 
         // 1. 校验方法白名单
         if (!isMethodAllowed(method)) {
-            logger.warn("[SIP过滤] 非白名单 SIP 方法: {}", method);
+            logger.debug("[SIP过滤] 非白名单 SIP 方法: {}", method);
             return false;
         }
 
@@ -140,24 +140,24 @@ public final class SipMessageFilter {
                 String contentType = contentTypeHeader.getContentType();
                 String contentSubType = contentTypeHeader.getContentSubType();
                 if (!isContentTypeAllowed(contentType, contentSubType)) {
-                    logger.warn("[SIP过滤] 非法 Content-Type: {}/{}", contentType, contentSubType);
+                    logger.debug("[SIP过滤] 非法 Content-Type: {}/{}", contentType, contentSubType);
                     return false;
                 }
             }
         } catch (Throwable t) {
             // 解析异常不阻断流程，仅记录告警
-            logger.warn("[SIP过滤] Content-Type 解析异常: {}", t.getMessage());
+            logger.debug("[SIP过滤] Content-Type 解析异常: {}", t.getMessage());
         }
 
         // 3. 校验消息体大小
         try {
             byte[] rawContent = request.getRawContent();
             if (rawContent != null && rawContent.length > MAX_CONTENT_LENGTH) {
-                logger.warn("[SIP过滤] 消息体过大: {} bytes, 上限 {}", rawContent.length, MAX_CONTENT_LENGTH);
+                logger.debug("[SIP过滤] 消息体过大: {} bytes, 上限 {}", rawContent.length, MAX_CONTENT_LENGTH);
                 return false;
             }
         } catch (Throwable t) {
-            logger.warn("[SIP过滤] 读取消息体异常: {}", t.getMessage());
+            logger.debug("[SIP过滤] 读取消息体异常: {}", t.getMessage());
         }
 
         // 4. 校验 X-GB-ver 头部（改造项1，2022版 7.1，可选）
@@ -165,10 +165,10 @@ public final class SipMessageFilter {
             Header gbVerHeader = request.getHeader(GBProtocolVersionHelper.HEADER_X_GB_VER);
             if (gbVerHeader != null) {
                 // 头部存在则记录版本号，便于后续协议版本协商
-                logger.warn("[SIP过滤] X-GB-ver: {}", gbVerHeader);
+                logger.debug("[SIP过滤] X-GB-ver: {}", gbVerHeader);
             }
         } catch (Throwable t) {
-            logger.warn("[SIP过滤] X-GB-ver 头部解析异常: {}", t.getMessage());
+            logger.debug("[SIP过滤] X-GB-ver 头部解析异常: {}", t.getMessage());
         }
 
         return true;
