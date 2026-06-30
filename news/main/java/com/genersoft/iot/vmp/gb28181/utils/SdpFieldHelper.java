@@ -205,7 +205,8 @@ public final class SdpFieldHelper {
         if (sdpBuilder == null || ObjectUtils.isEmpty(ssvcRatio)) {
             return;
         }
-        sdpBuilder.append("a=ssvcratio:").append(ssvcRatio).append("\r\n");
+        String safeRatio = ssvcRatio.replaceAll("[\r\n]", "");
+        sdpBuilder.append("a=ssvcratio:").append(safeRatio).append("\r\n");
     }
 
     // ================================================================
