@@ -162,6 +162,7 @@ public final class RegisterRedirectHelper {
         if (!ObjectUtils.isEmpty(host)) {
             // 审计修复: Device 类有 transport 字段但无 registerPort 字段
             // 仅更新 transport，registerPort 通过设备重新注册时自动获取
+            // 审计修复P1-03: Device类无setHost方法, 通过重新注册自动获取
             try {
                 if (!ObjectUtils.isEmpty(transport)) {
                     device.setTransport(transport);
