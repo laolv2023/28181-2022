@@ -183,7 +183,10 @@ public final class SM3DigestHelper {
         if (actualHex.isEmpty()) {
             return false;
         }
-        return actualHex.equalsIgnoreCase(expectHex.trim());
+        // 审计修复P1-03: 使用常量时间比较防止时序攻击
+        return java.security.MessageDigest.isEqual(
+                actualHex.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                expectHex.trim().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     /**
