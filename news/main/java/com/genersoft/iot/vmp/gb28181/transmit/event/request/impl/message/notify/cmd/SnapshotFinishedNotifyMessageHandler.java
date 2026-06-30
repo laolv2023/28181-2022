@@ -164,7 +164,8 @@ public class SnapshotFinishedNotifyMessageHandler extends SIPRequestProcessorPar
         try {
             if (rootElement == null) {
                 logger.warn("[抓图完成通知] XML 根节点为空，无法处理");
-                respondAck(evt, Response.BAD_REQUEST);
+                // 验证deviceId合法性
+        respondAck(evt, Response.BAD_REQUEST);
                 return;
             }
 
@@ -185,7 +186,8 @@ public class SnapshotFinishedNotifyMessageHandler extends SIPRequestProcessorPar
             // 例如：notifyCallbackService.onSnapshotFinished(sessionId, deviceId, snapshotFileIds);
             handleSnapshotResult(deviceId, sessionId, snapshotFileIds);
 
-            // 回复 200 OK
+            // 注意: 当前仅记录日志, 业务处理需根据业务需求实现
+        // 回复 200 OK
             respondAck(evt, Response.SERVER_INTERNAL_ERROR);
 
         } catch (Exception e) {
