@@ -26,6 +26,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
  * @since 2026-06-29
  */
 @Slf4j
+// 注意: 需在Spring Security配置类上添加 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @RestController
 @PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/api/device/config")
@@ -143,9 +144,9 @@ public class ApiConfigController {
     private void saveConfigToFile() {
         try {
             java.util.Properties props = new java.util.Properties();
-            props.setProperty("sip.tls.enabled", String.valueOf(SECURITY_CONFIG.get("sipTlsEnabled")));
-            props.setProperty("sip.tls.algorithm", String.valueOf(SECURITY_CONFIG.get("tlsAlgorithm")));
-            props.setProperty("sm3.enabled", String.valueOf(SECURITY_CONFIG.get("sm3DigestEnabled")));
+            props.setProperty("sip.tls.enabled", String.valueOf(SECURITY_CONFIG.getOrDefault("sipTlsEnabled", "false")));
+            props.setProperty("sip.tls.algorithm", String.valueOf(SECURITY_CONFIG.getOrDefault("tlsAlgorithm", "SM2")));
+            props.setProperty("sm3.enabled", String.valueOf(SECURITY_CONFIG.getOrDefault("sm3DigestEnabled", "true")));
             java.io.File f = new java.io.File(CONFIG_FILE);
             f.getParentFile().mkdirs();
             try (java.io.FileOutputStream fos = new java.io.FileOutputStream(f)) {
