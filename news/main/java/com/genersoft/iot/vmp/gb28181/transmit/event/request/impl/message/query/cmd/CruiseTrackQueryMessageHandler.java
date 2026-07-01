@@ -108,12 +108,16 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
         implements InitializingBean, IMessageHandler {
 
     /**
-     * 命令类型字符串
+     * 命令类型字符串 — 列表查询
      * <p>
-     * 改造项12：来源 设计文档第10.2节，2022版 A.2.4.1.3
+     * 改造项12：来源 设计文档第10.2节，2022版 A.2.4.1.3<br>
+     * 注意: 列表查询(CruiseTrackListID)和详情查询(CruiseTrackID)共用同一 CmdType，
+     * 由请求中携带的 XML 元素区分。此设计符合 GB/T 28181-2022 规范。
      * </p>
      */
     private static final String CMD_TYPE = "cruiseTrackQuery";
+    /** 详情查询 CmdType（与列表查询相同，保留常量以便未来区分） */
+    private static final String CMD_TYPE_DETAIL = "cruiseTrackQuery";
 
     /**
      * 响应结果：成功
