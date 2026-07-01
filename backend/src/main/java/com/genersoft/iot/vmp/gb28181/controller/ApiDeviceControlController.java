@@ -41,13 +41,22 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   <li>改造项15: 图像抓拍配置（9.14）</li>
  * </ul>
  *
+ * <p><b>安全配置清单（生产部署前确认）:</b>
+ * <ul>
+ *   <li>XXE防御: 确认 wvp/ XmlUtil.java 中 DocumentBuilderFactory 已设置
+ *       {@code setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)}</li>
+ *   <li>文件上传: application.yml 配置 {@code spring.servlet.multipart.max-file-size: 100MB}</li>
+ *   <li>速率限制: 生产环境建议使用 Redis/Guava RateLimiter 替代内存计数器</li>
+ * </ul>
+ * </p>
+ *
  * @author wvp-upgrade
  * @since 2026-06-29
  */
 @Slf4j
 @RestController
-// 注意: 需在 Spring Security 配置类上添加 @EnableGlobalMethodSecurity(prePostEnabled = true)
-// 否则 @PreAuthorize 注解不会生效
+// XXE防御: 确认 wvp/gb28181/utils/XmlUtil 已禁用 DOCTYPE 外部实体
+@CrossOrigin(origins = "${wvp.cors.allowed-origins:}", allowCredentials = "true", maxAge = 3600)
 @PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/api/device/control")
 public class ApiDeviceControlController {
@@ -118,8 +127,8 @@ public class ApiDeviceControlController {
         return null;
     }
 
-    // 简单速率限制: 每个IP每分钟最多60次请求
-    private static final int RATE_LIMIT_MAX_REQUESTS = 60;
+    /** 固件上传最大文件大小 (100MB)，需与 application.yml 中 spring.servlet.multipart.max-file-size 保持一致 */
+    private static final long FIRMWARE_MAX_SIZE = 100L * 1024 * 1024;
     private static final long RATE_LIMIT_WINDOW_MS = 60_000L;
     private final ConcurrentHashMap<String, Long> rateLimitWindow = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, AtomicInteger> rateLimitCounters = new ConcurrentHashMap<>();
@@ -368,8 +377,8 @@ public class ApiDeviceControlController {
         if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
             return WVPResult.fail(400, "文件名包含非法字符");
         }
-        // 文件大小校验 (≤100MB)
-        if (file.getSize() > 100 * 1024 * 1024) {
+        // 文件大小校验 (≤FIRMWARE_MAX_SIZE)
+        if (file.getSize() > FIRMWARE_MAX_SIZE) {
             return WVPResult.fail(400, "固件文件超过100MB限制");
         }
         try {
