@@ -152,6 +152,7 @@ public final class GBProtocolVersionHelper {
             Header header = request.getHeader(HEADER_X_GB_VER);
             if (header == null) {
                 // 未携带 X-GB-ver 头部，按规范默认回退到 2016 版
+                logger.warn("[协议版本] 设备未携带X-GB-ver头域, 默认按2016版处理");
                 return GB_PROTOCOL_VERSION_2016;
             }
             String value = header instanceof ExtensionHeader ? ((ExtensionHeader) header).getValue() : null;
@@ -163,6 +164,26 @@ public final class GBProtocolVersionHelper {
             logger.warn("[协议版本] 解析 X-GB-ver 头部异常，默认回退到 2016 版", e);
             return GB_PROTOCOL_VERSION_2016;
         }
+    }
+
+    /**
+     * 解析协议版本（支持人工指定覆盖）
+     * <p>
+     * 优先使用人工指定的版本号，为空时自动解析X-GB-ver头域
+     * </p>
+     *
+     * @param request SIP请求对象
+     * @param manualProtocolVersion 人工指定的协议版本（可为null）
+     * @return 协议版本号字符串
+     */
+    public static String parseGbVerHeader(Request request, String manualProtocolVersion) {
+        // 优先使用人工指定版本
+        if (manualProtocolVersion != null && !manualProtocolVersion.trim().isEmpty()) {
+            logger.info("[协议版本] 使用人工指定版本: {}", manualProtocolVersion);
+            return manualProtocolVersion.trim();
+        }
+        // 人工指定为空，走自动检测
+        return parseGbVerHeader(request);
     }
 
     /**
