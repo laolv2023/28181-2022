@@ -288,6 +288,9 @@ public class SipTlsProperties {
      *
      * @return true 表示配置完整
      */
+    @javax.annotation.PostConstruct
+    public void validate() { if (!isValid()) throw new IllegalStateException("TLS配置无效"); }
+
     public boolean isValid() {
         if (!enabled) {
             // 未启用 TLS，无需校验
@@ -306,9 +309,10 @@ public class SipTlsProperties {
     }
 
     @Override
+    /** 注意: toString不输出密码等敏感信息 */
     public String toString() {
         // 审计修复S1: 脱敏处理, 不输出密钥库/信任库文件路径, 防止日志泄露
-        return "SipTlsProperties{" +
+        return "SipTlsProperties{keyStorePassword=***, trustStorePassword=***, " +
                 "enabled=" + enabled +
                 ", keyStore=" + (keyStore != null ? "[已配置]" : "[未配置]") +
                 ", keyStoreType='" + keyStoreType + '\'' +
