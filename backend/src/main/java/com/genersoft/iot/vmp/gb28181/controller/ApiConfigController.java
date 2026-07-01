@@ -172,7 +172,6 @@ public class ApiConfigController {
      * 从文件加载配置（持久化）
      */
     @javax.annotation.PostConstruct
-    public void
     public void init() { loadConfigFromFile(); }
 
     private void loadConfigFromFile() {
@@ -194,3 +193,4 @@ public class ApiConfigController {
         }
     }
 }
+
