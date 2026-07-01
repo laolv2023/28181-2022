@@ -164,7 +164,7 @@ public final class MansrtspHelper {
      * @return 格式化字符串
      */
     private static String formatScale(double scale) {
-        if (scale == (long) scale) {
+        if (!Double.isInfinite(scale) && scale == Math.floor(scale) && scale <= Long.MAX_VALUE) {
             return String.valueOf((long) scale);
         }
         return String.valueOf(scale);
