@@ -71,7 +71,7 @@ public class ApiDeviceControlController {
      * @param zoom      变倍倍数，范围 0 ~ 20，精度 0.1
      * @return 操作结果
      */
-    @PostMapping("/ptz_precise/{deviceId}/{channelId}"))
+    @PostMapping("/ptz_precise/{deviceId}/{channelId}")
     public WVPResult<?> ptzPrecise(
             @PathVariable String deviceId,
             @PathVariable String channelId,
@@ -114,7 +114,7 @@ public class ApiDeviceControlController {
      * @param action    跟踪模式，可选值: Auto, Manual
      * @return 操作结果
      */
-    @PostMapping("/target_track/{deviceId}/{channelId}"))
+    @PostMapping("/target_track/{deviceId}/{channelId}")
     public WVPResult<?> targetTrack(
             @PathVariable String deviceId,
             @PathVariable String channelId,
@@ -157,7 +157,7 @@ public class ApiDeviceControlController {
      * @param channelId 通道编码
      * @return 操作结果
      */
-    @PostMapping("/format_sdcard/{deviceId}/{channelId}"))
+    @PostMapping("/format_sdcard/{deviceId}/{channelId}")
     public WVPResult<?> formatSdcard(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
@@ -192,7 +192,7 @@ public class ApiDeviceControlController {
      * @param channelId 通道编码
      * @return 存储卡状态信息
      */
-    @GetMapping("/storage_card_status_query/{deviceId}/{channelId}"))
+    @GetMapping("/storage_card_status_query/{deviceId}/{channelId}")
     public WVPResult<?> queryStorageCardStatus(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
@@ -287,7 +287,7 @@ public class ApiDeviceControlController {
      * @param sessionId    会话 ID（32~128字节，前端生成 UUID）
      * @return 操作结果
      */
-    @PostMapping("/device_upgrade/{deviceId}/{channelId}"))
+    @PostMapping("/device_upgrade/{deviceId}/{channelId}")
     public WVPResult<?> deviceUpgrade(
             @PathVariable String deviceId,
             @PathVariable String channelId,
@@ -333,7 +333,7 @@ public class ApiDeviceControlController {
      * @param channelId 通道编码
      * @return 查询结果（命令已下发，结果由设备异步返回）
      */
-    @GetMapping("/home_position_query/{deviceId}/{channelId}"))
+    @GetMapping("/home_position_query/{deviceId}/{channelId}")
     public WVPResult<?> queryHomePosition(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
@@ -367,7 +367,7 @@ public class ApiDeviceControlController {
      * @param trackListId 巡航轨迹列表 ID（可选，不传则查询所有）
      * @return 查询结果
      */
-    @GetMapping("/cruise_track_query/{deviceId}/{channelId}"))
+    @GetMapping("/cruise_track_query/{deviceId}/{channelId}")
     public WVPResult<?> queryCruiseTrack(
             @PathVariable String deviceId,
             @PathVariable String channelId,
@@ -402,7 +402,7 @@ public class ApiDeviceControlController {
      * @param channelId 通道编码
      * @return 查询结果
      */
-    @PostMapping("/ptz_precise_status_query/{deviceId}/{channelId}"))
+    @PostMapping("/ptz_precise_status_query/{deviceId}/{channelId}")
     public WVPResult<?> queryPtzPreciseStatus(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
@@ -445,7 +445,7 @@ public class ApiDeviceControlController {
      * @param sessionId  会话 ID（可选，前端生成 UUID）
      * @return 操作结果
      */
-    @PostMapping("/snapshot_config/{deviceId}/{channelId}"))
+    @PostMapping("/snapshot_config/{deviceId}/{channelId}")
     public WVPResult<?> snapshotConfig(
             @PathVariable String deviceId,
             @PathVariable String channelId,
