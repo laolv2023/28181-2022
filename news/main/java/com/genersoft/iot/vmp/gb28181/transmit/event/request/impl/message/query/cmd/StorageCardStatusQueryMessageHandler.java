@@ -237,11 +237,13 @@ public class StorageCardStatusQueryMessageHandler extends SIPRequestProcessorPar
         xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : SipCharsetHelper.escapeXml(sn)).append("</SN>\r\n");
         xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<Result>").append(result).append("</Result>\r\n");
-        xml.append("<StorageCard>\r\n");
-        xml.append("<Status>").append(status).append("</Status>\r\n");
-        xml.append("<Capacity>").append(capacity).append("</Capacity>\r\n");
-        xml.append("<RemainCapacity>").append(remainCapacity).append("</RemainCapacity>\r\n");
-        xml.append("</StorageCard>\r\n");
+        // SDcardStatusInfo 包装元素（GB/T 28181-2022 A.2.4.1.6 规范要求）
+        xml.append("<SDcardStatusInfo>\r\n");
+        xml.append("<status>").append(status).append("</status>\r\n");
+        xml.append("<capacity>").append(capacity).append("</capacity>\r\n");
+        // 规范字段名为 FreeSpace（非 RemainCapacity）
+        xml.append("<FreeSpace>").append(remainCapacity).append("</FreeSpace>\r\n");
+        xml.append("</SDcardStatusInfo>\r\n");
         xml.append("</Response>\r\n");
         return xml.toString();
         // 审计修复P1-16~19: 响应XML通过SIP响应消息返回给请求方, 非主动下发
