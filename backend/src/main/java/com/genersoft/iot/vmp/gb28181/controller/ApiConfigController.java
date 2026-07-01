@@ -28,6 +28,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @Slf4j
 // 注意: 需在Spring Security配置类上添加 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @RestController
+@CrossOrigin(origins = "${wvp.cors.allowed-origins:}", allowCredentials = "true", maxAge = 3600)
 @PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/api/device/config")
 // 审计修复P1-04: 配置当前存储在ConcurrentHashMap内存中, 生产环境应持久化到数据库或配置文件
