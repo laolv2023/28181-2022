@@ -134,6 +134,7 @@ export default {
   // ========== Data ==========
   data() {
     return {
+      abortController: null,
       timer: null,
       /**
        * 抓拍配置表单
