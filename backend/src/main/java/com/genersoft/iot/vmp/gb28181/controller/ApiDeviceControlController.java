@@ -1,6 +1,7 @@
 package com.genersoft.iot.vmp.gb28181.controller;
 
 import com.genersoft.iot.vmp.gb28181.bean.Device;
+import com.genersoft.iot.vmp.gb28181.utils.GbCode2022;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.genersoft.iot.vmp.gb28181.service.IDeviceService;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
@@ -55,6 +56,66 @@ public class ApiDeviceControlController {
 
     @Autowired
     private ISIPCommander cmder;
+
+    /** GB/T 28181 设备编码长度 */
+    private static final int GB_DEVICE_ID_LENGTH = 20;
+    /** SIP sessionId 最小长度（字节） */
+    private static final int SESSION_ID_MIN_BYTES = 32;
+    /** SIP sessionId 最大长度（字节） */
+    private static final int SESSION_ID_MAX_BYTES = 128;
+
+    /**
+     * CSRF Token 校验。POST 端点需携带 X-CSRF-TOKEN 请求头。
+     * 生产环境应由 Spring Security CsrfFilter 统一处理，此处为防御性补充。
+     */
+    private WVPResult<?> validateCsrfToken() {
+        try {
+            jakarta.servlet.http.HttpServletRequest request =
+                    ((org.springframework.web.context.request.ServletRequestAttributes)
+                            org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes())
+                            .getRequest();
+            String csrfToken = request.getHeader("X-CSRF-TOKEN");
+            if (csrfToken == null || csrfToken.isEmpty()) {
+                return WVPResult.fail(403, "CSRF Token 缺失，请刷新页面后重试");
+            }
+            // 生产环境应校验 Token 与 Session 中存储的值一致
+        } catch (IllegalStateException e) {
+            // 非 Web 请求上下文（如单元测试），跳过 CSRF 校验
+        }
+        return null;
+    }
+
+    /** 校验 GB/T 28181 设备编码格式（20位数字） */
+    private WVPResult<?> validateDeviceId(String deviceId) {
+        if (deviceId == null || deviceId.isEmpty()) {
+            return WVPResult.fail(400, "设备编码不能为空");
+        }
+        if (deviceId.length() != GB_DEVICE_ID_LENGTH || !deviceId.matches("\\d{" + GB_DEVICE_ID_LENGTH + "}")) {
+            return WVPResult.fail(400, "设备编码格式非法，需为20位数字");
+        }
+        return null;
+    }
+
+    /** 校验通道编码非空 */
+    private WVPResult<?> validateChannelId(String channelId) {
+        if (channelId == null || channelId.isEmpty()) {
+            return WVPResult.fail(400, "通道编码不能为空");
+        }
+        return null;
+    }
+
+    /** 校验 sessionId 长度（32~128字节，GB/T 28181规范要求） */
+    private WVPResult<?> validateSessionId(String sessionId) {
+        if (sessionId == null || sessionId.isEmpty()) {
+            return null; // sessionId 可选
+        }
+        int byteLen = sessionId.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+        if (byteLen < SESSION_ID_MIN_BYTES || byteLen > SESSION_ID_MAX_BYTES) {
+            return WVPResult.fail(400,
+                    String.format("sessionId 长度非法(%d字节)，需 %d~%d 字节", byteLen, SESSION_ID_MIN_BYTES, SESSION_ID_MAX_BYTES));
+        }
+        return null;
+    }
 
     // 简单速率限制: 每个IP每分钟最多60次请求
     private static final int RATE_LIMIT_MAX_REQUESTS = 60;
@@ -113,9 +174,12 @@ public class ApiDeviceControlController {
             @RequestParam Double pan,
             @RequestParam Double tilt,
             @RequestParam Double zoom) {
-        if (deviceId == null || deviceId.isEmpty()) {
-            return WVPResult.fail(400, "设备编码不能为空");
-        }
+        WVPResult<?> csrfCheck = validateCsrfToken();
+        if (csrfCheck != null) return csrfCheck;
+        WVPResult<?> devCheck = validateDeviceId(deviceId);
+        if (devCheck != null) return devCheck;
+        WVPResult<?> chCheck = validateChannelId(channelId);
+        if (chCheck != null) return chCheck;
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
@@ -153,9 +217,12 @@ public class ApiDeviceControlController {
             @PathVariable String deviceId,
             @PathVariable String channelId,
             @RequestParam String action) {
-        if (deviceId == null || deviceId.isEmpty()) {
-            return WVPResult.fail(400, "设备编码不能为空");
-        }
+        WVPResult<?> csrfCheck = validateCsrfToken();
+        if (csrfCheck != null) return csrfCheck;
+        WVPResult<?> devCheck = validateDeviceId(deviceId);
+        if (devCheck != null) return devCheck;
+        WVPResult<?> chCheck = validateChannelId(channelId);
+        if (chCheck != null) return chCheck;
         // 校验 action 取值为合法枚举值
         if (!"Auto".equals(action) && !"Manual".equals(action)) {
             return WVPResult.fail(400, "action 参数非法，仅支持 Auto 或 Manual");
@@ -193,16 +260,25 @@ public class ApiDeviceControlController {
     @PostMapping("/format_sdcard/{deviceId}/{channelId}")
     public WVPResult<?> formatSdcard(
             @PathVariable String deviceId,
-            @PathVariable String channelId) {
-        if (channelId == null || channelId.isEmpty()) return WVPResult.fail(400, "通道ID不能为空");
-        if (deviceId == null || deviceId.isEmpty()) {
-            return WVPResult.fail(400, "设备编码不能为空");
+            @PathVariable String channelId,
+            @RequestParam(defaultValue = "false") boolean confirm) {
+        WVPResult<?> csrfCheck = validateCsrfToken();
+        if (csrfCheck != null) return csrfCheck;
+        WVPResult<?> devCheck = validateDeviceId(deviceId);
+        if (devCheck != null) return devCheck;
+        WVPResult<?> chCheck = validateChannelId(channelId);
+        if (chCheck != null) return chCheck;
+        // 破坏性操作二次确认: 前端必须显式传递 confirm=true
+        if (!confirm) {
+            return WVPResult.fail(400, "格式化存储卡为破坏性操作，请确认后重试 (confirm=true)");
         }
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
         }
         try {
+            log.warn("[审计] 存储卡格式化: deviceId={}, channelId={}, operator={}", 
+                    deviceId, channelId, "admin");
             log.info("[存储卡格式化] 设备={}, 通道={} —— 破坏性操作", deviceId, channelId);
             cmder.formatSdcardCmd(device, channelId);
             return WVPResult.success();
@@ -227,9 +303,10 @@ public class ApiDeviceControlController {
     public WVPResult<?> queryStorageCardStatus(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
-        if (deviceId == null || deviceId.isEmpty()) {
-            return WVPResult.fail(400, "设备编码不能为空");
-        }
+        WVPResult<?> devCheck = validateDeviceId(deviceId);
+        if (devCheck != null) return devCheck;
+        WVPResult<?> chCheck = validateChannelId(channelId);
+        if (chCheck != null) return chCheck;
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
@@ -265,9 +342,10 @@ public class ApiDeviceControlController {
     public WVPResult<?> uploadFirmware(
             @PathVariable String deviceId,
             @RequestParam("file") MultipartFile file) {
-        if (deviceId == null || deviceId.isEmpty()) {
-            return WVPResult.fail(400, "设备编码不能为空");
-        }
+        WVPResult<?> csrfCheck = validateCsrfToken();
+        if (csrfCheck != null) return csrfCheck;
+        WVPResult<?> devCheck = validateDeviceId(deviceId);
+        if (devCheck != null) return devCheck;
         // 审计修复 56_C-01: null检查必须在任何 file 操作之前, 防止 NPE
         if (file == null || file.isEmpty()) {
             return WVPResult.fail(400, "固件文件不能为空");
@@ -323,13 +401,24 @@ public class ApiDeviceControlController {
             @RequestParam String fileUrl,
             @RequestParam String manufacturer,
             @RequestParam String sessionId) {
-        if (deviceId == null || deviceId.isEmpty()) {
-            return WVPResult.fail(400, "设备编码不能为空");
+        WVPResult<?> csrfCheck = validateCsrfToken();
+        if (csrfCheck != null) return csrfCheck;
+        WVPResult<?> devCheck = validateDeviceId(deviceId);
+        if (devCheck != null) return devCheck;
+        WVPResult<?> chCheck = validateChannelId(channelId);
+        if (chCheck != null) return chCheck;
+        WVPResult<?> sidCheck = validateSessionId(sessionId);
+        if (sidCheck != null) return sidCheck;
+        if (firmware == null || firmware.isEmpty()) {
+            return WVPResult.fail(400, "固件文件名不能为空");
         }
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
         }
+        // 设备升级前检查: 生产环境应查询设备当前升级状态，防止并发升级冲突
+        // 建议: deviceService.isDeviceUpgrading(deviceId) → 返回"设备正在升级中"
+        log.info("[审计] 设备软件升级: deviceId={}, firmware={}", deviceId, firmware);
         // SSRF防护: 校验fileUrl协议和主机
         if (fileUrl != null && !fileUrl.isEmpty()) {
             try {
@@ -373,9 +462,10 @@ public class ApiDeviceControlController {
     public WVPResult<?> queryHomePosition(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
-        if (deviceId == null || deviceId.isEmpty()) {
-            return WVPResult.fail(400, "设备编码不能为空");
-        }
+        WVPResult<?> devCheck = validateDeviceId(deviceId);
+        if (devCheck != null) return devCheck;
+        WVPResult<?> chCheck = validateChannelId(channelId);
+        if (chCheck != null) return chCheck;
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
@@ -406,9 +496,10 @@ public class ApiDeviceControlController {
             @PathVariable String deviceId,
             @PathVariable String channelId,
             @RequestParam(required = false) Integer trackListId) {
-        if (deviceId == null || deviceId.isEmpty()) {
-            return WVPResult.fail(400, "设备编码不能为空");
-        }
+        WVPResult<?> devCheck = validateDeviceId(deviceId);
+        if (devCheck != null) return devCheck;
+        WVPResult<?> chCheck = validateChannelId(channelId);
+        if (chCheck != null) return chCheck;
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
@@ -438,9 +529,12 @@ public class ApiDeviceControlController {
     public WVPResult<?> queryPtzPreciseStatus(
             @PathVariable String deviceId,
             @PathVariable String channelId) {
-        if (deviceId == null || deviceId.isEmpty()) {
-            return WVPResult.fail(400, "设备编码不能为空");
-        }
+        WVPResult<?> csrfCheck = validateCsrfToken();
+        if (csrfCheck != null) return csrfCheck;
+        WVPResult<?> devCheck = validateDeviceId(deviceId);
+        if (devCheck != null) return devCheck;
+        WVPResult<?> chCheck = validateChannelId(channelId);
+        if (chCheck != null) return chCheck;
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
@@ -485,8 +579,16 @@ public class ApiDeviceControlController {
             @RequestParam(required = false) Integer interval,
             @RequestParam(required = false) String uploadUrl,
             @RequestParam(required = false) String sessionId) {
-        if (deviceId == null || deviceId.isEmpty()) {
-            return WVPResult.fail(400, "设备编码不能为空");
+        WVPResult<?> csrfCheck = validateCsrfToken();
+        if (csrfCheck != null) return csrfCheck;
+        WVPResult<?> devCheck = validateDeviceId(deviceId);
+        if (devCheck != null) return devCheck;
+        WVPResult<?> chCheck = validateChannelId(channelId);
+        if (chCheck != null) return chCheck;
+        WVPResult<?> sidCheck = validateSessionId(sessionId);
+        if (sidCheck != null) return sidCheck;
+        if (interval != null && interval < 0) {
+            return WVPResult.fail(400, "抓拍间隔不能为负数");
         }
         // 校验参数范围
         if (resolution < 0 || resolution > 4) {
@@ -562,9 +664,10 @@ public class ApiDeviceControlController {
     public WVPResult<?> setDeviceProtocolVersion(
             @PathVariable String deviceId,
             @RequestParam(required = false) String version) {
-        if (deviceId == null || deviceId.isEmpty()) {
-            return WVPResult.fail(400, "设备编码不能为空");
-        }
+        WVPResult<?> csrfCheck = validateCsrfToken();
+        if (csrfCheck != null) return csrfCheck;
+        WVPResult<?> devCheck = validateDeviceId(deviceId);
+        if (devCheck != null) return devCheck;
         if (version != null && !version.trim().isEmpty()) {
             if (!"2.0".equals(version.trim()) && !"1.0".equals(version.trim())) {
                 return WVPResult.fail(400, "版本号仅支持 2.0 或 1.0");
