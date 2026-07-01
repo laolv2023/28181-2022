@@ -11,7 +11,7 @@ import org.springframework.util.ObjectUtils;
  * <p>
  * <b>2016原有命令：</b><br>
  * PTZ(云台控制)、TeleBoot(远程启动)、Record(录像控制)、Guard(布防撤防)、
- * Alarm(告警控制)、IFame(强制关键帧)、DragZoomIn(拉框放大)、DragZoomOut(拉框缩小)、
+ * Alarm(告警控制)、IFrame(强制关键帧)、DragZoomIn(拉框放大)、DragZoomOut(拉框缩小)、
  * HomePosition(看守位)。
  * </p>
  * <p>

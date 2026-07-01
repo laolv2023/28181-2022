@@ -282,8 +282,15 @@ public final class GbCode2022 {
             return false;
         }
         // 校验采集位置码（第 14 位）
-        // 审计修复P2-13: 采集位置码取 2 位以支持 1~10 范围, 确保边界值 10 可被校验通过
-        String capturePositionCode = gbCode.substring(13, 15);
+        // 审计修复P2-13 + 56_B-02: 采集位置码范围1~10，
+        // 当位置14为'1'且位置15为'0'时表示"10"（2位），否则取1位
+        char c14 = gbCode.charAt(13);
+        String capturePositionCode;
+        if (c14 == '1' && gbCode.charAt(14) == '0') {
+            capturePositionCode = "10";
+        } else {
+            capturePositionCode = String.valueOf(c14);
+        }
         if (!isValidCapturePositionCode(capturePositionCode)) {
             return false;
         }
