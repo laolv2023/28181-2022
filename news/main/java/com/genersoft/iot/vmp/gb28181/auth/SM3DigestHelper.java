@@ -244,6 +244,9 @@ public final class SM3DigestHelper {
      */
     //** 摘要计算(SM3优先, 不可用时回退MD5) */
     public static String digestWithFallback(byte[] data) {
+        if (!SM3_AVAILABLE) {
+            throw new IllegalStateException("SM3算法不可用, 请引入BouncyCastle依赖");
+        }
         if (data == null) {
             return "";
         }
