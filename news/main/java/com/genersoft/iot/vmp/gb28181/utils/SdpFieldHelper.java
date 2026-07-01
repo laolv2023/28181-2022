@@ -112,6 +112,7 @@ public final class SdpFieldHelper {
      * @param sdpBuilder SDP 字符串构造器
      */
     public static void appendDownloadSField(StringBuilder sdpBuilder) {
+        if (!Boolean.parseBoolean(System.getProperty("wvp.sdp.2022fields.enabled", "true"))) return;
         if (sdpBuilder == null) {
             return;
         }
