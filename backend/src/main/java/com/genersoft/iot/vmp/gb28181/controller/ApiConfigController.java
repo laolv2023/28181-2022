@@ -147,15 +147,21 @@ public class ApiConfigController {
     /**
      * 保存配置到文件（持久化）
      */
-    private void saveConfigToFile() {
+    private void saveConfigToFile() throws java.io.IOException {
         java.util.Properties props = new java.util.Properties();
         props.setProperty("sip.tls.enabled", String.valueOf(SECURITY_CONFIG.getOrDefault("sipTlsEnabled", "false")));
         props.setProperty("sip.tls.algorithm", String.valueOf(SECURITY_CONFIG.getOrDefault("tlsAlgorithm", "SM2")));
         props.setProperty("sm3.enabled", String.valueOf(SECURITY_CONFIG.getOrDefault("sm3DigestEnabled", "true")));
         java.io.File f = new java.io.File(CONFIG_FILE);
         f.getParentFile().mkdirs();
-        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(f)) {
+        // 原子写入: 先写临时文件，再 rename 替换，防止写入中断导致配置文件损坏
+        java.io.File tmpFile = new java.io.File(CONFIG_FILE + ".tmp");
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(tmpFile)) {
             props.store(fos, "WVP Security Config");
+        }
+        if (!tmpFile.renameTo(f)) {
+            tmpFile.delete();
+            throw new java.io.IOException("配置文件原子写入失败: " + CONFIG_FILE);
         }
     }
 
