@@ -156,25 +156,25 @@ public final class RegisterRedirectHelper {
         logger.info("[注册重定向] 设备 {} 收到 302, 新注册目标 host={}, port={}, transport={}",
                 device.getDeviceId(), host, port, transport);
 
-        // 更新设备本地保存的注册地址
-        if (!ObjectUtils.isEmpty(host)) {
-            try {
-                if (!ObjectUtils.isEmpty(transport)) {
-                    device.setTransport(transport);
-                }
-                // 审计修复 56_C-06: 直接调用 setHost, 捕获 NoSuchMethodError 兼容不同版本 Device 类(非反射)
+        // 线程安全: 对 Device 对象的修改需要在同步块中进行,
+        // 防止并发重定向导致设备信息竞态覆盖
+        synchronized (device) {
+            if (!ObjectUtils.isEmpty(host)) {
                 try {
-                    device.setHost(host);
-                } catch (NoSuchMethodError ignored) {
-                    // Device 类无 setHost 方法，通过重新注册自动获取
+                    if (!ObjectUtils.isEmpty(transport)) {
+                        device.setTransport(transport);
+                    }
+                    try {
+                        device.setHost(host);
+                    } catch (NoSuchMethodError ignored) {
+                    }
+                    try {
+                        device.setPort(port);
+                    } catch (NoSuchMethodError | NumberFormatException ignored) {
+                    }
+                } catch (Exception e) {
+                    logger.debug("[注册重定向] Device 地址更新忽略: {}", e.getMessage());
                 }
-                try {
-                    device.setPort(port);
-                } catch (NoSuchMethodError | NumberFormatException ignored) {
-                    // Device 类无 setPort 方法或 port 非数字
-                }
-            } catch (Exception e) {
-                logger.debug("[注册重定向] Device 地址更新忽略: {}", e.getMessage());
             }
         }
 
