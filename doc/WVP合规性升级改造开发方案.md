@@ -187,7 +187,7 @@ private String protocolVersion;
  * @return true表示2022版设备, false表示2016版设备
  */
 public boolean isVersion2022() {
-    return protocolVersion != null && protocolVersion.startsWith("2.");
+    return protocolVersion != null && protocolVersion.startsWith("2.") // 注意: 与改造项1的版本号"2.0"耦合;
 }
 ```
 
@@ -205,7 +205,7 @@ public boolean isVersion2022() {
 - **改造位置**：第53行`DEFAULT_ALGORITHM`常量、第100行`setParameter("algorithm", ...)`、第138/147/203/207/229行`messageDigest.digest()`调用
 
 #### 设计文档依据
-- **来源**：设计文档第8.3节（第697~718行）
+- **来源**：设计文档第8.3节（第742~763行）
 - **规范原文**："应对SIP信令做数字摘要认证，宜支持SM3等数字摘要算法"
 - **2016版原文**："宜支持MD5、SHA-1、SHA-256等数字摘要算法"
 
@@ -215,7 +215,7 @@ public boolean isVersion2022() {
 
 ```java
 // === 改造项2: SM3摘要算法支持 ===
-// 来源: 设计文档第8.3节(第697~718行), 2022版8.3
+// 来源: 设计文档第8.3节(第742~763行), 2022版8.3
 // 规范要求: 摘要算法从MD5/SHA-1/SHA-256变更为SM3
 // 兼容说明: 保留MD5支持以兼容2016版设备(设计文档第16.2节兼容建议)
 
@@ -225,7 +225,7 @@ import java.security.MessageDigest;
 
 /**
  * 2022版默认摘要算法: SM3
- * 来源: 设计文档第8.3节(第697~718行), 2022版8.3"宜支持SM3等数字摘要算法"
+ * 来源: 设计文档第8.3节(第742~763行), 2022版8.3"宜支持SM3等数字摘要算法"
  */
 public static final String DEFAULT_ALGORITHM_2022 = "SM3";
 
@@ -237,7 +237,7 @@ public static final String DEFAULT_ALGORITHM_2016 = "MD5";
 
 /**
  * 当前默认算法(配置驱动)
- * 来源: 设计文档第16.2节兼容建议"平台宜同时支持SM3(2022)和MD5(2016)"
+ * 来源: 设计文档第16.2节兼容建议"平台宜同时支持SM3(2022)和MD5/SHA-256（2016）"
  * 改造说明: 通过配置项决定默认算法, 默认SM3, 可回退MD5
  */
 public static String DEFAULT_ALGORITHM = DEFAULT_ALGORITHM_2022;
@@ -286,13 +286,13 @@ private String calculateDigest(String data, String algorithm) {
  * @return 算法名称("SM3"或"MD5")
  */
 private String selectAlgorithm(Device device) {
-    if (device != null && device.isVersion2022()) {
+    if (device != null && device.isVersion2022() // 依赖改造项1的版本协商结果) {
         // 2022版设备: 使用SM3
         // 来源: 设计文档第8.3节, 2022版8.3
         return DEFAULT_ALGORITHM_2022;
     }
     // 2016版设备: 使用MD5(兼容)
-    // 来源: 设计文档第16.2节"平台宜同时支持SM3(2022)和MD5(2016)"
+    // 来源: 设计文档第16.2节"平台宜同时支持SM3(2022)和MD5/SHA-256（2016）"
     return DEFAULT_ALGORITHM_2016;
 }
 ```
@@ -302,7 +302,7 @@ private String selectAlgorithm(Device device) {
 ```java
 // === 改造项2调用: doAuthenticatePlainTextPassword方法 ===
 // 改造位置: 原第203行 messageDigest.digest(A1.getBytes()) 替换为 calculateDigest
-// 来源: 设计文档第8.3节(第697~718行)
+// 来源: 设计文档第8.3节(第742~763行)
 
 public boolean doAuthenticatePlainTextPassword(Request request, String password) {
     // ... 原有代码不变 ...
@@ -329,7 +329,7 @@ public boolean doAuthenticatePlainTextPassword(Request request, String password)
     String A2 = request.getMethod().toUpperCase() + ":" + uri.toString();
     
     // === 改造: 使用calculateDigest替代messageDigest.digest ===
-    // 来源: 设计文档第8.3节(第697~718行)
+    // 来源: 设计文档第8.3节(第742~763行)
     // 原代码: byte[] mdbytes = messageDigest.digest(A1.getBytes()); String HA1 = toHexString(mdbytes);
     String HA1 = calculateDigest(A1, algorithm);
     String HA2 = calculateDigest(A2, algorithm);
@@ -364,7 +364,7 @@ public boolean doAuthenticatePlainTextPassword(Request request, String password)
 ```java
 // === 改造项2调用: generateChallenge方法 ===
 // 改造位置: 原第100行 setParameter("algorithm", DEFAULT_ALGORITHM)
-// 来源: 设计文档第8.3节(第697~718行)
+// 来源: 设计文档第8.3节(第742~763行)
 
 public Response generateChallenge(Response response, String realm) {
     try {
@@ -402,14 +402,14 @@ public Response generateChallenge(Response response, String realm) {
 - **改造位置**：新增`handleRegisterRedirect`方法
 
 #### 设计文档依据
-- **来源**：设计文档第9.2节（第831~858行），2022版9.1.2.3
+- **来源**：设计文档第9.2节（第876~915行），2022版9.1.2.3
 - **规范原文**："注册重定向应符合IETF RFC 3261中8.3'重定向服务器'和21.3.3'302临时重定向'相关规定"
 
 #### 改造代码
 
 ```java
 // === 改造项3: 注册重定向功能 ===
-// 来源: 设计文档第9.2节(第831~858行), 2022版9.1.2.3
+// 来源: 设计文档第9.2节(第876~915行), 2022版9.1.2.3
 // 规范要求: 支持302临时重定向响应, 用于负载均衡和故障迁移
 
 import javax.sip.header.ContactHeader;
@@ -417,7 +417,7 @@ import javax.sip.address.SipURI;
 
 /**
  * 处理注册重定向
- * 来源: 设计文档第9.2节(第831~858行), 2022版9.1.2.3
+ * 来源: 设计文档第9.2节(第876~915行), 2022版9.1.2.3
  * 规范流程:
  *   1. 设备向SIP重定向服务器发起注册请求
  *   2. 服务器验证身份后, 根据策略选择目标SIP服务器A
@@ -481,14 +481,14 @@ private void sendRegisterRedirect(Request request, String targetServerId,
 - **改造位置**：第413行`content.append("s=Download\\r\\n")`
 
 #### 设计文档依据
-- **来源**：设计文档第7节（第624~625行），2022版附录G
+- **来源**：设计文档第7节（第669~671行），2022版附录G
 - **规范原文**：2022版s字段操作类型为"Play"、"Playback"、"DoWnload"（大写W）
 
 #### 改造代码
 
 ```java
 // === 改造项4: s字段Download→DoWnload ===
-// 来源: 设计文档第7节(第624~625行), 2022版附录G
+// 来源: 设计文档第7节(第669~671行), 2022版附录G
 // 规范要求: 2022版s字段"Download"拼写为"DoWnload"(大写W)
 // 改造位置: SIPCommander.java 第413行
 
@@ -496,7 +496,7 @@ private void sendRegisterRedirect(Request request, String targetServerId,
 // content.append("s=Download\r\n");
 
 // 改造后代码:
-// 来源: 设计文档第7节(第624~625行), 2022版附录G s字段规范原文
+// 来源: 设计文档第7节(第669~671行), 2022版附录G s字段规范原文
 content.append("s=DoWnload\r\n");  // 注意: W为大写
 ```
 
@@ -514,27 +514,27 @@ content.append("s=DoWnload\r\n");  // 注意: W为大写
 - **改造位置**：第525行`content.append("s=Talk\\r\\n")`
 
 #### 设计文档依据
-- **来源**：设计文档第7节（第624~625行），2022版附录G
+- **来源**：设计文档第7节（第669~671行），2022版附录G
 - **规范原文**：2022版删除了"Talk"操作类型，仅保留"Play"、"Playback"、"DoWnload"
 
 #### 改造代码
 
 ```java
 // === 改造项5: s字段删除Talk ===
-// 来源: 设计文档第7节(第624~625行), 2022版附录G
+// 来源: 设计文档第7节(第669~671行), 2022版附录G
 // 规范要求: 2022版删除"Talk"操作类型
-// 改造位置: SIPCommander.java 第525行(broadcastStreamCmd方法中)
+// 改造位置: SIPCommander.java 第525行(talkStreamCmd方法中)
 
 // 原代码:
 // content.append("s=Talk\r\n");
 
 // 改造后代码:
-// 来源: 设计文档第7节(第624~625行), 2022版附录G
+// 来源: 设计文档第7节(第669~671行), 2022版附录G
 // 规范说明: 2022版删除了Talk操作类型, 语音对讲使用Play
 // 兼容说明: 对2016版设备保留Talk支持(设计文档第16.2节兼容建议)
-if (device != null && device.isVersion2022()) {
+if (device != null && device.isVersion2022() // 依赖改造项1的版本协商结果) {
     // 2022版设备: 使用Play(规范已删除Talk)
-    // 来源: 设计文档第7节(第624~625行)
+    // 来源: 设计文档第7节(第669~671行)
     content.append("s=Play\r\n");
 } else {
     // 2016版设备: 保留Talk(兼容)
@@ -546,7 +546,7 @@ if (device != null && device.isVersion2022()) {
 #### 兼容性说明
 - 2022版设备使用"Play"，符合2022版规范
 - 2016版设备保留"Talk"，**不破坏原有功能**
-- 通过`device.isVersion2022()`判断设备版本（依赖改造项1的Device类字段）
+- 通过`device.isVersion2022() // 依赖改造项1的版本协商结果`判断设备版本（依赖改造项1的Device类字段）
 
 ---
 
@@ -557,14 +557,14 @@ if (device != null && device.isVersion2022()) {
 - **改造位置**：第467行`content.append("a=downloadspeed:" + downloadSpeed + "\\r\\n")`
 
 #### 设计文档依据
-- **来源**：设计文档第7节（第594~606行，第599行），2022版附录G
+- **来源**：设计文档第7节（第644~656行，第599行），2022版附录G
 - **规范原文**：2022版a字段倍速参数格式为"a=doWnloadspeed"（大写W）
 
 #### 改造代码
 
 ```java
 // === 改造项6: a=downloadspeed→a=doWnloadspeed ===
-// 来源: 设计文档第7节(第594~606行, 第599行), 2022版附录G
+// 来源: 设计文档第7节(第644~656行, 第599行), 2022版附录G
 // 规范要求: 2022版a字段倍速参数格式为"a=doWnloadspeed"(大写W)
 // 改造位置: SIPCommander.java 第467行
 
@@ -589,7 +589,7 @@ content.append("a=doWnloadspeed:" + downloadSpeed + "\r\n");  // 注意: W为大
 - **文件2**：`src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/control/cmd/DeviceControlQueryMessageHandler.java`
 
 #### 设计文档依据
-- **来源**：设计文档第10.1节（第898~923行），2022版A.2.3.1.11
+- **来源**：设计文档第10.1节（第943~1018行），2022版A.2.3.1.11
 - **规范原文**：2022版新增PTZ精准控制命令，XML元素名`PTzPrecisectrl`（小写z）
 
 #### 改造代码
@@ -598,7 +598,7 @@ content.append("a=doWnloadspeed:" + downloadSpeed + "\r\n");  // 注意: W为大
 
 ```java
 // === 改造项7: 新增PTZ精准控制枚举 ===
-// 来源: 设计文档第10.1节(第898~923行), 2022版A.2.3.1.11
+// 来源: 设计文档第10.1节(第943~1018行), 2022版A.2.3.1.11
 // 规范要求: 2022版新增PTZ精准控制命令, XML元素名PTzPrecisectrl(小写z)
 
 /**
@@ -613,7 +613,7 @@ PTZ_PRECISE_CTRL("PTzPrecisectrl", "PTZ精准控制"),
 
 ```java
 // === 改造项7: PTZ精准控制命令处理 ===
-// 来源: 设计文档第10.1节(第898~923行), 2022版A.2.3.1.11
+// 来源: 设计文档第10.1节(第943~1018行), 2022版A.2.3.1.11
 // 规范原文: CmdType为Devicecontrol, 子元素PTzPrecisectrl包含pan/Tilt/zoom
 
 case PTZ_PRECISE_CTRL:
@@ -623,7 +623,7 @@ case PTZ_PRECISE_CTRL:
 
 /**
  * 处理PTZ精准控制命令
- * 来源: 设计文档第10.1节(第898~923行), 2022版A.2.3.1.11
+ * 来源: 设计文档第10.1节(第943~1018行), 2022版A.2.3.1.11
  * 规范XML结构:
  *   <Control>
  *     <CmdType>Devicecontrol</CmdType>
@@ -668,14 +668,14 @@ private void handlePtzPreciseCtrl(CommonGBChannel channel, Element rootElement,
 - **文件**：`src/main/java/com/genersoft/iot/vmp/common/enums/DeviceControlType.java`
 
 #### 设计文档依据
-- **来源**：设计文档第10.1节（第898~923行），2022版A.2.3.1.13
+- **来源**：设计文档第10.1节（第943~1018行），2022版A.2.3.1.13
 - **规范原文**：2022版新增存储卡格式化命令，XML元素名`FormatsDcard`
 
 #### 改造代码
 
 ```java
 // === 改造项8: 新增存储卡格式化枚举 ===
-// 来源: 设计文档第10.1节(第898~923行), 2022版A.2.3.1.13
+// 来源: 设计文档第10.1节(第943~1018行), 2022版A.2.3.1.13
 // 规范要求: 2022版新增存储卡格式化命令, XML元素名FormatsDcard
 
 /**
@@ -694,14 +694,14 @@ FORMAT_SDCARD("FormatsDcard", "存储卡格式化"),
 - **文件**：`src/main/java/com/genersoft/iot/vmp/common/enums/DeviceControlType.java`
 
 #### 设计文档依据
-- **来源**：设计文档第10.1节（第898~923行），2022版A.2.3.1.14
+- **来源**：设计文档第10.1节（第943~1018行），2022版A.2.3.1.14
 - **规范原文**：2022版新增目标跟踪命令，XML元素名`TargetTrack`
 
 #### 改造代码
 
 ```java
 // === 改造项9: 新增目标跟踪枚举 ===
-// 来源: 设计文档第10.1节(第898~923行), 2022版A.2.3.1.14
+// 来源: 设计文档第10.1节(第943~1018行), 2022版A.2.3.1.14
 // 规范要求: 2022版新增目标跟踪命令, XML元素名TargetTrack
 
 /**
@@ -721,14 +721,14 @@ TARGET_TRACK("TargetTrack", "目标跟踪"),
 - **文件**：`src/main/java/com/genersoft/iot/vmp/common/enums/DeviceControlType.java`
 
 #### 设计文档依据
-- **来源**：设计文档第10.1节（第898~923行），2022版A.2.3.1.12
+- **来源**：设计文档第10.1节（第943~1018行），2022版A.2.3.1.12
 - **规范原文**：2022版新增设备软件升级命令，XML元素名`Deviceupgrade`（小写u）
 
 #### 改造代码
 
 ```java
 // === 改造项10: 新增设备软件升级枚举 ===
-// 来源: 设计文档第10.1节(第898~923行), 2022版A.2.3.1.12
+// 来源: 设计文档第10.1节(第943~1018行), 2022版A.2.3.1.12
 // 规范要求: 2022版新增设备软件升级命令, XML元素名Deviceupgrade(小写u)
 
 /**
@@ -801,7 +801,7 @@ private String buildDeviceUpgradeCmd(String deviceId, int sn, String firmware,
 - **文件**：`src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/query/cmd/`目录新增处理器
 
 #### 设计文档依据
-- **来源**：设计文档第11.1节（第940~959行），2022版A.2.4.10~14
+- **来源**：设计文档第11.1节（第988~1036行），2022版A.2.4.10~14
 - **规范原文**：2022版新增5个查询命令及对应应答命令
 
 #### 改造代码
@@ -810,7 +810,7 @@ private String buildDeviceUpgradeCmd(String deviceId, int sn, String firmware,
 
 ```java
 // === 改造项11: 新增看守位信息查询处理器 ===
-// 来源: 设计文档第11.1节(第940~959行), 2022版A.2.4.10/A.2.6.12
+// 来源: 设计文档第11.1节(第988~1036行), 2022版A.2.4.10/A.2.6.12
 // 规范要求: CmdType为HomepositionQuery, 应答包含Homeposition(Enabled/ResetTime/presetIndex)
 
 package com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.query.cmd;
@@ -823,7 +823,7 @@ import javax.sip.RequestEvent;
 
 /**
  * 看守位信息查询处理器
- * 来源: 设计文档第11.1节(第940~959行), 2022版A.2.4.10
+ * 来源: 设计文档第11.1节(第988~1036行), 2022版A.2.4.10
  * 规范CmdType: HomepositionQuery(来源spec_2022.txt行2375)
  */
 @Slf4j
@@ -855,7 +855,7 @@ public class HomepositionQueryMessageHandler extends QueryMessageHandler {
 
 ```java
 // === 改造项12: 新增巡航轨迹列表查询处理器 ===
-// 来源: 设计文档第11.1节(第940~959行), 2022版A.2.4.11/A.2.6.13
+// 来源: 设计文档第11.1节(第988~1036行), 2022版A.2.4.11/A.2.6.13
 // 规范CmdType: cruiseTrackListQuery(来源spec_2022.txt行2381)
 
 /**
@@ -878,7 +878,7 @@ public class CruiseTrackListQueryMessageHandler extends QueryMessageHandler {
 
 ```java
 // === 改造项13: 新增PTZ精准状态查询处理器 ===
-// 来源: 设计文档第11.1节(第940~959行), 2022版A.2.4.13/A.2.6.15
+// 来源: 设计文档第11.1节(第988~1036行), 2022版A.2.4.13/A.2.6.15
 // 规范CmdType: pTZposition(来源spec_2022.txt行2395/2884)
 
 /**
@@ -901,7 +901,7 @@ public class PTZPreciseStatusQueryMessageHandler extends QueryMessageHandler {
 
 ```java
 // === 改造项14: 新增存储卡状态查询处理器 ===
-// 来源: 设计文档第11.1节(第940~959行), 2022版A.2.4.14/A.2.6.16
+// 来源: 设计文档第11.1节(第988~1036行), 2022版A.2.4.14/A.2.6.16
 // 规范CmdType: SDcardStatus(来源spec_2022.txt行2404/2901)
 
 /**
@@ -928,14 +928,14 @@ public class SDcardStatusQueryMessageHandler extends QueryMessageHandler {
 - **文件**：`src/main/java/com/genersoft/iot/vmp/gb28181/transmit/event/request/impl/message/notify/cmd/`目录新增处理器
 
 #### 设计文档依据
-- **来源**：设计文档第12.2节（第1037~1080行），2022版9.14
+- **来源**：设计文档第12.2节（第1085~1142行），2022版9.14
 - **规范原文**：2022版新增图像抓拍功能，通知命令CmdType为`uploadsnapshotFinished`
 
 #### 改造代码
 
 ```java
 // === 改造项15: 新增图像抓拍传输完成通知处理器 ===
-// 来源: 设计文档第12.2节(第1037~1080行), 2022版9.14/A.2.5.7
+// 来源: 设计文档第12.2节(第1085~1142行), 2022版9.14/A.2.5.7
 // 规范要求: CmdType为uploadsnapshotFinished(全小写u, 来源spec_2022.txt行2516)
 
 package com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.notify.cmd;
@@ -947,7 +947,7 @@ import javax.sip.RequestEvent;
 
 /**
  * 图像抓拍传输完成通知处理器
- * 来源: 设计文档第12.2节(第1037~1080行), 2022版9.14/A.2.5.7
+ * 来源: 设计文档第12.2节(第1085~1142行), 2022版9.14/A.2.5.7
  * 规范CmdType: uploadsnapshotFinished(来源spec_2022.txt行2516)
  * XML结构:
  *   <Notify>
@@ -1106,7 +1106,7 @@ private void appendAACAudioSdp(StringBuffer content) {
 
 ```java
 // === 改造项18: SDP f字段启用并支持H.265/AAC编码格式 ===
-// 来源: 设计文档第7节(第594~606行), 2022版附录G
+// 来源: 设计文档第7节(第644~656行), 2022版附录G
 // 规范要求: f字段结构完整性, H.265=5, SVAC音频=5, AAC=6
 
 /**
@@ -1199,7 +1199,7 @@ private void appendUField(StringBuffer content, String deviceId, int downloadTyp
 
 ```java
 // === 改造项24: MANSRTSP scale头取值限制 ===
-// 来源: 设计文档第4.3.5节(第328行), 2022版附录B.2.7
+// 来源: 设计文档第4.3.5节(第347行), 2022版附录B.2.7
 // 规范要求: scale头应支持的基本取值为0.25、0.5、1、2、4
 // 改造位置: SIPCommander.java 第1444行
 
@@ -1208,7 +1208,7 @@ private void appendUField(StringBuffer content, String deviceId, int downloadTyp
 
 // 改造后代码:
 private void appendScale(StringBuffer content, double speed) {
-    // 来源: 设计文档第4.3.5节(第328行), 2022版附录B.2.7
+    // 来源: 设计文档第4.3.5节(第347行), 2022版附录B.2.7
     // 规范取值: 0.25, 0.5, 1, 2, 4
     double[] validScales = {0.25, 0.5, 1, 2, 4};
     double closest = validScales[0];
@@ -1224,16 +1224,16 @@ private void appendScale(StringBuffer content, double speed) {
 }
 
 // === 改造项25: MANSRTSP倒放命令支持 ===
-// 来源: 设计文档第4.3.5节(第330行), 2022版附录B.2.8
+// 来源: 设计文档第4.3.5节(第357行), 2022版附录B.2.8
 // 规范要求: scale头必须是负数, 应至少支持-1
 private void appendReverseScale(StringBuffer content, double speed) {
-    // 来源: 设计文档第4.3.5节(第330行), 2022版附录B.2.8
+    // 来源: 设计文档第4.3.5节(第357行), 2022版附录B.2.8
     // 倒放: scale为负数, 至少支持-1
     content.append("Scale: " + (-Math.abs(speed)) + "\r\n");
 }
 
 // === 改造项26: TCP媒体传输重连机制 ===
-// 来源: 设计文档第13.4节(第1471~1485行), 2022版附录D
+// 来源: 设计文档第13.4节(第1522~1536行), 2022版附录D
 // 规范要求: 重连间隔应不小于1s, 重连次数应不小于3次
 // 改造说明: WVP的媒体传输由ZLMediaKit负责, 此方法为WVP侧的重连调度逻辑
 // 实际TCP重连由ZLMediaKit的stream-none-reader超时和reconnect配置实现
@@ -1249,10 +1249,10 @@ private void reconnectTcpMedia(String ip, int port, int maxRetries, int interval
             // 通过ZLMediaKit API触发媒体流重连
             // 来源: ZLMediaKit REST API - /index/api/replaySSE
             // WVP通过ZLMediaKit的mediaServerId获取MediaServerItem, 调用zlmresful接口重连
-            MediaServerItem mediaServer = mediaServerService.getMediaServerByIp(ip, port);
+            MediaServer mediaServer = mediaServerService.getMediaServerByAppAndStream(ip, port);
             if (mediaServer != null) {
                 // 调用ZLMediaKit的重连接口
-                zlmresfulful.reconnectMediaStream(mediaServer, ip, port);
+                zlmresTfulUtils.reconnectStream(mediaServer, ip, port);
                 log.info("[TCP重连] 第{}次重连 {}:{} 成功", i + 1, ip, port);
                 return; // 重连成功
             } else {
@@ -1278,7 +1278,7 @@ private void reconnectTcpMedia(String ip, int port, int maxRetries, int interval
 
 ```java
 // === 改造项27: Monitor-user-Identity头域支持 ===
-// 来源: 设计文档第8.3节(第697~718行), 2022版8.3
+// 来源: 设计文档第8.3节(第742~763行), 2022版8.3
 // 规范要求: 跨域访问使用Monitor-user-Identity头域(小写u)
 // 改造说明: 2016版为Monitor-User-Identity(大写U), 2022版改为Monitor-user-Identity(小写u)
 private static final String HEADER_MONITOR_USER_IDENTITY = "Monitor-user-Identity";
@@ -1456,12 +1456,12 @@ private void addPathHeaders(Request request, String routePath, String preferredP
     }
 }
 
-// === 改造项34: 摄像机采集部位类型代码 ===
-// 来源: 设计文档第13.10节(第1612~1619行), 2022版附录O
-// 规范要求: 摄像机采集部位类型代码(规范性)
+// === 改造项34: 摄像机采集部位类型代码（待核实2022版附录O原文） ===
+// 来源: 设计文档第13.10节(第1663~1670行), 2022版附录O
+// 规范要求: 摄像机采集部位类型代码（待核实2022版附录O原文）(规范性)
 // 改造说明: 附录O为规范性附录, 需在设备目录信息中支持
 /**
- * 摄像机采集部位类型代码校验
+ * 摄像机采集部位类型代码（待核实2022版附录O原文）校验
  * 来源: 设计文档第13.10节, 2022版附录O
  * 类型代码: 1-前, 2-后, 3-左, 4-右, 5-上, 6-下, 7-左前, 8-右前, 9-左后, 10-右后
  */
@@ -1538,7 +1538,7 @@ public static Element getRootElement(byte[] content, String charset) throws Docu
 
 ```java
 // === 改造项36: 行政区划代码更新 ===
-// 来源: 设计文档第13.5节(第1486~1510行), 2022版附录E
+// 来源: 设计文档第13.5节(第1537~1601行), 2022版附录E
 // 规范要求: 使用最新行政区划代码(非GB/T2260—2007)
 // 改造位置: GbCode.java 第13行注释
 
@@ -1564,7 +1564,7 @@ public static boolean isValidAdminCode(String adminCode) {
 }
 
 // === 改造项37: 类型编码扩展校验 ===
-// 来源: 设计文档第13.5节(第1486~1510行), 2022版附录E
+// 来源: 设计文档第13.5节(第1537~1601行), 2022版附录E
 // 规范要求: 新增类型编码120~125/140~143/502/503/505
 // 改造位置: GbCode.java 新增类型编码校验方法
 
@@ -1583,8 +1583,8 @@ public static boolean isNewTypeCode(String typeCode) {
 }
 
 // === 改造项38: 网络标识编码取值校验 ===
-// 来源: 设计文档第13.5节(第1486~1510行), 2022版附录E
-// 规范要求: 网络标识0~8(0/1公安视频传输网, 2行业专网, 3政法信息网, 4公安移动信息网, 5公安信息网, 6电子政务外网, 7互联网, 8专线, 9预留)
+// 来源: 设计文档第13.5节(第1537~1601行), 2022版附录E
+// 规范要求: 网络标识0~9(0/1公安视频传输网, 2行业专网, 3政法信息网, 4公安移动信息网, 5公安信息网, 6电子政务外网, 7互联网, 8专线, 9预留)
 // 改造位置: GbCode.java 新增网络标识校验方法
 
 /**
@@ -1714,8 +1714,23 @@ private void appendSvctime(StringBuffer content, String svctime) {
 本方案针对 WVP 2.7.4 的 **38 个需升级项**，给出了具体的改造模块、改造位置和改造代码。方案遵循以下原则：
 
 1. **不破坏原有功能**：所有改造采用增量方式，保留原有逻辑作为兼容回退
-2. **配置驱动**：通过`device.isVersion2022()`判断设备版本，实现2016/2022双版本兼容
+2. **配置驱动**：通过`device.isVersion2022() // 依赖改造项1的版本协商结果`判断设备版本，实现2016/2022双版本兼容
 3. **来源可追溯**：每处改造标注设计文档来源和规范原文
 4. **生产级代码**：包含异常处理、日志记录、线程安全
 
 **建议**：按照第六节的实施计划，分三个阶段实施升级，并在每个阶段完成后进行充分的兼容性测试和回归测试。
+
+
+---
+
+## 附：方案38项与核查报告43项合并映射表
+
+| 方案改造项 | 对应核查报告项 | 说明 |
+|---|---|---|
+| 改造项1 | PRO-01 | X-GB-ver头域 |
+| 改造项2 | PRO-02 | SM3摘要算法 |
+| 改造项7 | PRO-03/04 | PTZ精准控制+PTZ精准位置变化事件（合并） |
+| 改造项11 | PRO-05/06 | PTZ精准状态查询+PTZ精准位置变化通知（合并） |
+| 改造项15 | PRO-07/08 | 图像抓拍配置+图像抓拍完成通知（合并） |
+
+> **说明**：方案38项合并了核查报告43项中的5对相关项，实际覆盖43项全部内容。
