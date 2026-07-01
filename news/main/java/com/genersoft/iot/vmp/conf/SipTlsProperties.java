@@ -363,4 +363,4 @@ public class SipTlsProperties {
     public char[] getTrustStorePasswordChars() {
         return trustStorePassword != null ? trustStorePassword.toCharArray() : null;
     }
-
+}
