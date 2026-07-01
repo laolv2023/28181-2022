@@ -158,7 +158,7 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
                 device != null ? device.getDeviceId() : "null");
         // 设备端通常作为查询响应方而非发起方，此处仅 ACK
         // 审计修复P1-09~12: 响应XML通过SIP 200 OK消息体返回给请求方
-        try { evt.getResponse().setContent(responseXml.getBytes("GB18030"), evt.getResponse().getContentTypeHeader()); } catch (Exception ex) { log.warn("设置响应内容失败", ex); }
+        try { if (evt.getResponse() != null) { evt.getResponse().setContent(responseXml.getBytes("GB18030"), evt.getResponse().getContentTypeHeader()); } } catch (Exception ex) { log.warn("设置响应内容失败", ex); }
         responseOk(evt);
     }
 
