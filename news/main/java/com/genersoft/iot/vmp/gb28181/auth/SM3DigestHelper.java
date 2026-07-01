@@ -242,7 +242,7 @@ public final class SM3DigestHelper {
      * @param data 原始数据
      * @return 摘要十六进制字符串（SM3 为 64 字符, MD5 为 32 字符）
      */
-    //** 摘要计算(SM3优先, 不可用时回退MD5) */
+    /** 摘要计算(SM3优先, 不可用时回退MD5) */
     public static String digestWithFallback(byte[] data) {
         if (!SM3_AVAILABLE) {
             throw new IllegalStateException("SM3算法不可用, 请引入BouncyCastle依赖");
