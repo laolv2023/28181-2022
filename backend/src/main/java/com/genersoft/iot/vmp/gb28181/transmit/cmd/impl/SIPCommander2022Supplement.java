@@ -70,7 +70,7 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
     private static int loadSnCounterFromPersistence() {
         java.io.File snFile = new java.io.File(
                 System.getProperty("wvp.sn.persist.file",
-                        System.getProperty("java.io.tmpdir") + "/wvp/sn_counter.txt"));
+                        System.getProperty("user.home") + "/.wvp/sn_counter.txt"));
         try {
             if (snFile.exists()) {
                 String content = new String(java.nio.file.Files.readAllBytes(snFile.toPath())).trim();
