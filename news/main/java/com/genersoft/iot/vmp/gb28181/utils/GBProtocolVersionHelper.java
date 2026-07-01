@@ -152,7 +152,7 @@ public final class GBProtocolVersionHelper {
                 // 未携带 X-GB-ver 头部，按规范默认回退到 2016 版
                 return GB_PROTOCOL_VERSION_2016;
             }
-            String value = ((ExtensionHeader) header).getValue();
+            String value = header instanceof ExtensionHeader ? ((ExtensionHeader) header).getValue() : null;
             if (value == null || value.trim().isEmpty()) {
                 return GB_PROTOCOL_VERSION_2016;
             }
