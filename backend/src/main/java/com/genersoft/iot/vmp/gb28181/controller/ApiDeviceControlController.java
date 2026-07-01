@@ -7,6 +7,7 @@ import com.genersoft.iot.vmp.gb28181.service.IDeviceService;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -268,6 +269,10 @@ public class ApiDeviceControlController {
         if (devCheck != null) return devCheck;
         WVPResult<?> chCheck = validateChannelId(channelId);
         if (chCheck != null) return chCheck;
+        if (!checkRateLimit(getClientIp())) {
+            return WVPResult.fail(429, "请求过于频繁，请稍后重试");
+        }
+        MDC.put("req.deviceId", deviceId); // 请求追踪
         // 破坏性操作二次确认: 前端必须显式传递 confirm=true
         if (!confirm) {
             return WVPResult.fail(400, "格式化存储卡为破坏性操作，请确认后重试 (confirm=true)");
@@ -346,6 +351,10 @@ public class ApiDeviceControlController {
         if (csrfCheck != null) return csrfCheck;
         WVPResult<?> devCheck = validateDeviceId(deviceId);
         if (devCheck != null) return devCheck;
+        if (!checkRateLimit(getClientIp())) {
+            return WVPResult.fail(429, "请求过于频繁，请稍后重试");
+        }
+        MDC.put("req.deviceId", deviceId);
         // 审计修复 56_C-01: null检查必须在任何 file 操作之前, 防止 NPE
         if (file == null || file.isEmpty()) {
             return WVPResult.fail(400, "固件文件不能为空");
@@ -409,6 +418,10 @@ public class ApiDeviceControlController {
         if (chCheck != null) return chCheck;
         WVPResult<?> sidCheck = validateSessionId(sessionId);
         if (sidCheck != null) return sidCheck;
+        if (!checkRateLimit(getClientIp())) {
+            return WVPResult.fail(429, "请求过于频繁，请稍后重试");
+        }
+        MDC.put("req.deviceId", deviceId);
         if (firmware == null || firmware.isEmpty()) {
             return WVPResult.fail(400, "固件文件名不能为空");
         }
@@ -587,6 +600,10 @@ public class ApiDeviceControlController {
         if (chCheck != null) return chCheck;
         WVPResult<?> sidCheck = validateSessionId(sessionId);
         if (sidCheck != null) return sidCheck;
+        if (!checkRateLimit(getClientIp())) {
+            return WVPResult.fail(429, "请求过于频繁，请稍后重试");
+        }
+        MDC.put("req.deviceId", deviceId);
         if (interval != null && interval < 0) {
             return WVPResult.fail(400, "抓拍间隔不能为负数");
         }
