@@ -318,6 +318,10 @@ public class SipTlsProperties {
         if (needClientAuth && (trustStore == null || trustStore.isEmpty())) {
             return false;
         }
+        // TLS协议版本白名单: 仅允许 TLSv1.2 和 TLSv1.3
+        if (sslProtocol != null && !"TLSv1.2".equals(sslProtocol) && !"TLSv1.3".equals(sslProtocol)) {
+            return false;
+        }
         return true;
     }
 
