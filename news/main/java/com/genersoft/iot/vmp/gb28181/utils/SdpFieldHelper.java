@@ -15,7 +15,7 @@ import java.util.List;
  * <ul>
  *     <li>改造项4：下载场景 s 字段（DoWnload）</li>
  *     <li>改造项5：取消 Talk 类型支持</li>
- *     <li>改造项6：下载倍速字段（a=downloadspeed:，全小写）</li>
+ *     <li>改造项6：下载倍速字段（a=downloadspeed:，首字母大写）</li>
  *     <li>改造项18：f 字段格式扩展（v/a 双字段）</li>
  *     <li>改造项19：文件大小字段（a=filesize:）</li>
  *     <li>改造项20：SSVC 比例字段（a=ssvcratio:）</li>
@@ -93,19 +93,19 @@ public final class SdpFieldHelper {
     }
 
     // ================================================================
-    // 改造项4：下载场景 s 字段（DoWnload，全小写）
+    // 改造项4：下载场景 s 字段（DoWnload，首字母大写）
     // ================================================================
 
     /**
      * SDP s 字段中标识下载场景的固定值
-     * <p>改造项4：来源 2022版 9.2.2，s 字段取值固定为 "Download"（全小写）</p>
+     * <p>改造项4：来源 2022版 9.2.2，s 字段取值固定为 "Download"（首字母大写）</p>
      */
     public static final String DOWNLOAD_S_FIELD = "Download";
 
     /**
      * 在 SDP 中追加下载场景的 s 字段
      * <p>
-     * 改造项4：下载场景下 s 字段使用 "Download"，注意 W 为大写。
+     * 改造项4：下载场景下 s 字段使用 "Download"，首字母大写。
      * 来源：设计文档第11.2节，2022版 9.2.2 媒体描述。
      * </p>
      *
@@ -145,13 +145,13 @@ public final class SdpFieldHelper {
     }
 
     // ================================================================
-    // 改造项6：下载倍速字段（a=downloadspeed:，全小写）
+    // 改造项6：下载倍速字段（a=downloadspeed:，首字母大写）
     // ================================================================
 
     /**
      * 在 SDP 中追加下载倍速字段
      * <p>
-     * 改造项6：下载倍速字段名为 a=downloadspeed:，注意 W 为大写。
+     * 改造项6：下载倍速字段名为 a=downloadspeed:，首字母大写。
      * 来源：设计文档第11.4节，2022版 9.2.2 媒体描述。
      * </p>
      *
@@ -162,7 +162,7 @@ public final class SdpFieldHelper {
         if (sdpBuilder == null) {
             return;
         }
-        // 改造项6：固定字段名 downloadspeed，全小写
+        // 改造项6：固定字段名 downloadspeed，首字母大写
         sdpBuilder.append("a=downloadspeed:").append(formatSpeed(speed)).append("\r\n");
     }
 
