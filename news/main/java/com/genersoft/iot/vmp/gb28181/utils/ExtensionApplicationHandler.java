@@ -14,6 +14,7 @@ package com.genersoft.iot.vmp.gb28181.utils;
  * @author WVP合规性升级改造
  * @since 2.0
  */
+/** 预留接口, 生产环境按需实现 */
 public class ExtensionApplicationHandler {
 
     private ExtensionApplicationHandler() {}
