@@ -301,3 +301,18 @@ export function getSecurityConfig() {
     timeout: 10000
   })
 }
+
+
+/**
+ * 人工指定设备协议版本
+ * @param {string} deviceId 设备ID
+ * @param {string|null} version 协议版本号（"2.0"=2022版, "1.0"=2016版, null=清除）
+ */
+export function setDeviceProtocolVersion(deviceId, version) {
+  return request({
+    method: 'post',
+    url: `/api/device/control/set_protocol_version/${deviceId}`,
+    params: version != null ? { version } : {},
+    timeout: 10000
+  })
+}
