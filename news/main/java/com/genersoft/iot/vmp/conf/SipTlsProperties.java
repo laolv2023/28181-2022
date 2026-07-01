@@ -360,4 +360,4 @@ public class SipTlsProperties {
     public char[] /* 注意: String到char[]转换在String不可变时效果有限 */ getTrustStorePasswordChars() {
         return trustStorePassword != null ? trustStorePassword.toCharArray() : null;
     }
-
+}

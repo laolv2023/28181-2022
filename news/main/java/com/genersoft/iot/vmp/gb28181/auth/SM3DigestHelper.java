@@ -40,10 +40,10 @@ public final class SM3DigestHelper {
     private static final String ALGORITHM_SM3 = "SM3";
 
     /**
-     * 回退算法：SHA-256（仅在 SM3 不可用时使用）
+     * 回退算法：SHA-256（已废弃 — digestWithFallback 现已改为抛异常而非降级，此常量保留仅供静态块历史参考）
+     * @deprecated SM3 不可用时直接抛 {@link IllegalStateException}，不再使用 SHA-256 降级
      */
-    // ALGORITHM_FALLBACK 已废弃: digestWithFallback 改为抛异常而非降级
-    // 保留常量仅供静态块初始化参考, 不用于实际摘要计算
+    @Deprecated
     private static final String ALGORITHM_FALLBACK = "SHA-256";
 
     /**
@@ -238,15 +238,17 @@ public final class SM3DigestHelper {
     }
 
     /**
-     * 自动选择算法的摘要计算（优先 SM3，回退 MD5）
+     * 自动选择算法的摘要计算（SM3 优先）
      * <p>
-     * 来源: 改造项2 — SM3 优先, MD5 兼容
+     * 来源: 改造项2 — SM3 优先。
+     * 审计修复 P1-03: SM3 不可用时直接抛 {@link IllegalStateException}，不再静默降级到 SHA-256。
+     * 调用方如需 MD5 兼容，请显式调用 {@link #digestMd5(byte[])}。
      * </p>
      *
      * @param data 原始数据
-     * @return 摘要十六进制字符串（SM3 为 64 字符, MD5 为 32 字符）
+     * @return 摘要十六进制字符串（SM3 为 64 字符）
+     * @throws IllegalStateException 当 SM3 算法不可用时
      */
-    /** 摘要计算(SM3优先, 不可用时回退MD5) */
     public static String digestWithFallback(byte[] data) {
         if (!SM3_AVAILABLE) {
             throw new IllegalStateException("SM3算法不可用, 请引入BouncyCastle依赖");

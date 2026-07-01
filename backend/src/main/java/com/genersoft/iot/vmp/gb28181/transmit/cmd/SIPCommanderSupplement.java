@@ -97,11 +97,11 @@ public interface SIPCommanderSupplement {
      * 设备软件升级命令
      *
      * <p>来源: 后端改造项10, 设计文档第10.1节, 2022版A.2.3.1.12</p>
-     * <p>XML 元素名: DeviceUpgrade，核心字段:</p>
+     * <p>XML 元素名: Deviceupgrade，核心字段:</p>
      * <ul>
      *   <li>FirmWare: 固件文件名</li>
-     *   <li>FileURL: 固件文件下载地址</li>
-     *   <li>manufacturer: 设备制造商</li>
+     *   <li>FileuRL: 固件文件下载地址</li>
+     *   <li>Manufacturer: 设备制造商</li>
      *   <li>sessionID: 会话标识（32~128字节）</li>
      * </ul>
      *
@@ -188,9 +188,6 @@ public interface SIPCommanderSupplement {
      * <pre>
      * &lt;Control&gt;
      *   &lt;CmdType&gt;DeviceControl&lt;/CmdType&gt;
-     *   &lt;SN&gt;...&lt;/SN&gt;
-     *   &lt;DeviceID&gt;...&lt;/DeviceID&gt;
-     *   &lt;SnapConfig&gt;
      *     &lt;snapNum&gt;连拍张数&lt;/snapNum&gt;
      *     &lt;Interval&gt;抓拍间隔(秒)&lt;/Interval&gt;
      *     &lt;uploaduRL&gt;上传路径&lt;/uploaduRL&gt;
