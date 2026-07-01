@@ -107,7 +107,7 @@ public final class SM3DigestHelper {
      * 默认构造方法私有化，禁止实例化
      */
     private SM3DigestHelper() {
-        throw new IllegalStateException("工具类禁止实例化");
+        // 工具类禁止实例化;
     }
 
     /**
