@@ -102,7 +102,7 @@ export function targetTrack({ deviceId, channelId, action } = {}) {
  */
 export function queryStorageCardStatus(deviceId, channelId) {
   return request({
-    method: 'post',
+    method: 'get',
     url: `/api/device/control/storage_card_status_query/${deviceId}/${channelId}`,
     timeout: 15000
   })
@@ -197,7 +197,7 @@ export function uploadFirmware(deviceId, file) {
  */
 export function queryHomePosition(deviceId, channelId) {
   return request({
-    method: 'post',
+    method: 'get',
     url: `/api/device/control/home_position_query/${deviceId}/${channelId}`,
     timeout: 15000
   })
