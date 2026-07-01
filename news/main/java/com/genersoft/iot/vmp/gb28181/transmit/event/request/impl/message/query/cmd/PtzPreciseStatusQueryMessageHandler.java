@@ -108,6 +108,9 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
     @Autowired
     private QueryMessageHandler queryMessageHandler;
 
+    /** 待发送的响应 XML（由 handleQuery 构造，handForDevice 发送） */
+    private String responseXml;
+
     /**
      * Spring 容器初始化后回调，将当前处理器注册到 QueryMessageHandler。
      * <p>
@@ -188,8 +191,8 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
         double zoom = DEFAULT_ZOOM;
 
         // 构造响应 XML
-        String responseXml = buildResponseXml(deviceId, sn, RESULT_OK, pan, tilt, zoom);
-        log.info("[PTZ精准状态查询] 响应XML准备就绪, 待异步发送:\n{}", responseXml);
+        this.responseXml = buildResponseXml(deviceId, sn, RESULT_OK, pan, tilt, zoom);
+        log.info("[PTZ精准状态查询] 响应XML准备就绪, 待异步发送:\n{}", this.responseXml);
 
         responseOk(evt);
     }
@@ -246,3 +249,4 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
         }
     }
 }
+
