@@ -72,7 +72,7 @@ public final class SM3DigestHelper {
     static {
         // 静态初始化块：检测 SM3 算法可用性
         boolean available = false;
-        String algorithm = ALGORITHM_FALLBACK;
+        String algorithm = null;
 
         // 1. 先尝试 JDK 内置 SM3
         try {
@@ -144,12 +144,14 @@ public final class SM3DigestHelper {
         if (data == null) {
             return "";
         }
+        if (!SM3_AVAILABLE) {
+            throw new IllegalStateException("SM3算法不可用, 请引入BouncyCastle依赖");
+        }
         try {
             MessageDigest md = MessageDigest.getInstance(ACTUAL_ALGORITHM);
             byte[] digestBytes = md.digest(data);
             return bytesToHex(digestBytes);
         } catch (NoSuchAlgorithmException e) {
-            // 静态初始化已确保不会进入此分支，兜底返回空字符串
             logger.error("[SM3] 摘要计算异常，算法: {}", ACTUAL_ALGORITHM, e);
             return "";
         }
@@ -252,10 +254,7 @@ public final class SM3DigestHelper {
         if (data == null) {
             return "";
         }
-        if (isSm3Available()) {
-            return digest(data);
-        }
-        // SM3不可用时已抛IllegalStateException, 不会执行到此处
         return digest(data);
     }
 }
+
