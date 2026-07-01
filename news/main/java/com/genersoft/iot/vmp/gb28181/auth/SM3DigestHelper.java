@@ -42,6 +42,8 @@ public final class SM3DigestHelper {
     /**
      * 回退算法：SHA-256（仅在 SM3 不可用时使用）
      */
+    // ALGORITHM_FALLBACK 已废弃: digestWithFallback 改为抛异常而非降级
+    // 保留常量仅供静态块初始化参考, 不用于实际摘要计算
     private static final String ALGORITHM_FALLBACK = "SHA-256";
 
     /**
