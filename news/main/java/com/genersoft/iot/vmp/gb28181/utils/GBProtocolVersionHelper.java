@@ -31,6 +31,7 @@ public final class GBProtocolVersionHelper {
     /**
      * X-GB-ver 头部名称
      */
+    /** 版本协商: 双方都为2.0才走2022流程, 否则降级为2016 */
     public static final String HEADER_X_GB_VER = "X-GB-ver";
 
     /**
