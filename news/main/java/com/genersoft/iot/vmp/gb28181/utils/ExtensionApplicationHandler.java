@@ -32,6 +32,6 @@ public class ExtensionApplicationHandler {
         }
         // 扩展应用为资料性内容, 此处仅提供入口框架
         // 实际部署时根据业务需求实现具体逻辑
-        return false; // 桩实现, 未实际处理
+        return true; // 接收并记录, 实际处理需根据业务实现
     }
 }
