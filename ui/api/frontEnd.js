@@ -81,7 +81,7 @@ export function targetTrack({ deviceId, channelId, action } = {}) {
   if (!deviceId || !channelId) throw new Error('[targetTrack] deviceId 和 channelId 为必填参数')
   if (!['Auto', 'Manual'].includes(action)) throw new Error(`[targetTrack] action 必须为 Auto 或 Manual，实际值: ${action}`)
   return request({
-    method: 'get',
+    method: 'post',
     url: `/api/device/control/target_track/${deviceId}/${channelId}`,
     params: { action },
     timeout: 10000
@@ -104,7 +104,7 @@ export function targetTrack({ deviceId, channelId, action } = {}) {
  */
 export function queryStorageCardStatus(deviceId, channelId) {
   return request({
-    method: 'get',
+    method: 'post',
     url: `/api/device/control/storage_card_status_query/${deviceId}/${channelId}`,
     timeout: 15000
   })
@@ -199,7 +199,7 @@ export function uploadFirmware(deviceId, file) {
  */
 export function queryHomePosition(deviceId, channelId) {
   return request({
-    method: 'get',
+    method: 'post',
     url: `/api/device/control/home_position_query/${deviceId}/${channelId}`,
     timeout: 15000
   })
@@ -298,7 +298,7 @@ export function saveSecurityConfig(config) {
 
 export function getSecurityConfig() {
   return request({
-    method: 'get',
+    method: 'post',
     url: '/api/device/config/get_security',
     timeout: 10000
   })
