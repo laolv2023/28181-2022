@@ -185,19 +185,27 @@ public class DeviceUpgradeResultNotifyMessageHandler extends SIPRequestProcessor
                     deviceId, upgradeResult, firmware, failedReason, sessionId, sn);
 
             // 根据升级结果进行差异化业务处理
+            boolean dbConfirmed = false;
             if (UPGRADE_RESULT_OK.equalsIgnoreCase(upgradeResult)) {
-                // 升级成功：更新设备固件版本
-                handleUpgradeSuccess(deviceId, firmware, sessionId);
+                // 升级成功：更新设备固件版本 (DB操作)
+                dbConfirmed = handleUpgradeSuccess(deviceId, firmware, sessionId);
             } else if (UPGRADE_RESULT_FAILED.equalsIgnoreCase(upgradeResult)) {
                 // 升级失败：记录失败原因
                 handleUpgradeFailure(deviceId, firmware, failedReason, sessionId);
+                dbConfirmed = true; // 失败记录不阻塞 ACK
             } else {
                 // 未知结果：仅记录日志
                 logger.warn("[设备升级结果通知] 未知的升级结果标识: {}, deviceId={}", upgradeResult, deviceId);
+                dbConfirmed = true; // 未知结果不阻塞
             }
 
-            // 回复 200 OK
-            respondAck(evt, Response.OK);
+            // 仅在 DB 操作确认后回复 200 OK，防止 DB 失败时设备收到虚假成功
+            if (dbConfirmed) {
+                respondAck(evt, Response.OK);
+            } else {
+                logger.error("[设备升级结果通知] DB写入失败, 回复500");
+                respondAck(evt, Response.SERVER_INTERNAL_ERROR);
+            }
 
         } catch (Exception e) {
             logger.error("[设备升级结果通知] 处理异常", e);
@@ -216,10 +224,10 @@ public class DeviceUpgradeResultNotifyMessageHandler extends SIPRequestProcessor
      * @param firmware  新固件版本
      * @param sessionId 升级会话 ID
      */
-    private void handleUpgradeSuccess(String deviceId, String firmware, String sessionId) {
+    private boolean handleUpgradeSuccess(String deviceId, String firmware, String sessionId) {
         if (ObjectUtils.isEmpty(deviceId)) {
             logger.warn("[设备升级结果通知] 设备ID为空，无法更新固件版本");
-            return;
+            return false;
         }
         try {
             Device device = storager.queryVideoDevice(deviceId);
