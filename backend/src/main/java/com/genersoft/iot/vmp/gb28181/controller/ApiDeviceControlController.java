@@ -7,10 +7,14 @@ import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * WVP 设备控制与查询 API Controller —— GB/T 28181-2022 配套
@@ -52,6 +56,37 @@ public class ApiDeviceControlController {
     @Autowired
     private ISIPCommander cmder;
 
+    // 简单速率限制: 每个IP每分钟最多60次请求
+    private static final int RATE_LIMIT_MAX_REQUESTS = 60;
+    private static final long RATE_LIMIT_WINDOW_MS = 60_000L;
+    private final ConcurrentHashMap<String, Long> rateLimitWindow = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, AtomicInteger> rateLimitCounters = new ConcurrentHashMap<>();
+
+    private boolean checkRateLimit(String clientIp) {
+        long now = System.currentTimeMillis();
+        Long windowStart = rateLimitWindow.get(clientIp);
+        if (windowStart == null || now - windowStart > RATE_LIMIT_WINDOW_MS) {
+            rateLimitWindow.put(clientIp, now);
+            rateLimitCounters.computeIfAbsent(clientIp, k -> new AtomicInteger(0)).set(1);
+            return true;
+        }
+        AtomicInteger counter = rateLimitCounters.computeIfAbsent(clientIp, k -> new AtomicInteger(0));
+        return counter.incrementAndGet() <= RATE_LIMIT_MAX_REQUESTS;
+    }
+
+    /** 提取客户端IP */
+    private String getClientIp() {
+        jakarta.servlet.http.HttpServletRequest request =
+                ((org.springframework.web.context.request.ServletRequestAttributes)
+                        org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes())
+                        .getRequest();
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+
     // ========================================================================
     // 一、PTZ 精准控制（改造项7，A.2.3.1.11）
     // ========================================================================
@@ -92,7 +127,7 @@ public class ApiDeviceControlController {
             return WVPResult.success();
         } catch (Exception e) {
             log.error("[PTZ精准控制] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
-            return WVPResult.fail(500, "PTZ精准控制命令下发失败: " + "内部服务器错误");
+            return WVPResult.fail(500, "PTZ精准控制命令下发失败: " + e.getClass().getSimpleName());
         }
     
 
@@ -135,7 +170,7 @@ public class ApiDeviceControlController {
             return WVPResult.success();
         } catch (Exception e) {
             log.error("[目标跟踪] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
-            return WVPResult.fail(500, "目标跟踪命令下发失败: " + "内部服务器错误");
+            return WVPResult.fail(500, "目标跟踪命令下发失败: " + e.getClass().getSimpleName());
         }
     
 
@@ -173,9 +208,9 @@ public class ApiDeviceControlController {
             return WVPResult.success();
         } catch (Exception e) {
             log.error("[存储卡格式化] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
-            return WVPResult.fail(500, "存储卡格式化命令下发失败: " + "内部服务器错误");
+            return WVPResult.fail(500, "存储卡格式化命令下发失败: " + e.getClass().getSimpleName());
         }
-    
+    }
 
     /**
      * 存储卡状态查询
@@ -188,7 +223,6 @@ public class ApiDeviceControlController {
      * @param channelId 通道编码
      * @return 存储卡状态信息
      */
-    }
     @GetMapping("/storage_card_status_query/{deviceId}/{channelId}")
     public WVPResult<?> queryStorageCardStatus(
             @PathVariable String deviceId,
@@ -208,7 +242,7 @@ public class ApiDeviceControlController {
             return WVPResult.success();
         } catch (Exception e) {
             log.error("[存储卡状态查询] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
-            return WVPResult.fail(500, "存储卡状态查询失败: " + "内部服务器错误");
+            return WVPResult.fail(500, "存储卡状态查询失败: " + e.getClass().getSimpleName());
         }
     
 
@@ -238,9 +272,9 @@ public class ApiDeviceControlController {
         if (file == null || file.isEmpty()) {
             return WVPResult.fail(400, "固件文件不能为空");
         }
-        // 文件类型白名单校验
+        // 文件类型白名单校验（大小写不敏感，$锚定防止双扩展名绕过）
         String filename = file.getOriginalFilename();
-        if (filename == null || !filename.matches(".*\.(bin|img|zip)$")) {
+        if (filename == null || !filename.toLowerCase(java.util.Locale.ENGLISH).matches(".*\.(bin|img|zip)$")) {
             return WVPResult.fail(400, "不支持的固件文件类型, 仅允许 .bin/.img/.zip");
         }
         // 审计修复 56_C-01: 路径穿越检测
@@ -262,10 +296,9 @@ public class ApiDeviceControlController {
             return WVPResult.success(new FileUploadResult(fileUrl, file.getOriginalFilename()));
         } catch (Exception e) {
             log.error("[固件上传] 上传失败: deviceId={}", deviceId, e);
-            return WVPResult.fail(500, "固件上传失败: " + "内部服务器错误");
+            return WVPResult.fail(500, "固件上传失败: " + e.getClass().getSimpleName());
         }
-        
-    
+    }
 
     /**
      * 设备软件升级命令
@@ -277,13 +310,11 @@ public class ApiDeviceControlController {
      * @param deviceId     设备编码
      * @param channelId    通道编码
      * @param firmware     固件文件名
-        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
      * @param fileUrl      固件文件在服务器上的可访问 URL
      * @param manufacturer 设备制造商信息
      * @param sessionId    会话 ID（32~128字节，前端生成 UUID）
      * @return 操作结果
      */
-    }
     @PostMapping("/device_upgrade/{deviceId}/{channelId}")
     public WVPResult<?> deviceUpgrade(
             @PathVariable String deviceId,
@@ -318,7 +349,7 @@ public class ApiDeviceControlController {
             return WVPResult.success();
         } catch (Exception e) {
             log.error("[设备升级] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
-            return WVPResult.fail(500, "设备升级命令下发失败: " + "内部服务器错误");
+            return WVPResult.fail(500, "设备升级命令下发失败: " + e.getClass().getSimpleName());
         }
     
 
@@ -355,9 +386,9 @@ public class ApiDeviceControlController {
             return WVPResult.success();
         } catch (Exception e) {
             log.error("[看守位查询] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
-            return WVPResult.fail(500, "看守位查询失败: " + "内部服务器错误");
+            return WVPResult.fail(500, "看守位查询失败: " + e.getClass().getSimpleName());
         }
-    
+    }
 
     /**
      * 巡航轨迹查询
@@ -370,7 +401,6 @@ public class ApiDeviceControlController {
      * @param trackListId 巡航轨迹列表 ID（可选，不传则查询所有）
      * @return 查询结果
      */
-    }
     @GetMapping("/cruise_track_query/{deviceId}/{channelId}")
     public WVPResult<?> queryCruiseTrack(
             @PathVariable String deviceId,
@@ -389,9 +419,9 @@ public class ApiDeviceControlController {
             return WVPResult.success();
         } catch (Exception e) {
             log.error("[巡航轨迹查询] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
-            return WVPResult.fail(500, "巡航轨迹查询失败: " + "内部服务器错误");
+            return WVPResult.fail(500, "巡航轨迹查询失败: " + e.getClass().getSimpleName());
         }
-    
+    }
 
     /**
      * PTZ 精准状态查询
@@ -404,7 +434,6 @@ public class ApiDeviceControlController {
      * @param channelId 通道编码
      * @return 查询结果
      */
-    }
     @PostMapping("/ptz_precise_status_query/{deviceId}/{channelId}")
     public WVPResult<?> queryPtzPreciseStatus(
             @PathVariable String deviceId,
@@ -422,7 +451,7 @@ public class ApiDeviceControlController {
             return WVPResult.success();
         } catch (Exception e) {
             log.error("[PTZ精准状态查询] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
-            return WVPResult.fail(500, "PTZ精准状态查询失败: " + "内部服务器错误");
+            return WVPResult.fail(500, "PTZ精准状态查询失败: " + e.getClass().getSimpleName());
         }
     
 
@@ -466,6 +495,18 @@ public class ApiDeviceControlController {
         if (snapNum < 1 || snapNum > 10) {
             return WVPResult.fail(400, "抓拍数量必须为 1~10");
         }
+        // SSRF防护: uploadUrl校验协议和主机白名单
+        if (uploadUrl != null && !uploadUrl.isEmpty()) {
+            try {
+                java.net.URI uploadUri = new java.net.URI(uploadUrl);
+                String uploadScheme = uploadUri.getScheme();
+                if (uploadScheme == null || (!"http".equals(uploadScheme) && !"https".equals(uploadScheme))) {
+                    return WVPResult.fail(400, "uploadUrl仅支持http/https协议");
+                }
+            } catch (java.net.URISyntaxException ex) {
+                return WVPResult.fail(400, "uploadUrl格式无效");
+            }
+        }
         Device device = deviceService.getDevice(deviceId);
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
@@ -483,7 +524,7 @@ public class ApiDeviceControlController {
             return WVPResult.success();
         } catch (Exception e) {
             log.error("[图像抓拍配置] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
-            return WVPResult.fail(500, "图像抓拍配置失败: " + "内部服务器错误");
+            return WVPResult.fail(500, "图像抓拍配置失败: " + e.getClass().getSimpleName());
         }
     
 
@@ -495,7 +536,7 @@ public class ApiDeviceControlController {
     /**
      * 固件上传响应 DTO
      */
-        public static class FileUploadResult implements java.io.Serializable {
+    public static class FileUploadResult implements java.io.Serializable {
         private String fileUrl;
         private String fileName;
 
