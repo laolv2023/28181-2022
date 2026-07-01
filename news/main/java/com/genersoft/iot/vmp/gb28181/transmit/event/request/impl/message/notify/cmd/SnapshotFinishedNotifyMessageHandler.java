@@ -191,8 +191,9 @@ public class SnapshotFinishedNotifyMessageHandler extends SIPRequestProcessorPar
             respondAck(evt, Response.OK);
 
         } catch (Exception e) {
-            logger.error("[抓图完成通知] 处理异常", e);
-            respondAck(evt, Response.OK);
+            logger.error("[抓图完成通知] 处理异常: {}", e.getMessage(), e);
+            // 处理异常不应回复 200 OK, 回复 500 让设备知晓服务端处理失败
+            respondAck(evt, Response.SERVER_INTERNAL_ERROR);
         }
     }
 
