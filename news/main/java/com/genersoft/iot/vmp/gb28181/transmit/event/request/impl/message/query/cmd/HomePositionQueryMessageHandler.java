@@ -157,6 +157,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
         // 设备发起的查询请求，按规范 ACK 200 OK
         // 审计修复P1-09~12: 响应XML通过SIP 200 OK消息体返回给请求方
         try { // handForDevice 不直接处理响应, 由 handleQuery 方法处理 } catch (Exception ex) { log.warn("设置响应内容失败", ex); }
+        try { evt.getResponse().setContent(responseXml.getBytes("GB18030"), evt.getResponse().getContentTypeHeader()); } catch (Exception ex) { log.warn("设置响应内容失败", ex); }
         responseOk(evt);
     }
 
@@ -187,7 +188,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
      * 处理流程：
      * <ol>
      *     <li>从 XML 根节点解析 DeviceID、SN</li>
-     *     <li>查询本地看守位配置（默认值（实际应从设备响应XML中解析）或缓存）</li>
+     *     <li>查询本地看守位配置（默认值（生产环境应从设备响应XML中解析实际值）（实际应从设备响应XML中解析）或缓存）</li>
      *     <li>构造响应 XML 用于后续异步发送</li>
      *     <li>回复 200 OK 确认收到请求</li>
      * </ol>
