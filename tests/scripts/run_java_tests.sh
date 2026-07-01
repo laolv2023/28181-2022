@@ -2,6 +2,7 @@
 # run_java_tests.sh — 运行所有Java单元测试
 # 用法: bash run_java_tests.sh [WVP_SRC_DIR]
 set -uo pipefail
+trap 'echo "测试中断" >&2' ERR
 SKIP=0
 CONSOLE_JAR="${CONSOLE_JAR:-$(find / -name "junit-platform-console-standalone-*.jar" 2>/dev/null | head -1)}"
 if [ -z "$CONSOLE_JAR" ]; then echo "ERROR: ConsoleLauncher not found"; exit 1; fi
