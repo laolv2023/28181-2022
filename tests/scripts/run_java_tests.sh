@@ -9,7 +9,7 @@ TESTS_DIR="$(dirname "$SCRIPT_DIR")/java/unit"
 
 PASS=0
 FAIL=0
-SKIP=0
+FAIL_COUNT=0
 
 echo "═══════════════════════════════════════════"
 echo "  WVP GB/T 28181-2022 Java 单元测试"
@@ -40,8 +40,8 @@ for test_file in $(find "$TESTS_DIR" -name '*Test.java' | sort); do
             FAIL=$((FAIL + 1))
         fi
     else
-        echo "SKIP (编译失败, 可能依赖缺失)"
-        SKIP=$((SKIP + 1))
+        echo "FAIL (编译失败)"
+        FAIL_COUNT=$((FAIL_COUNT + 1))
     fi
 done
 
