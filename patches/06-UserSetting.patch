@@ -1,6 +1,6 @@
---- original/src/main/java/com/genersoft/iot/vmp/conf/UserSetting.java	2026-06-29 17:11:02.349379925 +0800
-+++ modified/src/main/java/com/genersoft/iot/vmp/conf/UserSetting.java	2026-06-29 17:11:02.349379925 +0800
-@@ -256,4 +256,59 @@
+--- original/src/main/java/com/genersoft/iot/vmp/conf/UserSetting.java  2026-06-29 17:11:02.349379925 +0800
++++ modified/src/main/java/com/genersoft/iot/vmp/conf/UserSetting.java  2026-06-29 17:11:02.349379925 +0800
+@@ -256,4 +256,148 @@
       */
      private int alarmKeepDays = 7;
  
@@ -58,5 +58,94 @@
 +     */
 +    // 审计修复R2-P1-02: 需执行 ALTER TABLE device ADD COLUMN protocol_version VARCHAR(10) DEFAULT NULL
 +    private boolean sipTlsEnabled = false;
++
++    // === 以下为全升级项开关化新增配置（14项） ===
++
++    /**
++     * 是否启用X-GB-ver头域
++     * 来源: 改造项1, 设计文档第4节
++     * 说明: 关闭后不发送X-GB-ver头域, 纯2016模式
++     */
++    private boolean xGbVerHeaderEnabled = true;
++
++    /**
++     * 是否启用SDP 2022版s字段/downloadspeed/Talk移除
++     * 来源: 改造项4/5/6, 设计文档第7.4节
++     * 说明: 关闭后SDP使用2016版格式
++     */
++    private boolean sdp2022FieldsEnabled = true;
++
++    /**
++     * 是否启用PTZ精准控制命令
++     * 来源: 改造项7, 设计文档第10.1节, 2022版A.2.3.1.11
++     */
++    private boolean ptzPreciseCtrlEnabled = true;
++
++    /**
++     * 是否启用存储卡格式化命令
++     * 来源: 改造项8, 设计文档第10.1节, 2022版A.2.3.1.13
++     */
++    private boolean formatSdcardEnabled = true;
++
++    /**
++     * 是否启用目标跟踪命令
++     * 来源: 改造项9, 设计文档第10.1节, 2022版A.2.3.1.14
++     */
++    private boolean targetTrackEnabled = true;
++
++    /**
++     * 是否启用设备升级命令
++     * 来源: 改造项10, 设计文档第10.1节, 2022版A.2.3.1.12
++     */
++    private boolean deviceUpgradeCmdEnabled = true;
++
++    /**
++     * 是否启用新增查询命令(PTZ精准状态/存储卡状态/巡航轨迹/看守位)
++     * 来源: 改造项11~14, 设计文档第11节
++     */
++    private boolean newQueryCmdsEnabled = true;
++
++    /**
++     * 是否启用新增通知命令(抓拍配置/抓拍完成/升级结果)
++     * 来源: 改造项15~17, 设计文档第12节
++     */
++    private boolean newNotifyCmdsEnabled = true;
++
++    /**
++     * 是否启用SDP H.265/SVAC音频编码支持
++     * 来源: 改造项18/19, 设计文档第6.3节, 附录G
++     */
++    private boolean sdpH265Enabled = true;
++
++    /**
++     * 是否启用SDP扩展字段(ssvcratio/filesize/streamnumber/u字段下载类型)
++     * 来源: 改造项20~23, 设计文档第7节, 附录G
++     */
++    private boolean sdpExtFieldsEnabled = true;
++
++    /**
++     * 是否启用MANSRTSP倍速限制和倒放支持
++     * 来源: 改造项24/25, 设计文档第12节, 附录B
++     * 说明: 关闭后倍速无限制, 不支持倒放
++     */
++    private boolean mansrtspScaleLimitEnabled = true;
++
++    /**
++     * 是否启用Monitor-user-Identity头域
++     * 来源: 改造项27, 设计文档第13.9节
++     */
++    private boolean monitorUserIdentityEnabled = true;
++
++    /**
++     * 是否启用数据完整性校验(HMAC)
++     * 来源: 改造项31, 设计文档第8.4节
++     */
++    private boolean dataIntegrityEnabled = false;
++
++    /**
++     * 是否启用GB35114证书认证
++     * 来源: 改造项32, 设计文档第8.1节
++     */
++    private boolean gb35114CertAuthEnabled = false;
 +
  }
