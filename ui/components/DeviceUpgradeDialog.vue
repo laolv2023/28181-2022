@@ -155,6 +155,7 @@ export default {
   // ========== Data ==========
   data() {
     return {
+      abortController: null,
       timer: null,
       /**
        * 升级表单
