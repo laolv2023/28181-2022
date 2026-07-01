@@ -47,6 +47,12 @@ public class SipTlsProperties {
     private boolean enabled = false;
 
     /**
+     * TLS 协议版本
+     * <p>默认 TLSv1.2，生产环境建议 TLSv1.3。禁止 TLSv1.0/TLSv1.1。</p>
+     */
+    private String sslProtocol = "TLSv1.2";
+
+    /**
      * 服务端密钥库路径
      * <p>
      * 支持 classpath:、file: 前缀，或绝对路径。
@@ -126,6 +132,17 @@ public class SipTlsProperties {
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public String getSslProtocol() {
+        return sslProtocol;
+    }
+
+    public void setSslProtocol(String sslProtocol) {
+        if (!"TLSv1.2".equals(sslProtocol) && !"TLSv1.3".equals(sslProtocol)) {
+            throw new IllegalArgumentException("sslProtocol仅支持TLSv1.2或TLSv1.3");
+        }
+        this.sslProtocol = sslProtocol;
     }
 
     /**
@@ -291,7 +308,7 @@ public class SipTlsProperties {
     @javax.annotation.PostConstruct
     public void validate() { if (!isValid()) throw new IllegalStateException("TLS配置无效"); }
 
-    @javax.annotation.PostConstruct
+    public boolean isValid() {
         if (keyStore == null || keyStore.isEmpty()) {
             return false;
         }
@@ -343,3 +360,4 @@ public class SipTlsProperties {
     public char[] /* 注意: String到char[]转换在String不可变时效果有限 */ getTrustStorePasswordChars() {
         return trustStorePassword != null ? trustStorePassword.toCharArray() : null;
     }
+
