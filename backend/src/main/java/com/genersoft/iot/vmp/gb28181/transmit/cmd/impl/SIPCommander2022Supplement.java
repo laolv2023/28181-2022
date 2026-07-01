@@ -61,9 +61,12 @@ public class SIPCommander2022Supplement {
     private SipLayer sipLayer;
 
     // SN 序号（简单递增，生产环境应考虑线程安全和持久化）
+    private static final String SN_PERSIST_FILE = System.getProperty("java.io.tmpdir") + "/wvp-sn-counter.properties";
     private static final java.util.concurrent.atomic.AtomicInteger snCounter = new java.util.concurrent.atomic.AtomicInteger(0);
     private static synchronized int nextSn() {
-        return snCounter.incrementAndGet();
+        int sn = snCounter.incrementAndGet();
+        persistSn(sn);
+        return sn;
     }
 
     // 固件上传目录（可配置化）
@@ -135,6 +138,7 @@ public class SIPCommander2022Supplement {
      * 来源: 后端改造项8, 设计文档第10.1节, 2022版A.2.3.1.13
      */
     public void formatSdcardCmdImpl(Device device, String channelId) {
+        if (device == null) { throw new IllegalArgumentException("device不能为null"); }
         int sn = nextSn();
         String deviceId = device.getDeviceId();
 
@@ -164,6 +168,7 @@ public class SIPCommander2022Supplement {
      * 来源: 后端改造项9, 设计文档第10.1节, 2022版A.2.3.1.14
      */
     public void targetTrackCmdImpl(Device device, String channelId, String action) {
+        if (device == null) { throw new IllegalArgumentException("device不能为null"); }
         int sn = nextSn();
         String deviceId = device.getDeviceId();
 
@@ -195,6 +200,7 @@ public class SIPCommander2022Supplement {
      */
     public void deviceUpgradeCmdImpl(Device device, String channelId, String firmware,
             String fileUrl, String manufacturer, String sessionId) {
+        if (device == null) { throw new IllegalArgumentException("device不能为null"); }
         // SSRF防护: 校验fileUrl不指向内网地址
         if (fileUrl != null && !fileUrl.isEmpty()) {
             try {
@@ -270,7 +276,7 @@ public class SIPCommander2022Supplement {
         }
 
         // 返回文件访问 URL（实际项目应返回可通过 HTTP 访问的完整 URL）
-        String fileUrl = "/firmware/" + deviceId + "/" + savedName;
+        String fileUrl = "http://" + device.getIp() + ":" + device.getPort() + "/firmware/" + deviceId + "/" + savedName;
         log.info("[固件上传] deviceId={}, originalName={}, savedAs={}, fileUrl={}",
                 deviceId, originalName, savedName, fileUrl);
         return fileUrl;
@@ -288,6 +294,7 @@ public class SIPCommander2022Supplement {
      * 来源: 后端改造项11, 设计文档第11.1节, 2022版A.2.4.10
      */
     public void homePositionQueryCmdImpl(Device device, String channelId) {
+        if (device == null) { throw new IllegalArgumentException("device不能为null"); }
         int sn = nextSn();
         String deviceId = device.getDeviceId();
 
@@ -312,6 +319,7 @@ public class SIPCommander2022Supplement {
      * 来源: 后端改造项12, 设计文档第11.1节, 2022版A.2.4.11
      */
     public void cruiseTrackQueryCmdImpl(Device device, String channelId, Integer trackListId) {
+        if (device == null) { throw new IllegalArgumentException("device不能为null"); }
         int sn = nextSn();
         String deviceId = device.getDeviceId();
 
@@ -339,6 +347,7 @@ public class SIPCommander2022Supplement {
      * 来源: 后端改造项13, 设计文档第11.1节, 2022版A.2.4.13
      */
     public void ptzPreciseStatusQueryCmdImpl(Device device, String channelId) {
+        if (device == null) { throw new IllegalArgumentException("device不能为null"); }
         int sn = nextSn();
         String deviceId = device.getDeviceId();
 
@@ -363,6 +372,7 @@ public class SIPCommander2022Supplement {
      * 来源: 后端改造项14, 设计文档第11.1节, 2022版A.2.4.14
      */
     public void storageCardStatusQueryCmdImpl(Device device, String channelId) {
+        if (device == null) { throw new IllegalArgumentException("device不能为null"); }
         int sn = nextSn();
         String deviceId = device.getDeviceId();
 
@@ -393,6 +403,7 @@ public class SIPCommander2022Supplement {
      */
     public void snapshotConfigCmdImpl(Device device, String channelId, int resolution,
             int snapNum, int interval, String uploadUrl, String sessionId) {
+        if (device == null) { throw new IllegalArgumentException("device不能为null"); }
         int sn = nextSn();
         String deviceId = device.getDeviceId();
 
@@ -474,5 +485,14 @@ public class SIPCommander2022Supplement {
         } catch (SipException | ParseException | InvalidArgumentException e) {
             log.error("[SIP发送] 消息发送失败: device={}, channelId={}", device.getDeviceId(), channelId, e);
         }
+    }
+    private static void persistSn(int sn) {
+        try {
+            java.util.Properties props = new java.util.Properties();
+            props.setProperty("sn", String.valueOf(sn));
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(SN_PERSIST_FILE)) {
+                props.store(fos, "WVP SN Counter");
+            }
+        } catch (Exception ignored) {}
     }
 }
