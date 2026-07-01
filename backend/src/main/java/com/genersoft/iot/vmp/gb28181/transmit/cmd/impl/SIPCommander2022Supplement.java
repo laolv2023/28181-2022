@@ -1,6 +1,7 @@
 package com.genersoft.iot.vmp.gb28181.transmit.cmd.impl;
 
 import com.genersoft.iot.vmp.gb28181.bean.Device;
+import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.gb28181.SipLayer;
 import com.genersoft.iot.vmp.gb28181.transmit.SIPSender;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
@@ -99,6 +100,7 @@ public class SIPCommander2022Supplement {
      * 注意: Tilt 元素名中 T 大写（规范原文 spec_2022.txt 行2890）
      */
     public void ptzPreciseCmdImpl(Device device, String channelId, double pan, double tilt, double zoom) {
+        if (!userSetting.isPtzPreciseCtrlEnabled()) { throw new UnsupportedOperationException("PTZ精准控制未启用"); }
         if (device == null) {
             throw new IllegalArgumentException("device不能为null");
         }
@@ -169,6 +171,7 @@ public class SIPCommander2022Supplement {
      * 来源: 后端改造项9, 设计文档第10.1节, 2022版A.2.3.1.14
      */
     public void targetTrackCmdImpl(Device device, String channelId, String action) {
+        if (!userSetting.isTargetTrackEnabled()) { throw new UnsupportedOperationException("目标跟踪未启用"); }
         if (device == null) { throw new IllegalArgumentException("device不能为null"); }
         int sn = nextSn();
         String deviceId = device.getDeviceId();
