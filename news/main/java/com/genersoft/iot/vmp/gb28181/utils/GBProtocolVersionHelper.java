@@ -106,6 +106,7 @@ public final class GBProtocolVersionHelper {
      * @param request SIP 请求对象
      */
     public static void addGbVerHeader(Request request) {
+        if (!Boolean.parseBoolean(System.getProperty("wvp.xgbver.header.enabled", "true"))) return;
         if (request == null) {
             logger.warn("[协议版本] 请求对象为空，跳过 X-GB-ver 头部追加");
             return;
