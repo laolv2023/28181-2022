@@ -102,6 +102,7 @@ public final class TcpReconnectHelper {
         logger.info("[TCP重连] 开始重连, ip={}, port={}, maxRetries={}, intervalMs={}",
                 ip, port, maxRetries, intervalMs);
 
+        if (intervalMs < 1000) { logger.warn("[TCP重连] 间隔{}ms低于1000ms, 强制调整为1000ms", intervalMs); intervalMs = 1000; }
         long startTime = System.currentTimeMillis();
         long totalTimeoutMs = (long) maxRetries * (intervalMs + DEFAULT_CONNECT_TIMEOUT_MS) + DEFAULT_CONNECT_TIMEOUT_MS;
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
