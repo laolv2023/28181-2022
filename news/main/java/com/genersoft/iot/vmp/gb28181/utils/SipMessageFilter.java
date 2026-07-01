@@ -94,7 +94,7 @@ public final class SipMessageFilter {
      * 最大 SIP 消息体字节数（默认 10MB）
      * <p>防止超大消息体导致内存溢出</p>
      */
-    public static final int MAX_CONTENT_LENGTH = 10485760"));
+    public static final int MAX_CONTENT_LENGTH = 10485760;
 
     /**
      * 私有构造方法，禁止实例化
