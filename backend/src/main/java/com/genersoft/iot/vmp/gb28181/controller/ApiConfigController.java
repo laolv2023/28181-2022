@@ -44,20 +44,15 @@ public class ApiConfigController {
      *   - tcpReconnectEnabled: false   — TCP 重连可选特性
      */
     private static final String CONFIG_FILE = System.getProperty("user.home") + "/.wvp/security-config.properties";
-        // ConcurrentHashMap 保证线程安全, 静态字段在类加载时初始化
-        private static final ConcurrentHashMap<String, Object> SECURITY_CONFIG = new ConcurrentHashMap<>();
+    /** 安全配置存储 — ConcurrentHashMap 保证线程安全，静态字段在类加载时初始化 */
+    private static final ConcurrentHashMap<String, Object> SECURITY_CONFIG = new ConcurrentHashMap<>();
 
     static {
         // 初始化默认配置
-        // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
         SECURITY_CONFIG.put("sm3DigestEnabled", true);
-        // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
         SECURITY_CONFIG.put("sipTlsEnabled", false);
-        // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
         SECURITY_CONFIG.put("sipCharset", "gb18030");
-        // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
         SECURITY_CONFIG.put("registerRedirectEnabled", true);
-        // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
         SECURITY_CONFIG.put("tcpReconnectEnabled", false);
     }
 
@@ -87,16 +82,14 @@ public class ApiConfigController {
         if (config.containsKey("sm3DigestEnabled")) {
             Object val = config.get("sm3DigestEnabled");
             if (val instanceof Boolean) {
-                // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
-        SECURITY_CONFIG.put("sm3DigestEnabled", val);
+                SECURITY_CONFIG.put("sm3DigestEnabled", val);
                 log.info("[安全配置] SM3摘要算法: {}", val);
             }
         }
         if (config.containsKey("sipTlsEnabled")) {
             Object val = config.get("sipTlsEnabled");
             if (val instanceof Boolean) {
-                // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
-        SECURITY_CONFIG.put("sipTlsEnabled", val);
+                SECURITY_CONFIG.put("sipTlsEnabled", val);
                 log.info("[安全配置] SIP TLS加密: {}", val);
             }
         }
@@ -105,8 +98,7 @@ public class ApiConfigController {
             String charset = String.valueOf(val);
             // 校验字符集为合法值
             if ("gb18030".equals(charset) || "gb2312".equals(charset)) {
-                // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
-        SECURITY_CONFIG.put("sipCharset", charset);
+                SECURITY_CONFIG.put("sipCharset", charset);
                 log.info("[安全配置] SIP字符集: {}", charset);
             } else {
                 log.warn("[安全配置] 非法字符集值被忽略: {}", charset);
@@ -115,22 +107,25 @@ public class ApiConfigController {
         if (config.containsKey("registerRedirectEnabled")) {
             Object val = config.get("registerRedirectEnabled");
             if (val instanceof Boolean) {
-                // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
-        SECURITY_CONFIG.put("registerRedirectEnabled", val);
+                SECURITY_CONFIG.put("registerRedirectEnabled", val);
                 log.info("[安全配置] 注册重定向: {}", val);
             }
         }
         if (config.containsKey("tcpReconnectEnabled")) {
             Object val = config.get("tcpReconnectEnabled");
             if (val instanceof Boolean) {
-                // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
-        SECURITY_CONFIG.put("tcpReconnectEnabled", val);
+                SECURITY_CONFIG.put("tcpReconnectEnabled", val);
                 log.info("[安全配置] TCP媒体重连: {}", val);
             }
         }
 
         log.info("[安全配置] 配置已保存，部分配置需重启服务后生效");
-        saveConfigToFile();
+        try {
+            saveConfigToFile();
+        } catch (Exception e) {
+            log.error("[安全配置] 持久化失败: {}", e.getMessage());
+            return WVPResult.fail(500, "配置保存失败，持久化异常: " + e.getMessage());
+        }
         return WVPResult.success(Map.of(
                 "code", 0,
                 "msg", "配置已保存，部分配置需重启服务后生效"
@@ -146,25 +141,21 @@ public class ApiConfigController {
      */
     @GetMapping("/get_security")
     public WVPResult<Object> getSecurity() {
-        return Map.copyOf(SECURITY_CONFIG);
+        return WVPResult.success(Map.copyOf(SECURITY_CONFIG));
     }
 
     /**
      * 保存配置到文件（持久化）
      */
     private void saveConfigToFile() {
-        try {
-            java.util.Properties props = new java.util.Properties();
-            props.setProperty("sip.tls.enabled", String.valueOf(SECURITY_CONFIG.getOrDefault("sipTlsEnabled", "false")));
-            props.setProperty("sip.tls.algorithm", String.valueOf(SECURITY_CONFIG.getOrDefault("tlsAlgorithm", "SM2")));
-            props.setProperty("sm3.enabled", String.valueOf(SECURITY_CONFIG.getOrDefault("sm3DigestEnabled", "true")));
-            java.io.File f = new java.io.File(CONFIG_FILE);
-            f.getParentFile().mkdirs();
-            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(f)) {
-                props.store(fos, "WVP Security Config");
-            }
-        } catch (Exception e) {
-            log.warn("[安全配置] 持久化失败: {}", e.getMessage());
+        java.util.Properties props = new java.util.Properties();
+        props.setProperty("sip.tls.enabled", String.valueOf(SECURITY_CONFIG.getOrDefault("sipTlsEnabled", "false")));
+        props.setProperty("sip.tls.algorithm", String.valueOf(SECURITY_CONFIG.getOrDefault("tlsAlgorithm", "SM2")));
+        props.setProperty("sm3.enabled", String.valueOf(SECURITY_CONFIG.getOrDefault("sm3DigestEnabled", "true")));
+        java.io.File f = new java.io.File(CONFIG_FILE);
+        f.getParentFile().mkdirs();
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(f)) {
+            props.store(fos, "WVP Security Config");
         }
     }
 
@@ -182,12 +173,9 @@ public class ApiConfigController {
             try (java.io.FileInputStream fis = new java.io.FileInputStream(f)) {
                 props.load(fis);
             }
-            // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
-        SECURITY_CONFIG.put("sipTlsEnabled", Boolean.parseBoolean(props.getProperty("sip.tls.enabled", "false")));
-            // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
-        SECURITY_CONFIG.put("tlsAlgorithm", props.getProperty("sip.tls.algorithm", "SM2"));
-            // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
-        SECURITY_CONFIG.put("sm3DigestEnabled", Boolean.parseBoolean(props.getProperty("sm3.enabled", "true")));
+            SECURITY_CONFIG.put("sipTlsEnabled", Boolean.parseBoolean(props.getProperty("sip.tls.enabled", "false")));
+            SECURITY_CONFIG.put("tlsAlgorithm", props.getProperty("sip.tls.algorithm", "SM2"));
+            SECURITY_CONFIG.put("sm3DigestEnabled", Boolean.parseBoolean(props.getProperty("sm3.enabled", "true")));
         } catch (Exception e) {
             log.warn("[安全配置] 加载失败: {}", e.getMessage());
         }
