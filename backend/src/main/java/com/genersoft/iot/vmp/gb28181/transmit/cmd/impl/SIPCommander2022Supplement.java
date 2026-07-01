@@ -62,7 +62,7 @@ public class SIPCommander2022Supplement {
 
     // SN 序号（简单递增，生产环境应考虑线程安全和持久化）
     private static final String SN_PERSIST_FILE = System.getProperty("java.io.tmpdir") + "/wvp-sn-counter.properties";
-    private static final java.util.concurrent.atomic.AtomicInteger snCounter = new java.util.concurrent.atomic.AtomicInteger(0);
+    private static final java.util.concurrent.atomic.AtomicInteger snCounter = new java.util.concurrent.atomic.AtomicInteger(loadSnFromFile());
     private static int nextSn() {
         int sn = snCounter.incrementAndGet();
         persistSn(sn);
@@ -277,7 +277,7 @@ public class SIPCommander2022Supplement {
         }
 
         // 返回文件访问 URL（实际项目应返回可通过 HTTP 访问的完整 URL）
-        String fileUrl = "/firmware/" + deviceId + "/" + savedName;
+        String fileUrl = "http://" + device.getIp() + ":" + device.getPort() + "/firmware/" + deviceId + "/" + savedName;
         log.info("[固件上传] deviceId={}, originalName={}, savedAs={}, fileUrl={}",
                 deviceId, originalName, savedName, fileUrl);
         return fileUrl;
@@ -487,6 +487,18 @@ public class SIPCommander2022Supplement {
             log.error("[SIP发送] 消息发送失败: device={}, channelId={}", device.getDeviceId(), channelId, e);
         }
     }
+    private static int loadSnFromFile() {
+        try {
+            java.io.File f = new java.io.File(SN_PERSIST_FILE);
+            if (f.exists()) {
+                java.util.Properties props = new java.util.Properties();
+                try (java.io.FileInputStream fis = new java.io.FileInputStream(f)) { props.load(fis); }
+                return Integer.parseInt(props.getProperty("sn", "0"));
+            }
+        } catch (Exception ignored) {}
+        return 0;
+    }
+
     private static void persistSn(int sn) {
         try {
             java.util.Properties props = new java.util.Properties();
