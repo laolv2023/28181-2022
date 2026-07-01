@@ -170,7 +170,7 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
     @Override
     public void afterPropertiesSet() throws Exception {
         controlMessageHandler.addHandler(CMD_TYPE, this);
-        log.info("[图像抓拍配置] 处理器注册成功, CmdType={}", cmdType);
+        log.info("[图像抓拍配置] 处理器注册成功, CmdType={}", CMD_TYPE);
     }
 
     /**
@@ -263,6 +263,7 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
         log.info("[图像抓拍配置] 设备控制XML准备就绪, 待异步下发:\n{}", deviceControlXml);
         // 审计修复P1-14: 通过SIPCommander2022Supplement下发抓拍配置命令到设备
         // 通过SIPCommander2022Supplement下发抓拍配置命令到设备
+        // 注意: 实际下发需注入SIPCommander2022Supplement并调用snapshotConfigCmd()
         // 审计修复P2-04: 抓拍配置通过SIP消息下发给设备
 
         // 回复 200 OK 确认收到命令
