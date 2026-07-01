@@ -1,5 +1,12 @@
 /**
  * 前端 API 层
+ * 错误处理: 调用方应使用 try/catch, 在 catch 中:
+ *   1. 记录错误日志 (console.error)
+ *   2. 向用户展示友好消息 (ElMessage.error)
+ *   3. 根据状态码处理 (401→登录, 403→权限, 500→服务器错误)
+ */
+/**
+ * 前端 API 层
  * CSRF 防护: 所有 POST/PUT/DELETE 请求自动携带 X-CSRF-TOKEN 头
  * 文件校验: 上传文件前需在前端校验文件类型和大小
  */
