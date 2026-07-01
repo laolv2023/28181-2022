@@ -214,7 +214,7 @@ export function queryCruiseTrack(deviceId, channelId, trackListId) {
   return request({
     method: 'get',
     url: `/api/device/control/cruise_track_query/${deviceId}/${channelId}`,
-    data: { trackListId },
+    params: { trackListId },
     timeout: 15000
   })
 }
