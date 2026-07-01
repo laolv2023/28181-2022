@@ -253,7 +253,7 @@ public final class SM3DigestHelper {
         if (isSm3Available()) {
             return digest(data);
         }
-        logger.warn("[SM3] SM3不可用, 回退到MD5");
-        return digestMd5(data);
+        // SM3不可用时已抛IllegalStateException, 不会执行到此处
+        return digest(data);
     }
 }
