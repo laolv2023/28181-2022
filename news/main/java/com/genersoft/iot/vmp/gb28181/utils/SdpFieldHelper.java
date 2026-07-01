@@ -361,6 +361,7 @@ public final class SdpFieldHelper {
      */
     /** 倍速格式化: 整数显示为整数, 小数保留 */
     private static String formatSpeed(double speed) {
+        if (Double.isInfinite(speed) || Double.isNaN(speed)) return "0";
         if (speed == (long) speed) {
             return String.valueOf((long) speed);
         }
