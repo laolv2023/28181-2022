@@ -558,4 +558,40 @@ public class ApiDeviceControlController {
 }
 }
 }
+
+    /**
+     * 人工指定设备协议版本
+     * 来源: 运维需求 — 部分设备未携带X-GB-ver头域时人工指定版本
+     * @param deviceId 设备ID
+     * @param version 协议版本号（"2.0"=2022版, "1.0"=2016版, null=清除人工指定恢复自动检测）
+     */
+    @PostMapping("/set_protocol_version/{deviceId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public WVPResult<?> setDeviceProtocolVersion(
+            @PathVariable String deviceId,
+            @RequestParam(required = false) String version) {
+        if (deviceId == null || deviceId.isEmpty()) {
+            return WVPResult.fail(400, "设备编码不能为空");
+        }
+        if (version != null && !version.trim().isEmpty()) {
+            if (!"2.0".equals(version.trim()) && !"1.0".equals(version.trim())) {
+                return WVPResult.fail(400, "版本号仅支持 2.0 或 1.0");
+            }
+        }
+        try {
+            Device device = deviceService.getDevice(deviceId);
+            if (device == null) {
+                return WVPResult.fail(404, "设备不存在");
+            }
+            // 设置人工指定版本
+            device.setManualProtocolVersion(version);
+            deviceService.updateDevice(device);
+            log.info("[协议版本] 人工指定设备 {} 协议版本为: {}", deviceId, version == null ? "自动检测" : version);
+            return WVPResult.success("操作成功");
+        } catch (Exception e) {
+            log.error("[协议版本] 人工指定失败: {}", e.getMessage());
+            return WVPResult.fail(500, "操作失败: " + e.getMessage());
+        }
+    }
+
 }
