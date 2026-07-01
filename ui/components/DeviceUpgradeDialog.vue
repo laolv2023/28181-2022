@@ -205,7 +205,7 @@ export default {
      * 条件：已选择文件 且 上传成功 且 已填写制造商 且 当前无进行中的上传/升级操作
      */
     canUpgrade() {
-      return this.uploadSuccess && this.firmwareFile !== null &&
+      return this.uploadSuccess && this.form.firmwareFile !== null &&
              this.form.manufacturer.trim() !== '' &&
              !this.uploading &&
              !this.upgrading
