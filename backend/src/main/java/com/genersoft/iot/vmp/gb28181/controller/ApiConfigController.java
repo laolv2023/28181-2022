@@ -43,6 +43,7 @@ public class ApiConfigController {
      *   - tcpReconnectEnabled: false   — TCP 重连可选特性
      */
     private static final String CONFIG_FILE = System.getProperty("user.home") + "/.wvp/security-config.properties";
+        // ConcurrentHashMap 保证线程安全, 静态字段在类加载时初始化
         private static final ConcurrentHashMap<String, Object> SECURITY_CONFIG = new ConcurrentHashMap<>();
 
     static {
@@ -73,7 +74,7 @@ public class ApiConfigController {
     @PostMapping("/save_security")
     public WVPResult<Object> saveSecurity(@RequestBody Map<String, Object> config) {
         if (config == null || config.isEmpty()) {
-            return WVPResult.success(Map.of("code", 400, "msg", "配置数据不能为空");
+            return WVPResult.fail(400, "配置数据不能为空");
         }
 
         // 逐一校验并存储配置项
@@ -158,6 +159,9 @@ public class ApiConfigController {
     /**
      * 从文件加载配置（持久化）
      */
+    private void @javax.annotation.PostConstruct
+    public void init() { loadConfigFromFile(); }
+
     private void loadConfigFromFile() {
         try {
             java.io.File f = new java.io.File(CONFIG_FILE);
