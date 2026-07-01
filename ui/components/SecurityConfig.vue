@@ -127,6 +127,7 @@
 </template>
 
 <script>
+import { getSecurityConfig } from "@/api/frontEnd";
 /**
  * 安全配置页面
  *
