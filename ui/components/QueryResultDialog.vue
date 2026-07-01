@@ -145,6 +145,9 @@ export default {
   // ========== Data ==========
   data() {
     return {
+      currentPage: 1,
+      pageSize: 10,
+      total: 0,
       abortController: null,
             /** 当前激活标签页 */
       activeTab: 'homePosition',
