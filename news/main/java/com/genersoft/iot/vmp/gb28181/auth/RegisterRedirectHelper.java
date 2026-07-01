@@ -169,7 +169,7 @@ public final class RegisterRedirectHelper {
                     // Device 类无 setHost 方法，通过重新注册自动获取
                 }
                 try {
-                    device.setPort(Integer.parseInt(port));
+                    device.setPort(port);
                 } catch (NoSuchMethodError | NumberFormatException ignored) {
                     // Device 类无 setPort 方法或 port 非数字
                 }
