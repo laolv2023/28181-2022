@@ -39,7 +39,7 @@
       <!-- 配置表单 -->
       <el-form
         ref="configForm"
-        :model="config"
+        :model="config" :rules="formRules"
         label-width="200px"
         size="small"
         :disabled="saving"
@@ -147,6 +147,9 @@ export default {
   // ========== Data ==========
   data() {
     return {
+      formRules: {
+        sm3DigestEnabled: [{ required: false }],
+      },
       timer: null,
       /**
        * 安全配置对象
