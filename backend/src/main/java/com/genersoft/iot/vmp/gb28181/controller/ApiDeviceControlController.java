@@ -71,7 +71,7 @@ public class ApiDeviceControlController {
      * @param zoom      变倍倍数，范围 0 ~ 20，精度 0.1
      * @return 操作结果
      */
-    @PostMapping("/ptz_precise/{deviceId/{channelId")
+    @PostMapping("/ptz_precise/{deviceId}/{channelId}")
     public WVPResult<?> ptzPrecise(
             @PathVariable String deviceId,
             @PathVariable String channelId,
@@ -86,14 +86,16 @@ public class ApiDeviceControlController {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
         
         try {
-            log.info("[PTZ精准控制] 设备={, 通道={, pan={, tilt={, zoom={",
+            log.info("[PTZ精准控制] 设备={}, 通道={}, pan={}, tilt={}, zoom={}",
                     deviceId, channelId, pan, tilt, zoom);
             cmder.ptzPreciseCmd(device, channelId, pan, tilt, zoom);
             return WVPResult.success();
          catch (Exception e) {
             log.error("[PTZ精准控制] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "PTZ精准控制命令下发失败: " + "内部服务器错误");
+        }
         
+        }
     
 
     // ========================================================================
@@ -135,7 +137,9 @@ public class ApiDeviceControlController {
          catch (Exception e) {
             log.error("[目标跟踪] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "目标跟踪命令下发失败: " + "内部服务器错误");
+        }
         
+        }
     
 
     // ========================================================================
@@ -172,7 +176,9 @@ public class ApiDeviceControlController {
          catch (Exception e) {
             log.error("[存储卡格式化] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "存储卡格式化命令下发失败: " + "内部服务器错误");
+        }
         
+        }
     
 
     /**
@@ -206,7 +212,9 @@ public class ApiDeviceControlController {
          catch (Exception e) {
             log.error("[存储卡状态查询] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "存储卡状态查询失败: " + "内部服务器错误");
+        }
         
+        }
     
 
     // ========================================================================
@@ -259,6 +267,7 @@ public class ApiDeviceControlController {
          catch (Exception e) {
             log.error("[固件上传] 上传失败: deviceId={", deviceId, e);
             return WVPResult.fail(500, "固件上传失败: " + "内部服务器错误");
+        }
         
     
 
@@ -304,7 +313,9 @@ public class ApiDeviceControlController {
          catch (Exception e) {
             log.error("[设备升级] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "设备升级命令下发失败: " + "内部服务器错误");
+        }
         
+        }
     
 
     // ========================================================================
@@ -340,7 +351,9 @@ public class ApiDeviceControlController {
          catch (Exception e) {
             log.error("[看守位查询] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "看守位查询失败: " + "内部服务器错误");
+        }
         
+        }
     
 
     /**
@@ -373,7 +386,9 @@ public class ApiDeviceControlController {
          catch (Exception e) {
             log.error("[巡航轨迹查询] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "巡航轨迹查询失败: " + "内部服务器错误");
+        }
         
+        }
     
 
     /**
@@ -405,7 +420,9 @@ public class ApiDeviceControlController {
          catch (Exception e) {
             log.error("[PTZ精准状态查询] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "PTZ精准状态查询失败: " + "内部服务器错误");
+        }
         
+        }
     
 
     // ========================================================================
@@ -465,7 +482,9 @@ public class ApiDeviceControlController {
          catch (Exception e) {
             log.error("[图像抓拍配置] 命令下发失败: deviceId={, channelId={", deviceId, channelId, e);
             return WVPResult.fail(500, "图像抓拍配置失败: " + "内部服务器错误");
+        }
         
+        }
     
 
     // ========================================================================
@@ -495,3 +514,113 @@ public class ApiDeviceControlController {
         public void setFileName(String fileName) { this.fileName = fileName; 
     
 
+
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
