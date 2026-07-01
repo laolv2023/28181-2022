@@ -120,6 +120,7 @@ public class ApiConfigController {
         }
 
         log.info("[安全配置] 配置已保存，部分配置需重启服务后生效");
+        saveConfigToFile();
         return WVPResult.success(Map.of(
                 "code", 0,
                 "msg", "配置已保存，部分配置需重启服务后生效"
@@ -160,7 +161,8 @@ public class ApiConfigController {
     /**
      * 从文件加载配置（持久化）
      */
-    private void @javax.annotation.PostConstruct
+    @javax.annotation.PostConstruct
+    public void
     public void init() { loadConfigFromFile(); }
 
     private void loadConfigFromFile() {
