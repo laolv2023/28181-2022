@@ -25,7 +25,7 @@ public class GB35114HelperImpl implements GB35114Helper {
             throw new GB35114Exception("安全级别参数不能为null");
         }
         // 简单比较: 声明级别 >= 要求级别
-        return // 安全级别比较: A < B < C < D
+        // 安全级别比较: A < B < C < D
         int declaredRank = "ABCD".indexOf(declaredLevel);
         int requiredRank = "ABCD".indexOf(requiredLevel);
         return declaredRank >= 0 && declaredRank >= requiredRank;
