@@ -1,16 +1,4 @@
 /**
- * 前端 API 层
- * 错误处理: 调用方应使用 try/catch, 在 catch 中:
- *   1. 记录错误日志 (console.error)
- *   2. 向用户展示友好消息 (ElMessage.error)
- *   3. 根据状态码处理 (401→登录, 403→权限, 500→服务器错误)
- */
-/**
- * 前端 API 层
- * CSRF 防护: 所有 POST/PUT/DELETE 请求自动携带 X-CSRF-TOKEN 头
- * 文件校验: 上传文件前需在前端校验文件类型和大小
- */
-/**
  * 前端 API 层 — 错误处理指导:
  * 调用方应使用 try/catch 捕获异常, 并在 catch 中:
  * 1. 记录错误日志
@@ -62,7 +50,7 @@ export function ptzPrecise({ deviceId, channelId, pan, tilt, zoom } = {}) {
   return request({
     method: 'post',
     url: `/api/device/control/ptz_precise/${deviceId}/${channelId}`,
-    params: { pan: pan ?? null, tilt: tilt ?? null, zoom: zoom ?? null },
+    data: { pan: pan ?? null, tilt: tilt ?? null, zoom: zoom ?? null },
     timeout: 10000  // PTZ 控制命令 10s 超时
   })
 }
@@ -90,7 +78,7 @@ export function targetTrack({ deviceId, channelId, action } = {}) {
   return request({
     method: 'post',
     url: `/api/device/control/target_track/${deviceId}/${channelId}`,
-    params: { action },
+    data: { action },
     timeout: 10000
   })
 }
@@ -226,7 +214,7 @@ export function queryCruiseTrack(deviceId, channelId, trackListId) {
   return request({
     method: 'get',
     url: `/api/device/control/cruise_track_query/${deviceId}/${channelId}`,
-    params: { trackListId },
+    data: { trackListId },
     timeout: 15000
   })
 }
