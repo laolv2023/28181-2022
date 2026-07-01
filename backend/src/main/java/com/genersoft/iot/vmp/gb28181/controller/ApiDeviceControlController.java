@@ -494,7 +494,7 @@ public class ApiDeviceControlController {
     /**
      * 固件上传响应 DTO
      */
-    public static class FileUploadResult {
+    public static class FileUploadResult implements java.io.Serializable {
         // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
         private String fileUrl;
         private String fileName;
