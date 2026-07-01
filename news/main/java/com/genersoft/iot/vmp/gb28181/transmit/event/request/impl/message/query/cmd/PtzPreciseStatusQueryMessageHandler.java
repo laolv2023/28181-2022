@@ -182,7 +182,7 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
         String sn = XmlUtil.getText(element, "SN");
         log.info("[PTZ精准状态查询] 解析请求: deviceId={}, sn={}", deviceId, sn);
 
-        // 查询本地 PTZ 状态缓存（此处使用默认值（实际应从设备响应XML中解析），实际项目应从设备状态缓存中读取）
+        // 查询本地 PTZ 状态缓存（此处使用默认值（生产环境应从设备响应XML中解析实际值）（实际应从设备响应XML中解析），实际项目应从设备状态缓存中读取）
         double pan = DEFAULT_PAN;
         double tilt = DEFAULT_TILT;
         double zoom = DEFAULT_ZOOM;
