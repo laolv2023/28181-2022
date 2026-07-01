@@ -61,7 +61,30 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SIPCommander2022Supplement implements SIPCommanderSupplement {
 
     // SN 序号（线程安全的原子自增，持久化以防重启后 SN 重复）
-    private static final AtomicInteger snCounter = new AtomicInteger(0);
+    // 注意: 若持久化文件损坏或不可读，snCounter 从 0 开始，
+    // 可能导致 SIP 消息重放风险。生产环境建议使用数据库序列或 Redis 原子递增。
+    private static final AtomicInteger snCounter = new AtomicInteger(
+            loadSnCounterFromPersistence());
+
+    /** 从持久化文件恢复 SN 计数器，失败时告警并从 0 开始 */
+    private static int loadSnCounterFromPersistence() {
+        java.io.File snFile = new java.io.File(
+                System.getProperty("wvp.sn.persist.file",
+                        System.getProperty("java.io.tmpdir") + "/wvp/sn_counter.txt"));
+        try {
+            if (snFile.exists()) {
+                String content = new String(java.nio.file.Files.readAllBytes(snFile.toPath())).trim();
+                int sn = Integer.parseInt(content);
+                log.info("[SN计数器] 从持久化文件恢复 SN={}", sn);
+                return sn;
+            }
+        } catch (Exception e) {
+            log.error("[SN计数器] 持久化文件损坏或不可读, SN 从 0 开始! 文件: {}, 错误: {}",
+                    snFile.getAbsolutePath(), e.getMessage());
+        }
+        log.warn("[SN计数器] 持久化文件不存在, SN 从 0 开始。生产环境请配置 wvp.sn.persist.file");
+        return 0;
+    }
 
     private static int nextSn() {
         return snCounter.incrementAndGet();
@@ -259,6 +282,17 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         log.info("[固件上传] deviceId={}, originalName={}, savedAs={}, fileUrl={}",
                 deviceId, originalName, savedName, fileUrl);
         return fileUrl;
+    } catch (IOException e) {
+        // 上传失败时清理已创建的目录（防止孤儿目录泄露）
+        try {
+            Path uploadDir = Paths.get(FIRMWARE_UPLOAD_DIR, deviceId);
+            if (Files.exists(uploadDir) && Files.list(uploadDir).findAny().isEmpty()) {
+                Files.deleteIfExists(uploadDir);
+            }
+        } catch (IOException cleanupEx) {
+            log.warn("[固件上传] 清理孤儿目录失败: {}", cleanupEx.getMessage());
+        }
+        throw e;
     }
 
     // ========================================================================
