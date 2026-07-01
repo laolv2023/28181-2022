@@ -3,14 +3,31 @@ package com.genersoft.iot.vmp.gb28181.transmit.cmd.impl;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.SIPCommanderSupplement;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.sip.ClientTransaction;
+import javax.sip.SipProvider;
+import javax.sip.address.AddressFactory;
+import javax.sip.address.SipURI;
+import javax.sip.header.CSeqHeader;
+import javax.sip.header.CallIdHeader;
+import javax.sip.header.ContentTypeHeader;
+import javax.sip.header.FromHeader;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.MaxForwardsHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.MessageFactory;
+import javax.sip.message.Request;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -53,6 +70,19 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
     // 固件上传目录（可通过系统属性 wvp.firmware.dir 配置）
     private static final String FIRMWARE_UPLOAD_DIR =
             System.getProperty("wvp.firmware.dir", System.getProperty("java.io.tmpdir") + "/wvp/firmware");
+
+    // SIP 消息发送基础设施（由 WVP 容器注入，开发阶段可能为 null）
+    @Autowired(required = false)
+    private SipProvider sipProvider;
+
+    @Autowired(required = false)
+    private MessageFactory messageFactory;
+
+    @Autowired(required = false)
+    private HeaderFactory headerFactory;
+
+    @Autowired(required = false)
+    private AddressFactory addressFactory;
 
     // ========================================================================
     // 一、PTZ 精准控制（改造项7，A.2.3.1.11）
@@ -97,7 +127,7 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         xml.append("</Control>\r\n");
 
         String xmlStr = xml.toString();
-        log.info("[SIP-PTZ精准控制] sn={}, deviceId={}, xml={}", sn, deviceId, xmlStr);
+        log.debug("[SIP-PTZ精准控制] sn={}, deviceId={}, xml={}", sn, deviceId, xmlStr);
         sendSipMessage(device, channelId, xmlStr);
     }
 
@@ -127,7 +157,7 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         xml.append("</Control>\r\n");
 
         String xmlStr = xml.toString();
-        log.info("[SIP-存储卡格式化] sn={}, deviceId={}", sn, deviceId);
+        log.debug("[SIP-存储卡格式化] sn={}, deviceId={}", sn, deviceId);
         sendSipMessage(device, channelId, xmlStr);
     }
 
@@ -157,7 +187,7 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         xml.append("</Control>\r\n");
 
         String xmlStr = xml.toString();
-        log.info("[SIP-目标跟踪] sn={}, deviceId={}, action={}", sn, deviceId, action);
+        log.debug("[SIP-目标跟踪] sn={}, deviceId={}, action={}", sn, deviceId, action);
         sendSipMessage(device, channelId, xmlStr);
     }
 
@@ -194,7 +224,7 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         xml.append("</Control>\r\n");
 
         String xmlStr = xml.toString();
-        log.info("[SIP-设备升级] sn={}, deviceId={}, firmware={}, sessionId={}",
+        log.debug("[SIP-设备升级] sn={}, deviceId={}, firmware={}, sessionId={}",
                 sn, deviceId, firmware, sessionId);
         sendSipMessage(device, channelId, xmlStr);
     }
@@ -256,7 +286,7 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         xml.append("</Query>\r\n");
 
         String xmlStr = xml.toString();
-        log.info("[SIP-看守位查询] sn={}, deviceId={}", sn, deviceId);
+        log.debug("[SIP-看守位查询] sn={}, deviceId={}", sn, deviceId);
         sendSipMessage(device, channelId, xmlStr);
     }
 
@@ -284,7 +314,7 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         xml.append("</Query>\r\n");
 
         String xmlStr = xml.toString();
-        log.info("[SIP-巡航轨迹查询] sn={}, deviceId={}, trackListId={}", sn, deviceId, trackListId);
+        log.debug("[SIP-巡航轨迹查询] sn={}, deviceId={}, trackListId={}", sn, deviceId, trackListId);
         sendSipMessage(device, channelId, xmlStr);
     }
 
@@ -309,7 +339,7 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         xml.append("</Query>\r\n");
 
         String xmlStr = xml.toString();
-        log.info("[SIP-PTZ精准状态查询] sn={}, deviceId={}", sn, deviceId);
+        log.debug("[SIP-PTZ精准状态查询] sn={}, deviceId={}", sn, deviceId);
         sendSipMessage(device, channelId, xmlStr);
     }
 
@@ -334,7 +364,7 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         xml.append("</Query>\r\n");
 
         String xmlStr = xml.toString();
-        log.info("[SIP-存储卡状态查询] sn={}, deviceId={}", sn, deviceId);
+        log.debug("[SIP-存储卡状态查询] sn={}, deviceId={}", sn, deviceId);
         sendSipMessage(device, channelId, xmlStr);
     }
 
@@ -372,7 +402,7 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         xml.append("</Control>\r\n");
 
         String xmlStr = xml.toString();
-        log.info("[SIP-图像抓拍配置] sn={}, deviceId={}, resolution={}, snapNum={}",
+        log.debug("[SIP-图像抓拍配置] sn={}, deviceId={}, resolution={}, snapNum={}",
                 sn, deviceId, resolution, snapNum);
         sendSipMessage(device, channelId, xmlStr);
     }
@@ -408,21 +438,61 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
     /**
      * 通过 JAIN-SIP 发送 MESSAGE 到设备
      *
-     * <p>实际实现需调用 WVP 现有的 SIP 消息发送基础设施（如 {@code SipSender}），
-     * 此处为骨架方法，集成时将 xml 字符串作为 MESSAGE body 发送</p>
+     * <p>使用 WVP 容器注入的 JAIN-SIP 基础设施进行消息发送。
+     * 若 SIP 基础设施不可用（开发阶段），记录 ERROR 日志并静默丢弃，
+     * 确保 WVP 集成后 SIP 发送自动生效。</p>
      *
      * @param device    目标设备
      * @param channelId 通道编码
      * @param xml       GB/T 28181 格式的 XML 消息体
      */
     private void sendSipMessage(Device device, String channelId, String xml) {
-        // 实际集成代码:
-        //   SIPRequest request = messageFactory.createRequest(...);
-        //   ContentTypeHeader contentType = headerFactory.createContentTypeHeader("Application", "MANSCDP+xml");
-        //   request.setContent(xml, contentType);
-        //   sipSender.transmitRequest(device.getIp(), request);
-        //
-        // 来源: WVP 现有 SIPCommander.java 中的 sendMessage/sendControlMessage 模式
-        log.debug("[SIP发送] device={}, channel={}, xml={}", device.getDeviceId(), channelId, xml);
+        if (sipProvider == null || messageFactory == null || headerFactory == null || addressFactory == null) {
+            log.error("[SIP发送] SIP基础设施未初始化(sipProvider={}, msgFactory={}, hdrFactory={}, addrFactory={}), "
+                    + "消息已丢弃: device={}, channel={}",
+                    sipProvider != null, messageFactory != null, headerFactory != null, addressFactory != null,
+                    device.getDeviceId(), channelId);
+            log.debug("[SIP发送-丢弃内容] device={}, channel={}, xml={}", device.getDeviceId(), channelId, xml);
+            return;
+        }
+        try {
+            String deviceId = device.getDeviceId();
+            String ip = device.getIp();
+            int port = device.getPort() > 0 ? device.getPort() : 5060;
+
+            // 构造 SIP MESSAGE 请求
+            SipURI requestUri = addressFactory.createSipURI(deviceId, ip + ":" + port);
+            ArrayList<ViaHeader> viaHeaders = new ArrayList<>();
+            ViaHeader viaHeader = headerFactory.createViaHeader(
+                    sipProvider.getSipStack().getIPAddress(),
+                    sipProvider.getSipStack().getPort(),
+                    "UDP", null);
+            viaHeaders.add(viaHeader);
+
+            CallIdHeader callIdHeader = sipProvider.getNewCallId();
+            CSeqHeader cSeqHeader = headerFactory.createCSeqHeader(1L, Request.MESSAGE);
+            MaxForwardsHeader maxForwards = headerFactory.createMaxForwardsHeader(70);
+
+            FromHeader fromHeader = headerFactory.createFromHeader(
+                    addressFactory.createAddress(addressFactory.createSipURI(
+                            sipProvider.getSipStack().getIPAddress())), UUID.randomUUID().toString());
+            ToHeader toHeader = headerFactory.createToHeader(
+                    addressFactory.createAddress(requestUri), null);
+
+            Request request = messageFactory.createRequest(requestUri, Request.MESSAGE,
+                    callIdHeader, cSeqHeader, fromHeader, toHeader, viaHeaders, maxForwards);
+
+            ContentTypeHeader contentTypeHeader = headerFactory.createContentTypeHeader(
+                    "Application", "MANSCDP+xml");
+            request.setContent(xml, contentTypeHeader);
+
+            ClientTransaction transaction = sipProvider.getNewClientTransaction(request);
+            transaction.sendRequest();
+            log.debug("[SIP发送] MESSAGE已发送: device={}, channel={}, callId={}",
+                    deviceId, channelId, callIdHeader.getCallId());
+        } catch (ParseException | javax.sip.SipException | javax.sip.InvalidArgumentException e) {
+            log.error("[SIP发送] 发送失败: device={}, channel={}, err={}",
+                    device.getDeviceId(), channelId, e.getMessage());
+        }
     }
 }
