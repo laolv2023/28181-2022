@@ -291,6 +291,9 @@ public class SipTlsProperties {
     @javax.annotation.PostConstruct
     public void validate() { if (!isValid()) throw new IllegalStateException("TLS配置无效"); }
 
+    @javax.annotation.PostConstruct
+    public void validate() { if (!isValid()) throw new IllegalStateException("TLS配置无效"); }
+
     public boolean isValid() {
         if (!enabled) {
             // 未启用 TLS，无需校验
