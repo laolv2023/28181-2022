@@ -120,6 +120,9 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
     @Autowired
     private QueryMessageHandler queryMessageHandler;
 
+    /** 待发送的响应 XML（由 handleQuery 构造，handForDevice 发送） */
+    private String responseXml;
+
     /**
      * Spring 容器初始化后回调，将当前处理器注册到 QueryMessageHandler 中。
      * <p>
@@ -214,8 +217,8 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
         int resetTime = DEFAULT_RESET_TIME;
 
         // 构造响应 XML（实际项目通过 ISIPCommanderForPlatform 异步发送给上级平台）
-        String responseXml = buildResponseXml(deviceId, sn, RESULT_OK, enabled, presetId, resetTime);
-        log.info("[看守位信息查询] 响应XML准备就绪, 待异步发送:\n{}", responseXml);
+        this.responseXml = buildResponseXml(deviceId, sn, RESULT_OK, enabled, presetId, resetTime);
+        log.info("[看守位信息查询] 响应XML准备就绪, 待异步发送:\n{}", this.responseXml);
 
         // 先 ACK 200 OK 确认收到请求
         responseOk(evt);
@@ -275,3 +278,4 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
         }
     }
 }
+
