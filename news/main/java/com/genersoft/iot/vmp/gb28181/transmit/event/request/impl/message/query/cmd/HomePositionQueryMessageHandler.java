@@ -112,7 +112,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
     /**
      * 默认看守位启用状态
      */
-    private static final boolean DEFAULT_ENABLED = false;
+    private static final int DEFAULT_ENABLED = 0; // 0=禁用, 1=启用, 遵循GB/T 28181-2022规范
 
     /**
      * 注入查询消息分发器，启动时注册本处理器
@@ -212,7 +212,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
         log.info("[看守位信息查询] 解析请求: deviceId={}, sn={}", deviceId, sn);
 
         // 查询本地看守位配置（此处使用默认值（实际应从设备响应XML中解析），实际项目应从设备配置缓存中读取）
-        boolean enabled = DEFAULT_ENABLED;
+        int enabled = DEFAULT_ENABLED;
         int presetId = DEFAULT_PRESET_ID;
         int resetTime = DEFAULT_RESET_TIME;
 
@@ -240,7 +240,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
      * @return 完整响应 XML 字符串
      */
     private String buildResponseXml(String deviceId, String sn, String result,
-                                    boolean enabled, int presetId, int resetTime) {
+                                    int enabled, int presetId, int resetTime) {
         StringBuilder xml = new StringBuilder(256);
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Response>\r\n");
