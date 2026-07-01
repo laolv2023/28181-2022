@@ -51,9 +51,12 @@ public class GB35114HelperImpl implements GB35114Helper {
             throw new GB35114Exception("安全级别参数不能为null");
         }
         // 安全级别比较: GB 35114 仅定义 A/B/C 三个安全等级
-        // 审计修复 56_B-04: 移除不规范 D 级别
-        int declaredRank = "ABC".indexOf(declaredLevel);
-        int requiredRank = "ABC".indexOf(requiredLevel);
+        // 空字符串/空白字符绕过防护: indexOf("")=0 会导致空声明被识别为 A 级
+        if (declaredLevel.trim().isEmpty() || requiredLevel.trim().isEmpty()) {
+            throw new GB35114Exception("安全级别不能为空字符串");
+        }
+        int declaredRank = "ABC".indexOf(declaredLevel.trim());
+        int requiredRank = "ABC".indexOf(requiredLevel.trim());
         if (declaredRank < 0) {
             log.warn("[GB35114] 设备声明了非标准安全级别: {}, 仅支持 A/B/C", declaredLevel);
         }
