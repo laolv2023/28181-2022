@@ -1,7 +1,6 @@
 package com.genersoft.iot.vmp.gb28181.auth;
 
 import com.genersoft.iot.vmp.gb28181.bean.Device;
-import gov.nist.javax.sip.header.SIPHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ObjectUtils;
@@ -17,8 +16,6 @@ import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 import java.text.ParseException;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * 注册重定向工具类
@@ -167,15 +164,13 @@ public final class RegisterRedirectHelper {
                 }
                 // 尝试更新 host 和 port（通过反射兼容不同版本的 Device 类）
                 try {
-                    java.lang.reflect.Method setHost = device.getClass().getMethod("setHost", String.class);
-                    setHost.invoke(device, host);
-                } catch (NoSuchMethodException ignored) {
+                    device.setHost(host);
+                } catch (NoSuchMethodError ignored) {
                     // Device 类无 setHost 方法，通过重新注册自动获取
                 }
                 try {
-                    java.lang.reflect.Method setPort = device.getClass().getMethod("setPort", int.class);
-                    setPort.invoke(device, Integer.parseInt(port));
-                } catch (NoSuchMethodException | NumberFormatException ignored) {
+                    device.setPort(Integer.parseInt(port));
+                } catch (NoSuchMethodError | NumberFormatException ignored) {
                     // Device 类无 setPort 方法或 port 非数字
                 }
             } catch (Exception e) {
