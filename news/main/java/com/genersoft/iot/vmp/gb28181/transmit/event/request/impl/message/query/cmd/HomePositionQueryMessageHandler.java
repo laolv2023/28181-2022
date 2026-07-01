@@ -156,8 +156,8 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
                 device != null ? device.getDeviceId() : "null");
         // 设备发起的查询请求，按规范 ACK 200 OK
         // 审计修复P1-09~12: 响应XML通过SIP 200 OK消息体返回给请求方
-        try { // handForDevice 不直接处理响应, 由 handleQuery 方法处理 } catch (Exception ex) { log.warn("设置响应内容失败", ex); }
-        try { evt.getResponse().setContent(responseXml.getBytes("GB18030"), evt.getResponse().getContentTypeHeader()); } catch (Exception ex) { log.warn("设置响应内容失败", ex); }
+        // handForDevice 不直接处理响应, 由 handleQuery 方法处理
+        try { if (evt.getResponse() != null) { evt.getResponse().setContent(responseXml.getBytes("GB18030"), evt.getResponse().getContentTypeHeader()); } } catch (Exception ex) { log.warn("设置响应内容失败", ex); }
         responseOk(evt);
     }
 
