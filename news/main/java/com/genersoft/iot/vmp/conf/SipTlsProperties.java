@@ -336,28 +336,31 @@ public class SipTlsProperties {
                 '}';
     }
 
-    // 审计修复P2-22: 提供 char[] /* 注意: String到char[]转换在String不可变时效果有限 */ 形式的密码访问器, 避免字符串密码常驻内存无法及时回收
+    // 审计修复P2-22: 提供 char[] 形式的密码访问器, 避免字符串密码常驻内存无法及时回收
+    // 注意: String到char[]转换在String不可变时效果有限, 生产环境建议配置外部密钥管理
     /**
-     * 获取密钥库密码的 char[] /* 注意: String到char[]转换在String不可变时效果有限 */ 形式
+     * 获取密钥库密码的 char[] 形式
      * <p>
-     * 审计修复P2-22: 调用方使用后应调用 Arrays.fill(password, '\0') 清空敏感数据
+     * 审计修复P2-22 + 56_C-08: 调用方使用后应调用 Arrays.fill(password, '\0') 清空敏感数据。
+     * 注意: String 到 char[] 转换在 String 不可变时效果有限。
      * </p>
      *
      * @return 密钥库密码字符数组, 未配置时返回 null
      */
-    public char[] /* 注意: String到char[]转换在String不可变时效果有限 */ getKeyStorePasswordChars() {
+    public char[] getKeyStorePasswordChars() {
         return keyStorePassword != null ? keyStorePassword.toCharArray() : null;
     }
 
     /**
-     * 获取信任库密码的 char[] /* 注意: String到char[]转换在String不可变时效果有限 */ 形式
+     * 获取信任库密码的 char[] 形式
      * <p>
-     * 审计修复P2-22: 调用方使用后应调用 Arrays.fill(password, '\0') 清空敏感数据
+     * 审计修复P2-22 + 56_C-08: 调用方使用后应调用 Arrays.fill(password, '\0') 清空敏感数据。
+     * 注意: String 到 char[] 转换在 String 不可变时效果有限。
      * </p>
      *
      * @return 信任库密码字符数组, 未配置时返回 null
      */
-    public char[] /* 注意: String到char[]转换在String不可变时效果有限 */ getTrustStorePasswordChars() {
+    public char[] getTrustStorePasswordChars() {
         return trustStorePassword != null ? trustStorePassword.toCharArray() : null;
     }
-}
+

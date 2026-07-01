@@ -145,8 +145,9 @@ public final class SipMessageFilter {
                 }
             }
         } catch (Exception t) {
-            // 解析异常不阻断流程，仅记录告警
-            logger.debug("[SIP过滤] Content-Type 解析异常: {}", t.getMessage());
+            // 审计修复 56_B-08: 解析异常应拒绝请求(fail-closed), 防止畸形消息绕过过滤
+            logger.warn("[SIP过滤] Content-Type 解析异常, 拒绝请求: {}", t.getMessage());
+            return false;
         }
 
         // 3. 校验消息体大小
@@ -157,7 +158,9 @@ public final class SipMessageFilter {
                 return false;
             }
         } catch (Exception t) {
-            logger.debug("[SIP过滤] 读取消息体异常: {}", t.getMessage());
+            // 审计修复 56_B-08: 读取异常应拒绝请求, 无法确认消息体大小时安全优先
+            logger.warn("[SIP过滤] 读取消息体异常, 拒绝请求: {}", t.getMessage());
+            return false;
         }
 
         // 4. 校验 X-GB-ver 头部（改造项1，2022版 7.1，可选）

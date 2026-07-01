@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+
 /**
  * GB35114Helper 默认实现（桩实现）
  * 生产环境需替换为基于国密 SM2 签名算法的完整实现。
@@ -12,6 +14,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class GB35114HelperImpl implements GB35114Helper {
     private static final Logger log = LoggerFactory.getLogger(GB35114HelperImpl.class);
+
+    // 审计修复 56_B-06: 启动时告警, 提醒运维替换桩实现
+    @PostConstruct
+    void warnStubImplementation() {
+        log.error("========================================");
+        log.error("[GB35114] 当前使用桩实现! 所有签名验证请求将失败!");
+        log.error("[GB35114] 生产环境必须替换为基于国密 SM2 的完整实现!");
+        log.error("========================================");
+    }
 
     @Override
     public boolean verifySignature(byte[] data, String signature) throws GB35114Exception {

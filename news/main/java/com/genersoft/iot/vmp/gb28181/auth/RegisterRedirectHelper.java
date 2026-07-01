@@ -162,7 +162,7 @@ public final class RegisterRedirectHelper {
                 if (!ObjectUtils.isEmpty(transport)) {
                     device.setTransport(transport);
                 }
-                // 尝试更新 host 和 port（通过反射兼容不同版本的 Device 类）
+                // 审计修复 56_C-06: 直接调用 setHost, 捕获 NoSuchMethodError 兼容不同版本 Device 类(非反射)
                 try {
                     device.setHost(host);
                 } catch (NoSuchMethodError ignored) {

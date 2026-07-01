@@ -15,6 +15,9 @@ import org.springframework.stereotype.Component;
 public class DataIntegrityHelperImpl implements DataIntegrityHelper {
     private static final Logger log = LoggerFactory.getLogger(DataIntegrityHelperImpl.class);
 
+    // 审计修复 56_C-07: 时间戳校验窗口从硬编码提取为常量, 默认±300秒
+    private static final long TIMESTAMP_WINDOW_MS = 5 * 60 * 1000L;
+
     @Override
     public boolean verifyDigest(byte[] data, String expectHex) throws DataIntegrityException {
         if (data == null) throw new DataIntegrityException("数据不能为null");
@@ -41,7 +44,7 @@ public class DataIntegrityHelperImpl implements DataIntegrityHelper {
             // 兼容秒和毫秒时间戳
             if (ts < 1000000000000L) ts = ts * 1000;
             long now = System.currentTimeMillis();
-            return Math.abs(now - ts) < 5 * 60 * 1000;
+            return Math.abs(now - ts) < TIMESTAMP_WINDOW_MS;
         } catch (NumberFormatException e) {
             throw new DataIntegrityException("时间戳格式错误", e);
         }
