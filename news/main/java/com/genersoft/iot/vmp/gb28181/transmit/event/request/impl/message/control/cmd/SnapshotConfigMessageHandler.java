@@ -362,7 +362,7 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
         StringBuilder xml = new StringBuilder(256);
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Control>\r\n");
-        xml.append("<CmdType>DeviceControl</CmdType>\r\n");
+        xml.append("<CmdType>DeviceConfig</CmdType>\r\n");
         xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : SipCharsetHelper.escapeXml(sn)).append("</SN>\r\n");
         xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<SnapConfig>\r\n");
