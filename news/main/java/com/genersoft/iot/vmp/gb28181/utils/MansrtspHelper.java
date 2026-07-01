@@ -68,6 +68,7 @@ public final class MansrtspHelper {
      */
     /** 追加Scale头部, 返回实际使用的倍速 */
     public static double appendScale(StringBuilder builder, double scale) {
+        if (!Boolean.parseBoolean(System.getProperty("wvp.mansrtsp.scale.limit.enabled", "true"))) { builder.append(HEADER_SCALE).append(": ").append(scale).append("\r\n"); return scale; }
         if (builder == null) {
             return DEFAULT_SCALE;
         }
