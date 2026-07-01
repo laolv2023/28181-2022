@@ -134,7 +134,7 @@ public class ApiConfigController {
         return WVPResult.success(Map.of(
                 "code", 0,
                 "msg", "配置已保存，部分配置需重启服务后生效"
-        );
+        ));
     }
 
     /**
