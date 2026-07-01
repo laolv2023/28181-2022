@@ -251,6 +251,7 @@ public class HomePositionQueryMessageHandler extends SIPRequestProcessorParent
         xml.append("<HomePosition>\r\n");
         xml.append("<Enabled>").append(enabled).append("</Enabled>\r\n");
         xml.append("<PresetID>").append(presetId).append("</PresetID>\r\n");
+        xml.append("<presetIndex>").append(presetId).append("</presetIndex>\r\n");
         xml.append("<ResetTime>").append(resetTime).append("</ResetTime>\r\n");
         xml.append("</HomePosition>\r\n");
         xml.append("</Response>\r\n");
