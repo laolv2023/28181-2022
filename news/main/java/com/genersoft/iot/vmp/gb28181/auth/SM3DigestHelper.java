@@ -103,6 +103,9 @@ public final class SM3DigestHelper {
 
         ACTUAL_ALGORITHM = algorithm;
         SM3_AVAILABLE = available;
+        if (!available && ACTUAL_ALGORITHM == null) {
+            logger.error("[SM3] SM3算法不可用且无回退算法, 摘要功能将不可用");
+        }
     }
 
     /**
@@ -146,6 +149,9 @@ public final class SM3DigestHelper {
         }
         if (!SM3_AVAILABLE) {
             throw new IllegalStateException("SM3算法不可用, 请引入BouncyCastle依赖");
+        }
+        if (ACTUAL_ALGORITHM == null) {
+            throw new IllegalStateException("SM3算法名称未初始化, 请联系系统管理员");
         }
         try {
             MessageDigest md = MessageDigest.getInstance(ACTUAL_ALGORITHM);
