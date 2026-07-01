@@ -38,6 +38,8 @@ public class DataIntegrityHelperImpl implements DataIntegrityHelper {
         // 时间戳验证: 检查时间戳是否在合理范围内（±5分钟）
         try {
             long ts = Long.parseLong(timestamp.trim());
+            // 兼容秒和毫秒时间戳
+            if (ts < 1000000000000L) ts = ts * 1000;
             long now = System.currentTimeMillis();
             return Math.abs(now - ts) < 5 * 60 * 1000;
         } catch (NumberFormatException e) {
