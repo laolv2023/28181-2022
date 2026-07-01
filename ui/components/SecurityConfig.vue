@@ -148,6 +148,7 @@ export default {
   // ========== Data ==========
   data() {
     return {
+      abortController: null,
       formRules: {
         sm3DigestEnabled: [{ required: false }],
       },
