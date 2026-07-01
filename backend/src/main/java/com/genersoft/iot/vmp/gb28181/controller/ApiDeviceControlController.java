@@ -231,7 +231,7 @@ public class ApiDeviceControlController {
      * @param file     固件文件（MultipartFile）
      * @return 上传后的文件 URL
      */
-    @PostMapping("/upload_firmware/{deviceId")
+    @PostMapping("/upload_firmware/{deviceId}")
     public WVPResult<?> uploadFirmware(
             @PathVariable String deviceId,
             @RequestParam("file") MultipartFile file) {
@@ -594,4 +594,3 @@ public class ApiDeviceControlController {
         }
     }
 
-}
