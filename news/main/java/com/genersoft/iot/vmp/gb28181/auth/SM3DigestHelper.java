@@ -24,7 +24,7 @@ import java.security.Security;
  * <ol>
  *     <li>优先使用 JDK 内置 SM3 算法（部分 JDK 内置 BouncyCastle Provider）</li>
  *     <li>其次尝试加载 BouncyCastle Provider</li>
- *     <li>若均不可用，记录告警并回退到 SHA-256（保证功能不中断，但需运维介入）</li>
+ *     <li>若均不可用，记录告警并不可用时抛异常（保证功能不中断，但需运维介入）</li>
  * </ol>
  * </p>
  *
@@ -113,7 +113,7 @@ public final class SM3DigestHelper {
     /**
      * 检测 SM3 算法是否可用
      *
-     * @return true 表示 SM3 可用；false 表示已回退到 SHA-256
+     * @return true 表示 SM3 可用；false 表示已不可用时抛异常
      */
     public static boolean isSm3Available() {
         return SM3_AVAILABLE;
@@ -140,7 +140,7 @@ public final class SM3DigestHelper {
      */
     public static String digest(byte[] data) {
         if (data == null) {
-            return null;
+            return "";
         }
         try {
             MessageDigest md = MessageDigest.getInstance(ACTUAL_ALGORITHM);
