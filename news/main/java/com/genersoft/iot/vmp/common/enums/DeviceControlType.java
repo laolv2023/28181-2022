@@ -148,7 +148,6 @@ public enum DeviceControlType {
     public String toString() {
         return this.desc;
     }
-}
 
     /**
      * 获取 XML 元素名
