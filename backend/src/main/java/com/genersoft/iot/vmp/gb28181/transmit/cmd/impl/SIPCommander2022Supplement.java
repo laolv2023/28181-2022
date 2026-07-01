@@ -18,6 +18,7 @@ import javax.sip.SipException;
 import javax.sip.InvalidArgumentException;
 import java.io.File;
 import java.io.IOException;
+import java.util.regex.Pattern;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -65,7 +66,7 @@ public class SIPCommander2022Supplement {
     private static final java.util.concurrent.atomic.AtomicInteger snCounter = new java.util.concurrent.atomic.AtomicInteger(loadSnFromFile());
     private static int nextSn() {
         int sn = snCounter.incrementAndGet();
-        persistSn(sn);
+        if (sn % 10 == 0) persistSn(sn); // 每10次持久化一次
         return sn;
     }
 
