@@ -63,7 +63,7 @@ public class SIPCommander2022Supplement {
     // SN 序号（简单递增，生产环境应考虑线程安全和持久化）
     private static final String SN_PERSIST_FILE = System.getProperty("java.io.tmpdir") + "/wvp-sn-counter.properties";
     private static final java.util.concurrent.atomic.AtomicInteger snCounter = new java.util.concurrent.atomic.AtomicInteger(0);
-    private static synchronized int nextSn() {
+    private static int nextSn() {
         int sn = snCounter.incrementAndGet();
         persistSn(sn);
         return sn;
@@ -204,7 +204,7 @@ public class SIPCommander2022Supplement {
         // SSRF防护: 校验fileUrl不指向内网地址
         if (fileUrl != null && !fileUrl.isEmpty()) {
             try {
-                java.net.URL url = new java.net.URL(fileUrl);
+                java.net.URL url = new java.net.URI(fileUrl).toURL();
                 java.net.InetAddress addr = java.net.InetAddress.getByName(url.getHost());
                 if (addr.isSiteLocalAddress() || addr.isLoopbackAddress() || addr.isAnyLocalAddress()) {
                     throw new IllegalArgumentException("fileUrl不允许指向内网地址");
@@ -401,7 +401,7 @@ public class SIPCommander2022Supplement {
      *
      * 来源: 后端改造项15, 设计文档第12.2节, 2022版9.14
      */
-    public void snapshotConfigCmdImpl(Device device, String channelId, int resolution,
+    public void snapshotConfigCmdImpl(Device device, String channelId, int resolution /* 非标扩展字段 */,
             int snapNum, int interval, String uploadUrl, String sessionId) {
         if (device == null) { throw new IllegalArgumentException("device不能为null"); }
         int sn = nextSn();
