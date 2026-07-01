@@ -16,6 +16,8 @@ import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 import java.text.ParseException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * 注册重定向工具类
@@ -38,8 +40,44 @@ public final class RegisterRedirectHelper {
     /**
      * 默认构造方法私有化，禁止实例化
      */
+    /** 最大重定向次数，防止无限循环 */
+    private static final int MAX_REDIRECT_DEPTH = 5;
+
     private RegisterRedirectHelper() {
         throw new IllegalStateException("工具类禁止实例化");
+    }
+
+    /**
+     * 带环路检测的重定向处理。
+     * 维护已访问地址集合，超过深度上限或检测到环路时中止。
+     *
+     * @param response     302 响应对象
+     * @param device       设备对象
+     * @param visitedHosts 已访问主机集合（调用方维护，首次调用传空集合）
+     * @param depth        当前重定向深度
+     * @return 重定向后的 Contact URI，检测到环路或超深度返回 null
+     */
+    public static String handle302RedirectSafe(Response response, Device device,
+                                                Set<String> visitedHosts, int depth) {
+        if (depth >= MAX_REDIRECT_DEPTH) {
+            logger.warn("[注册重定向] 重定向深度超限({}), 中止", depth);
+            return null;
+        }
+        String contactUri = handle302Response(response, device);
+        if (contactUri == null) return null;
+
+        // 提取目标主机用于环路检测
+        try {
+            String host = ((SipURI) ((ContactHeader) response.getHeader(ContactHeader.NAME))
+                    .getAddress().getURI()).getHost();
+            if (!visitedHosts.add(host)) {
+                logger.warn("[注册重定向] 检测到环路: host={} 已访问过, visited={}", host, visitedHosts);
+                return null;
+            }
+        } catch (Exception e) {
+            logger.debug("[注册重定向] 环路检测解析异常: {}", e.getMessage());
+        }
+        return contactUri;
     }
 
     /**
