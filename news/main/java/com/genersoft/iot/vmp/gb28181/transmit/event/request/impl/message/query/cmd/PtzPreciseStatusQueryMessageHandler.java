@@ -221,10 +221,17 @@ public class PtzPreciseStatusQueryMessageHandler extends SIPRequestProcessorPare
         xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : SipCharsetHelper.escapeXml(sn)).append("</SN>\r\n");
         xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<Result>").append(result).append("</Result>\r\n");
-        // Pan/Tilt/Zoom 保留两位小数
-        xml.append("<Pan>").append(String.format(java.util.Locale.ROOT, "%.2f", pan)).append("</Pan>\r\n");
-        xml.append("<Tilt>").append(String.format(java.util.Locale.ROOT, "%.2f", tilt)).append("</Tilt>\r\n");
-        xml.append("<Zoom>").append(String.format(java.util.Locale.ROOT, "%.2f", zoom)).append("</Zoom>\r\n");
+        // PTZStatus 包装元素（GB/T 28181-2022 A.2.4.1.5 规范要求）
+        xml.append("<PTZStatus>\r\n");
+        // 元素名小写（规范原文 spec_2022.txt）
+        xml.append("<pan>").append(String.format(java.util.Locale.ROOT, "%.2f", pan)).append("</pan>\r\n");
+        xml.append("<tilt>").append(String.format(java.util.Locale.ROOT, "%.2f", tilt)).append("</tilt>\r\n");
+        xml.append("<zoom>").append(String.format(java.util.Locale.ROOT, "%.2f", zoom)).append("</zoom>\r\n");
+        // 2022版新增必选字段（A.2.4.1.5）
+        xml.append("<horizontalFieldAngle>0.00</horizontalFieldAngle>\r\n");
+        xml.append("<verticalFieldAngle>0.00</verticalFieldAngle>\r\n");
+        xml.append("<maxViewDistance>0.0</maxViewDistance>\r\n");
+        xml.append("</PTZStatus>\r\n");
         xml.append("</Response>\r\n");
         return xml.toString();
         // 审计修复P1-16~19: 响应XML通过SIP响应消息返回给请求方, 非主动下发
