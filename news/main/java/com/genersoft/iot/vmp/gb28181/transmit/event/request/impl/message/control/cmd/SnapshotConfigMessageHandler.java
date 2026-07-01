@@ -85,7 +85,7 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
      * 也可被非标准上游直接以 CmdType="SnapConfig" 调用。
      * </p>
      */
-    private static final String CMD_TYPE = "SnapConfig";
+    private final String cmdType = "SnapConfig";
 
     /**
      * 抓拍配置 XML 元素名
@@ -101,6 +101,25 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
      * 抓拍数量字段名
      */
     private static final String ELEMENT_SNAP_NUM = "snapNum";
+
+    /**
+     * 抓拍间隔字段名（可选）
+     * <p>来源：2022版 9.14，SIPCommanderSupplement 接口 Javadoc</p>
+     */
+    private static final String ELEMENT_INTERVAL = "Interval";
+
+    /**
+     * 抓拍上传地址字段名（可选）
+     * <p>注意：规范 XML 元素名为 uploaduRL（u 小写），与 Java 驼峰命名不同</p>
+     * <p>来源：2022版附录 A.2.1.24，SIPCommanderSupplement 接口 Javadoc</p>
+     */
+    private static final String ELEMENT_UPLOAD_URL = "uploaduRL";
+
+    /**
+     * 抓拍会话 ID 字段名（可选）
+     * <p>来源：2022版 9.14，SIPCommanderSupplement 接口 Javadoc</p>
+     */
+    private static final String ELEMENT_SESSION_ID = "sessionID";
 
     /**
      * 分辨率：CIF（352×288）
@@ -169,8 +188,8 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-        controlMessageHandler.addHandler(CMD_TYPE, this);
-        log.info("[图像抓拍配置] 处理器注册成功, CmdType={}", CMD_TYPE);
+        controlMessageHandler.addHandler(cmdType, this);
+        log.info("[图像抓拍配置] 处理器注册成功, CmdType={}", cmdType);
     }
 
     /**
@@ -215,9 +234,11 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
      * 改造项15：来源 设计文档第9.14节，2022版 9.14。
      * 处理流程：
      * <ol>
-     *     <li>从 XML 根节点或 SnapConfig 子节点中解析 Resolution、snapNum</li>
+     *     <li>从 XML 根节点或 SnapConfig 子节点中解析 Resolution、snapNum（必选），
+     *         以及 Interval、uploaduRL、sessionID（可选）</li>
      *     <li>校验 Resolution ∈ {0,1,2,3,4}，snapNum ∈ [1,10]</li>
-     *     <li>构造下发给设备的 DeviceControl XML（实际项目通过 ISIPCommander 发送）</li>
+     *     <li>构造下发给设备的 DeviceControl XML（实际项目通过 ISIPCommander 发送），
+     *         可选字段为 null 时不输出</li>
      *     <li>回复 200 OK</li>
      * </ol>
      * </p>
@@ -243,28 +264,28 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
 
         Integer resolution = XmlUtil.getInteger(resolutionSource, ELEMENT_RESOLUTION);
         Integer snapNum = XmlUtil.getInteger(resolutionSource, ELEMENT_SNAP_NUM);
+        // 可选字段：Interval、uploaduRL、sessionID
+        Integer interval = XmlUtil.getInteger(resolutionSource, ELEMENT_INTERVAL);
+        String uploadUrl = XmlUtil.getText(resolutionSource, ELEMENT_UPLOAD_URL);
+        String sessionId = XmlUtil.getText(resolutionSource, ELEMENT_SESSION_ID);
 
         // 字段校验：分辨率范围 0~4
         if (resolution == null || !isValidResolution(resolution)) {
-            log.warn("[图像抓拍配置] 分辨率非法, resolution={}, 使用默认值（应从设备响应中解析） {}", resolution, DEFAULT_RESOLUTION);
+            log.warn("[图像抓拍配置] 分辨率非法, resolution={}, 使用默认值 {}", resolution, DEFAULT_RESOLUTION);
             resolution = DEFAULT_RESOLUTION;
         }
         // 字段校验：抓拍数量范围 1~10
         if (snapNum == null || !isValidSnapNum(snapNum)) {
-            log.warn("[图像抓拍配置] 抓拍数量非法, snapNum={}, 使用默认值（应从设备响应中解析） {}", snapNum, DEFAULT_SNAP_NUM);
+            log.warn("[图像抓拍配置] 抓拍数量非法, snapNum={}, 使用默认值 {}", snapNum, DEFAULT_SNAP_NUM);
             snapNum = DEFAULT_SNAP_NUM;
         }
 
-        log.info("[图像抓拍配置] 配置参数: resolution={}, snapNum={}, desc={}",
-                resolution, snapNum, resolutionDesc(resolution));
+        log.info("[图像抓拍配置] 配置参数: resolution={}, snapNum={}, interval={}, uploadUrl={}, sessionId={}, desc={}",
+                resolution, snapNum, interval, uploadUrl, sessionId, resolutionDesc(resolution));
 
         // 构造下发给设备的 DeviceControl XML（实际项目通过 ISIPCommander 异步发送）
-        String deviceControlXml = buildDeviceControlXml(deviceId, sn, resolution, snapNum);
+        String deviceControlXml = buildDeviceControlXml(deviceId, sn, resolution, snapNum, interval, uploadUrl, sessionId);
         log.info("[图像抓拍配置] 设备控制XML准备就绪, 待异步下发:\n{}", deviceControlXml);
-        // 审计修复P1-14: 通过SIPCommander2022Supplement下发抓拍配置命令到设备
-        // 通过SIPCommander2022Supplement下发抓拍配置命令到设备
-        // 注意: 实际下发需注入SIPCommander2022Supplement并调用snapshotConfigCmd()
-        // 审计修复P2-04: 抓拍配置通过SIP消息下发给设备
 
         // 回复 200 OK 确认收到命令
         responseOk(evt);
@@ -323,15 +344,21 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
      * 构造下发给设备的 DeviceControl XML
      * <p>
      * 改造项15：来源 2022版 9.14 DeviceControl 容器格式。
+     * 包含 Resolution、snapNum（必选），以及 Interval、uploaduRL、sessionID（可选）。
+     * 可选字段为 null 时不输出对应元素，保证向后兼容。
      * </p>
      *
      * @param deviceId   设备 ID
      * @param sn         请求 SN
      * @param resolution 分辨率
      * @param snapNum    抓拍数量
+     * @param interval   抓拍间隔（可选，null 时不输出）
+     * @param uploadUrl  上传地址（可选，null 时不输出）
+     * @param sessionId  会话 ID（可选，null 时不输出）
      * @return 完整 DeviceControl XML 字符串
      */
-    private String buildDeviceControlXml(String deviceId, String sn, int resolution, int snapNum) {
+    private String buildDeviceControlXml(String deviceId, String sn, int resolution, int snapNum,
+            Integer interval, String uploadUrl, String sessionId) {
         StringBuilder xml = new StringBuilder(256);
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Control>\r\n");
@@ -341,6 +368,16 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
         xml.append("<SnapConfig>\r\n");
         xml.append("<Resolution>").append(resolution).append("</Resolution>\r\n");
         xml.append("<snapNum>").append(snapNum).append("</snapNum>\r\n");
+        // 可选字段：为 null 时不输出，保证向后兼容
+        if (interval != null) {
+            xml.append("<Interval>").append(interval).append("</Interval>\r\n");
+        }
+        if (!ObjectUtils.isEmpty(uploadUrl)) {
+            xml.append("<uploaduRL>").append(SipCharsetHelper.escapeXml(uploadUrl)).append("</uploaduRL>\r\n");
+        }
+        if (!ObjectUtils.isEmpty(sessionId)) {
+            xml.append("<sessionID>").append(SipCharsetHelper.escapeXml(sessionId)).append("</sessionID>\r\n");
+        }
         xml.append("</SnapConfig>\r\n");
         xml.append("</Control>\r\n");
         return xml.toString();
@@ -360,7 +397,7 @@ public class SnapshotConfigMessageHandler extends SIPRequestProcessorParent
             responseAck((SIPRequest) evt.getRequest(), Response.OK);
         } catch (SipException | InvalidArgumentException | ParseException e) {
             log.error("[图像抓拍配置] 回复 200 OK 异常: {}", e.getMessage());
-        } catch (Exception t) {
+        } catch (Throwable t) {
             log.error("[图像抓拍配置] 回复响应未知异常", t);
         }
     }
