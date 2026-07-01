@@ -62,6 +62,9 @@ public class SIPCommander2022Supplement {
     @Autowired
     private SipLayer sipLayer;
 
+    @Autowired
+    private UserSetting userSetting;
+
     // SN 序号（简单递增，生产环境应考虑线程安全和持久化）
     private static final String SN_PERSIST_FILE = System.getProperty("java.io.tmpdir") + "/wvp-sn-counter.properties";
     private static final java.util.concurrent.atomic.AtomicInteger snCounter = new java.util.concurrent.atomic.AtomicInteger(loadSnFromFile());
@@ -281,7 +284,7 @@ public class SIPCommander2022Supplement {
         }
 
         // 返回文件访问 URL（实际项目应返回可通过 HTTP 访问的完整 URL）
-        String fileUrl = "http://" + device.getIp() + ":" + device.getPort() + "/firmware/" + deviceId + "/" + savedName;
+        String fileUrl = System.getProperty("wvp.firmware.base.url", "http://127.0.0.1:18080") + "/firmware/" + deviceId + "/" + savedName;
         log.info("[固件上传] deviceId={}, originalName={}, savedAs={}, fileUrl={}",
                 deviceId, originalName, savedName, fileUrl);
         return fileUrl;
