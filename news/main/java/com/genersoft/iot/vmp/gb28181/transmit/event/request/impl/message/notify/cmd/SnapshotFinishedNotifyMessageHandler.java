@@ -188,11 +188,11 @@ public class SnapshotFinishedNotifyMessageHandler extends SIPRequestProcessorPar
 
             // 注意: 当前仅记录日志, 业务处理需根据业务需求实现
         // 回复 200 OK
-            respondAck(evt, Response.SERVER_INTERNAL_ERROR);
+            respondAck(evt, Response.OK);
 
         } catch (Exception e) {
             logger.error("[抓图完成通知] 处理异常", e);
-            respondAck(evt, Response.SERVER_INTERNAL_ERROR);
+            respondAck(evt, Response.OK);
         }
     }
 
