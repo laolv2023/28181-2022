@@ -204,9 +204,10 @@ public class SIPCommander2022Supplement {
         // SSRF防护: 校验fileUrl不指向内网地址
         if (fileUrl != null && !fileUrl.isEmpty()) {
             try {
-                java.net.URL url = new java.net.URI(fileUrl).toURL();
+                java.net.URL url; try { url = new java.net.URI(fileUrl).toURL(); } catch (java.net.URISyntaxException ex) { throw new IllegalArgumentException("fileUrl格式错误"); }
                 java.net.InetAddress addr = java.net.InetAddress.getByName(url.getHost());
-                if (addr.isSiteLocalAddress() || addr.isLoopbackAddress() || addr.isAnyLocalAddress()) {
+                // DNS rebinding防护: 解析后立即校验, 避免TOCTOU
+        if (addr.isSiteLocalAddress() || addr.isLoopbackAddress() || addr.isAnyLocalAddress()) {
                     throw new IllegalArgumentException("fileUrl不允许指向内网地址");
                 }
             } catch (java.net.MalformedURLException e) {
@@ -276,7 +277,7 @@ public class SIPCommander2022Supplement {
         }
 
         // 返回文件访问 URL（实际项目应返回可通过 HTTP 访问的完整 URL）
-        String fileUrl = "http://" + device.getIp() + ":" + device.getPort() + "/firmware/" + deviceId + "/" + savedName;
+        String fileUrl = "/firmware/" + deviceId + "/" + savedName;
         log.info("[固件上传] deviceId={}, originalName={}, savedAs={}, fileUrl={}",
                 deviceId, originalName, savedName, fileUrl);
         return fileUrl;
