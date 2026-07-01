@@ -199,7 +199,7 @@ public class StorageCardStatusQueryMessageHandler extends SIPRequestProcessorPar
         String sn = XmlUtil.getText(element, "SN");
         log.info("[存储卡状态查询] 解析请求: deviceId={}, sn={}", deviceId, sn);
 
-        // 查询本地存储卡状态缓存（此处使用默认值（实际应从设备响应XML中解析），实际项目应从设备状态缓存中读取）
+        // 查询本地存储卡状态缓存（此处使用默认值（生产环境应从设备响应XML中解析实际值）（实际应从设备响应XML中解析），实际项目应从设备状态缓存中读取）
         int status = STATUS_NORMAL;
         long capacity = DEFAULT_CAPACITY;
         long remainCapacity = DEFAULT_REMAIN_CAPACITY;
