@@ -126,6 +126,9 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
     @Autowired
     private QueryMessageHandler queryMessageHandler;
 
+    /** 待发送的响应 XML（由 handleQuery 构造，handForDevice 发送） */
+    private String responseXml;
+
     /**
      * Spring 容器初始化后回调，将当前处理器注册到 QueryMessageHandler。
      * <p>
@@ -212,16 +215,15 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
         log.info("[巡航轨迹查询] 解析请求: deviceId={}, sn={}, listId={}, trackId={}",
                 deviceId, sn, cruiseTrackListId, cruiseTrackId);
 
-        String responseXml;
         if (!ObjectUtils.isEmpty(cruiseTrackId)) {
             // 详情查询：返回单条巡航轨迹的预置位序列
-            responseXml = buildDetailResponseXml(deviceId, sn, cruiseTrackId);
+            this.responseXml = buildDetailResponseXml(deviceId, sn, cruiseTrackId);
         } else {
             // 列表查询：返回轨迹列表
-            responseXml = buildListResponseXml(deviceId, sn, cruiseTrackListId);
+            this.responseXml = buildListResponseXml(deviceId, sn, cruiseTrackListId);
         }
 
-        log.info("[巡航轨迹查询] 响应XML准备就绪, 待异步发送:\n{}", responseXml);
+        log.info("[巡航轨迹查询] 响应XML准备就绪, 待异步发送:\n{}", this.responseXml);
         responseOk(evt);
     }
 
@@ -352,3 +354,4 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
         }
     }
 }
+
