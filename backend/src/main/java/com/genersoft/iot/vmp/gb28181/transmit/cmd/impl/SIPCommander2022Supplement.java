@@ -133,6 +133,13 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
      */
     @Override
     public void ptzPreciseCmd(Device device, String channelId, double pan, double tilt, double zoom) {
+        // NaN/Infinity 防护: 防止 String.format 输出字面量 "NaN"/"Infinity" 到设备
+        if (Double.isNaN(pan) || Double.isInfinite(pan)
+                || Double.isNaN(tilt) || Double.isInfinite(tilt)
+                || Double.isNaN(zoom) || Double.isInfinite(zoom)) {
+            throw new IllegalArgumentException(
+                    "PTZ参数包含非法值(NaN/Infinity): pan=" + pan + ", tilt=" + tilt + ", zoom=" + zoom);
+        }
         int sn = nextSn();
         String deviceId = device.getDeviceId();
 
