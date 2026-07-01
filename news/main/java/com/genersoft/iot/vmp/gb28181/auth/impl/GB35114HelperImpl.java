@@ -25,7 +25,22 @@ public class GB35114HelperImpl implements GB35114Helper {
     }
 
     @Override
+    public byte[] processSVACEncryptedStream(byte[] encryptedStream) throws GB35114Exception {
+        if (encryptedStream == null || encryptedStream.length == 0) {
+            throw new GB35114Exception("加密流数据不能为空");
+        }
+        log.warn("[GB35114] processSVACEncryptedStream 桩实现, 无法解密SVAC流; 生产环境必须替换为国密SM4完整实现");
+        throw new GB35114Exception("SVAC加密流解密未实现, 请替换为生产级GB35114HelperImpl");
+    }
+
+    @Override
     public boolean verifySignature(byte[] data, String signature) throws GB35114Exception {
+        if (data == null || data.length == 0) {
+            throw new GB35114Exception("签名原始数据不能为空");
+        }
+        if (signature == null || signature.isEmpty()) {
+            throw new GB35114Exception("签名值不能为空");
+        }
         log.warn("[GB35114] verifySignature 桩实现, 返回 false");
         return false;
     }
