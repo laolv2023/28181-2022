@@ -138,7 +138,7 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
     @Override
     public void afterPropertiesSet() throws Exception {
         queryMessageHandler.addHandler(CMD_TYPE, this);
-        log.info("[巡航轨迹查询] 处理器注册成功, CmdType={}", cmdType);
+        log.info("[巡航轨迹查询] 处理器注册成功, CmdType={}", CMD_TYPE);
     }
 
     /**
@@ -158,6 +158,7 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
                 device != null ? device.getDeviceId() : "null");
         // 设备端通常作为查询响应方而非发起方，此处仅 ACK
         // 审计修复P1-09~12: 响应XML通过SIP 200 OK消息体返回给请求方
+        try { evt.getResponse().setContent(responseXml.getBytes("GB18030"), evt.getResponse().getContentTypeHeader()); } catch (Exception ex) { log.warn("设置响应内容失败", ex); }
         responseOk(evt);
     }
 
@@ -244,7 +245,7 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
         StringBuilder xml = new StringBuilder(512);
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Response>\r\n");
-        xml.append("<CmdType>").append(cmdType).append("</CmdType>\r\n");
+        xml.append("<CmdType>").append(CMD_TYPE).append("</CmdType>\r\n");
         xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : SipCharsetHelper.escapeXml(sn)).append("</SN>\r\n");
         xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<Result>").append(RESULT_OK).append("</Result>\r\n");
@@ -285,7 +286,7 @@ public class CruiseTrackQueryMessageHandler extends SIPRequestProcessorParent
         StringBuilder xml = new StringBuilder(512);
         xml.append("<?xml version=\"1.0\" encoding=\"GB18030\"?>\r\n");
         xml.append("<Response>\r\n");
-        xml.append("<CmdType>").append(cmdType).append("</CmdType>\r\n");
+        xml.append("<CmdType>").append(CMD_TYPE).append("</CmdType>\r\n");
         xml.append("<SN>").append(ObjectUtils.isEmpty(sn) ? "1" : SipCharsetHelper.escapeXml(sn)).append("</SN>\r\n");
         xml.append("<DeviceID>").append(ObjectUtils.isEmpty(deviceId) ? "" : SipCharsetHelper.escapeXml(deviceId)).append("</DeviceID>\r\n");
         xml.append("<Result>").append(RESULT_OK).append("</Result>\r\n");
