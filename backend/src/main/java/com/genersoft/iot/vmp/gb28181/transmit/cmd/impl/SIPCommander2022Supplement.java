@@ -397,7 +397,7 @@ public class SIPCommander2022Supplement {
     /**
      * 图像抓拍配置命令
      *
-     * <p>XML 字段: snapNum(小写n), Interval(I大写), uploaduRL(u小写), sessionID(s小写)</p>
+     * <p>XML 字段: snapNum(小写n), Interval(I大写), uploadURL(u小写), sessionID(s小写)</p>
      * <p>注: Resolution 字段为后端扩展（前端传入），规范中无此字段，但已在实际 Handler 中实现</p>
      *
      * 来源: 后端改造项15, 设计文档第12.2节, 2022版9.14
@@ -418,7 +418,7 @@ public class SIPCommander2022Supplement {
         xml.append("<Resolution>").append(resolution).append("</Resolution>\r\n");
         xml.append("<snapNum>").append(snapNum).append("</snapNum>\r\n");
         xml.append("<Interval>").append(interval).append("</Interval>\r\n");
-        xml.append("<uploaduRL>").append(escapeXml(uploadUrl != null ? uploadUrl : "")).append("</uploaduRL>\r\n");
+        xml.append("<uploadURL>").append(escapeXml(uploadUrl != null ? uploadUrl : "")).append("</uploadURL>\r\n");
         xml.append("<sessionID>").append(escapeXml(sessionId)).append("</sessionID>\r\n");
         xml.append("</SnapConfig>\r\n");
         xml.append("</Control>\r\n");
