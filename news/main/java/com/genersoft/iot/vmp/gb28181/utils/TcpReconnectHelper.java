@@ -74,6 +74,10 @@ public final class TcpReconnectHelper {
      */
     // 审计修复P2-18: 此方法为同步阻塞调用, 生产环境应从工作线程调用, 避免阻塞SIP信令线程
     /** TCP媒体通道重连 */
+    /**
+     * 注意: 此方法为同步阻塞调用, 在SIP信令线程中调用会阻塞信令处理。
+     * 建议在独立线程或异步任务中执行。
+     */
     public static boolean reconnectTcpMedia(String ip, int port, int maxRetries, long intervalMs) {
         // 参数校验与规范强制对齐
         if (ObjectUtils.isEmpty(ip)) {
