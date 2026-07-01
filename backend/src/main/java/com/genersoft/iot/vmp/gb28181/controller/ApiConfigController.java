@@ -49,10 +49,15 @@ public class ApiConfigController {
 
     static {
         // 初始化默认配置
+        // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
         SECURITY_CONFIG.put("sm3DigestEnabled", true);
+        // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
         SECURITY_CONFIG.put("sipTlsEnabled", false);
+        // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
         SECURITY_CONFIG.put("sipCharset", "gb18030");
+        // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
         SECURITY_CONFIG.put("registerRedirectEnabled", true);
+        // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
         SECURITY_CONFIG.put("tcpReconnectEnabled", false);
     }
 
@@ -82,14 +87,16 @@ public class ApiConfigController {
         if (config.containsKey("sm3DigestEnabled")) {
             Object val = config.get("sm3DigestEnabled");
             if (val instanceof Boolean) {
-                SECURITY_CONFIG.put("sm3DigestEnabled", val);
+                // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
+        SECURITY_CONFIG.put("sm3DigestEnabled", val);
                 log.info("[安全配置] SM3摘要算法: {}", val);
             }
         }
         if (config.containsKey("sipTlsEnabled")) {
             Object val = config.get("sipTlsEnabled");
             if (val instanceof Boolean) {
-                SECURITY_CONFIG.put("sipTlsEnabled", val);
+                // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
+        SECURITY_CONFIG.put("sipTlsEnabled", val);
                 log.info("[安全配置] SIP TLS加密: {}", val);
             }
         }
@@ -98,7 +105,8 @@ public class ApiConfigController {
             String charset = String.valueOf(val);
             // 校验字符集为合法值
             if ("gb18030".equals(charset) || "gb2312".equals(charset)) {
-                SECURITY_CONFIG.put("sipCharset", charset);
+                // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
+        SECURITY_CONFIG.put("sipCharset", charset);
                 log.info("[安全配置] SIP字符集: {}", charset);
             } else {
                 log.warn("[安全配置] 非法字符集值被忽略: {}", charset);
@@ -107,14 +115,16 @@ public class ApiConfigController {
         if (config.containsKey("registerRedirectEnabled")) {
             Object val = config.get("registerRedirectEnabled");
             if (val instanceof Boolean) {
-                SECURITY_CONFIG.put("registerRedirectEnabled", val);
+                // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
+        SECURITY_CONFIG.put("registerRedirectEnabled", val);
                 log.info("[安全配置] 注册重定向: {}", val);
             }
         }
         if (config.containsKey("tcpReconnectEnabled")) {
             Object val = config.get("tcpReconnectEnabled");
             if (val instanceof Boolean) {
-                SECURITY_CONFIG.put("tcpReconnectEnabled", val);
+                // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
+        SECURITY_CONFIG.put("tcpReconnectEnabled", val);
                 log.info("[安全配置] TCP媒体重连: {}", val);
             }
         }
@@ -173,9 +183,12 @@ public class ApiConfigController {
             try (java.io.FileInputStream fis = new java.io.FileInputStream(f)) {
                 props.load(fis);
             }
-            SECURITY_CONFIG.put("sipTlsEnabled", Boolean.parseBoolean(props.getProperty("sip.tls.enabled", "false")));
-            SECURITY_CONFIG.put("tlsAlgorithm", props.getProperty("sip.tls.algorithm", "SM2"));
-            SECURITY_CONFIG.put("sm3DigestEnabled", Boolean.parseBoolean(props.getProperty("sm3.enabled", "true")));
+            // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
+        SECURITY_CONFIG.put("sipTlsEnabled", Boolean.parseBoolean(props.getProperty("sip.tls.enabled", "false")));
+            // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
+        SECURITY_CONFIG.put("tlsAlgorithm", props.getProperty("sip.tls.algorithm", "SM2"));
+            // 注意: 复合操作(get+put)在高并发下非原子, 建议使用computeIfAbsent
+        SECURITY_CONFIG.put("sm3DigestEnabled", Boolean.parseBoolean(props.getProperty("sm3.enabled", "true")));
         } catch (Exception e) {
             log.warn("[安全配置] 加载失败: {}", e.getMessage());
         }
