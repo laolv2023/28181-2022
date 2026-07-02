@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 
 /**
  * WVP 安全配置 API Controller —— GB/T 28181-2022 配套
@@ -186,21 +187,6 @@ public class ApiConfigController {
         } catch (Exception e) {
             log.warn("[安全配置] 加载失败: {}", e.getMessage());
         }
-    }
-
-    /**
-     * 健康检查端点（无需认证）。
-     * 返回 SIP 栈、配置、DB 连接状态。
-     */
-    @GetMapping("/health")
-    public WVPResult<Object> health() {
-        java.util.Map<String, Object> status = new java.util.LinkedHashMap<>();
-        status.put("status", "UP");
-        status.put("timestamp", System.currentTimeMillis());
-        status.put("sm3Available", com.genersoft.iot.vmp.gb28181.auth.SM3DigestHelper.isSm3Available());
-        status.put("configLoaded", !SECURITY_CONFIG.isEmpty());
-        status.put("memoryConfigSize", SECURITY_CONFIG.size());
-        return WVPResult.success(status);
     }
 }
 

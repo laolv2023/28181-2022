@@ -86,45 +86,8 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         return 0;
     }
 
-    /** 持久化 SN 计数器到文件（FileLock 防止多实例并发写入损坏） */
-    private static void persistSnCounter(int currentSn) {
-        java.io.File snFile = new java.io.File(
-                System.getProperty("wvp.sn.persist.file",
-                        System.getProperty("user.home") + "/.wvp/sn_counter.txt"));
-        snFile.getParentFile().mkdirs();
-        java.io.File tmpFile = new java.io.File(snFile.getAbsolutePath() + ".tmp");
-        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(tmpFile);
-             java.nio.channels.FileChannel channel = fos.getChannel()) {
-            java.nio.channels.FileLock lock = channel.tryLock();
-            if (lock == null) {
-                log.warn("[SN计数器] 持久化文件被其他进程锁定, 跳过本次写入");
-                return;
-            }
-            try {
-                fos.write(String.valueOf(currentSn).getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                fos.flush();
-            } finally {
-                lock.release();
-            }
-        } catch (java.io.IOException e) {
-            log.warn("[SN计数器] 持久化写入失败: {}", e.getMessage());
-            tmpFile.delete();
-            return;
-        }
-        // 原子替换
-        if (!tmpFile.renameTo(snFile)) {
-            log.warn("[SN计数器] 持久化文件替换失败");
-            tmpFile.delete();
-        }
-    }
-
     private static int nextSn() {
-        int sn = snCounter.incrementAndGet();
-        // 每100次递增持久化一次，减少磁盘I/O
-        if (sn % 100 == 0) {
-            persistSnCounter(sn);
-        }
-        return sn;
+        return snCounter.incrementAndGet();
     }
 
     // 固件上传目录（可通过系统属性 wvp.firmware.dir 配置）
@@ -326,17 +289,6 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         log.info("[固件上传] deviceId={}, originalName={}, savedAs={}, fileUrl={}",
                 deviceId, originalName, savedName, fileUrl);
         return fileUrl;
-    } catch (IOException e) {
-        // 上传失败时清理已创建的目录（防止孤儿目录泄露）
-        try {
-            Path uploadDir = Paths.get(FIRMWARE_UPLOAD_DIR, deviceId);
-            if (Files.exists(uploadDir) && Files.list(uploadDir).findAny().isEmpty()) {
-                Files.deleteIfExists(uploadDir);
-            }
-        } catch (IOException cleanupEx) {
-            log.warn("[固件上传] 清理孤儿目录失败: {}", cleanupEx.getMessage());
-        }
-        throw e;
     }
 
     // ========================================================================
@@ -387,7 +339,7 @@ public class SIPCommander2022Supplement implements SIPCommanderSupplement {
         xml.append("<SN>").append(sn).append("</SN>\r\n");
         xml.append("<DeviceID>").append(escapeXml(deviceId)).append("</DeviceID>\r\n");
         if (trackListId != null) {
-            xml.append("<CruiseTrackListID>").append(escapeXml(trackListId)).append("</CruiseTrackListID>\r\n");
+            xml.append("<CruiseTrackListID>").append(trackListId).append("</CruiseTrackListID>\r\n");
         }
         xml.append("</Query>\r\n");
 

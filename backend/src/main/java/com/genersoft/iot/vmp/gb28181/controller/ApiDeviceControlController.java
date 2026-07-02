@@ -2,8 +2,6 @@ package com.genersoft.iot.vmp.gb28181.controller;
 
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.utils.GbCode2022;
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.genersoft.iot.vmp.gb28181.service.IDeviceService;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
@@ -68,9 +66,6 @@ public class ApiDeviceControlController {
 
     @Autowired
     private ISIPCommander cmder;
-
-    /** 审计日志 Marker，用于结构化审计日志过滤 */
-    private static final Marker AUDIT_MARKER = MarkerFactory.getMarker("AUDIT");
 
     /** GB/T 28181 设备编码长度 */
     private static final int GB_DEVICE_ID_LENGTH = 20;
@@ -137,6 +132,8 @@ public class ApiDeviceControlController {
     private static final long RATE_LIMIT_WINDOW_MS = 60_000L;
     private final ConcurrentHashMap<String, Long> rateLimitWindow = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, AtomicInteger> rateLimitCounters = new ConcurrentHashMap<>();
+    /** 速率限制：每分钟最大请求数 */
+    private static final int RATE_LIMIT_MAX_REQUESTS = 100;
 
     private boolean checkRateLimit(String clientIp) {
         long now = System.currentTimeMillis();
@@ -150,17 +147,24 @@ public class ApiDeviceControlController {
         return counter.incrementAndGet() <= RATE_LIMIT_MAX_REQUESTS;
     }
 
-    /** 提取客户端IP */
+    /** 提取客户端IP（优先 RemoteAddr，仅受信任代理使用 X-Forwarded-For） */
     private String getClientIp() {
         jakarta.servlet.http.HttpServletRequest request =
                 ((org.springframework.web.context.request.ServletRequestAttributes)
                         org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes())
                         .getRequest();
+        String remoteAddr = request.getRemoteAddr();
+        // 仅当请求来自受信任代理时才使用 X-Forwarded-For
         String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+        if (xForwardedFor != null && !xForwardedFor.isEmpty() && isTrustedProxy(remoteAddr)) {
             return xForwardedFor.split(",")[0].trim();
         }
-        return request.getRemoteAddr();
+        return remoteAddr;
+    }
+
+    /** 判断是否为受信任代理（生产环境应从配置读取） */
+    private boolean isTrustedProxy(String ip) {
+        return "127.0.0.1".equals(ip) || "0:0:0:0:0:0:0:1".equals(ip);
     }
 
     // ========================================================================
@@ -287,6 +291,7 @@ public class ApiDeviceControlController {
             return WVPResult.fail(429, "请求过于频繁，请稍后重试");
         }
         MDC.put("req.deviceId", deviceId); // 请求追踪
+        try {
         // 破坏性操作二次确认: 前端必须显式传递 confirm=true
         if (!confirm) {
             return WVPResult.fail(400, "格式化存储卡为破坏性操作，请确认后重试 (confirm=true)");
@@ -296,13 +301,17 @@ public class ApiDeviceControlController {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
         }
         try {
-            log.warn(AUDIT_MARKER, "[审计] 存储卡格式化: deviceId={}, channelId={}", deviceId, channelId);
+            log.warn("[审计] 存储卡格式化: deviceId={}, channelId={}, operator={}", 
+                    deviceId, channelId, "admin");
             log.info("[存储卡格式化] 设备={}, 通道={} —— 破坏性操作", deviceId, channelId);
             cmder.formatSdcardCmd(device, channelId);
             return WVPResult.success();
         } catch (Exception e) {
             log.error("[存储卡格式化] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
             return WVPResult.fail(500, "存储卡格式化命令下发失败: " + e.getClass().getSimpleName());
+        }
+        } finally {
+            MDC.remove("req.deviceId");
         }
     }
 
@@ -368,6 +377,7 @@ public class ApiDeviceControlController {
             return WVPResult.fail(429, "请求过于频繁，请稍后重试");
         }
         MDC.put("req.deviceId", deviceId);
+        try {
         // 审计修复 56_C-01: null检查必须在任何 file 操作之前, 防止 NPE
         if (file == null || file.isEmpty()) {
             return WVPResult.fail(400, "固件文件不能为空");
@@ -397,6 +407,9 @@ public class ApiDeviceControlController {
         } catch (Exception e) {
             log.error("[固件上传] 上传失败: deviceId={}", deviceId, e);
             return WVPResult.fail(500, "固件上传失败: " + e.getClass().getSimpleName());
+        }
+        } finally {
+            MDC.remove("req.deviceId");
         }
     }
 
@@ -435,6 +448,7 @@ public class ApiDeviceControlController {
             return WVPResult.fail(429, "请求过于频繁，请稍后重试");
         }
         MDC.put("req.deviceId", deviceId);
+        try {
         if (firmware == null || firmware.isEmpty()) {
             return WVPResult.fail(400, "固件文件名不能为空");
         }
@@ -444,7 +458,7 @@ public class ApiDeviceControlController {
         }
         // 设备升级前检查: 生产环境应查询设备当前升级状态，防止并发升级冲突
         // 建议: deviceService.isDeviceUpgrading(deviceId) → 返回"设备正在升级中"
-        log.warn(AUDIT_MARKER, "[审计] 设备软件升级: deviceId={}, firmware={}", deviceId, firmware);
+        log.info("[审计] 设备软件升级: deviceId={}, firmware={}", deviceId, firmware);
         // SSRF防护: 校验fileUrl协议和主机
         if (fileUrl != null && !fileUrl.isEmpty()) {
             try {
@@ -466,8 +480,10 @@ public class ApiDeviceControlController {
             log.error("[设备升级] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
             return WVPResult.fail(500, "设备升级命令下发失败: " + e.getClass().getSimpleName());
         }
-    
 
+        } finally {
+            MDC.remove("req.deviceId");
+        }
     }
     // ========================================================================
     // 五、2022版新增查询（改造项11~13）
@@ -617,6 +633,7 @@ public class ApiDeviceControlController {
             return WVPResult.fail(429, "请求过于频繁，请稍后重试");
         }
         MDC.put("req.deviceId", deviceId);
+        try {
         if (interval != null && interval < 0) {
             return WVPResult.fail(400, "抓拍间隔不能为负数");
         }
@@ -658,8 +675,10 @@ public class ApiDeviceControlController {
             log.error("[图像抓拍配置] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
             return WVPResult.fail(500, "图像抓拍配置失败: " + e.getClass().getSimpleName());
         }
-    
 
+        } finally {
+            MDC.remove("req.deviceId");
+        }
     }
     // ========================================================================
     // 内部类：固件上传结果
