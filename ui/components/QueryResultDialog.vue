@@ -271,7 +271,7 @@ export default {
       this.queryLoading = true
       this.homePositionError = null
       try {
-        const { data } = await queryHomePosition(this.deviceId, this.channelId)
+        const { data } = await queryHomePosition(this.deviceId, this.channelId, signal)
         if (signal && signal.aborted) return  // 请求已被取消
         if (data && data.HomePosition) {
           this.homePositionInfo = {
@@ -302,7 +302,7 @@ export default {
       this.queryLoading = true
       this.cruiseTrackError = null
       try {
-        const { data } = await queryCruiseTrack(this.deviceId, this.channelId)
+        const { data } = await queryCruiseTrack(this.deviceId, this.channelId, undefined, signal)
         if (signal && signal.aborted) return
         if (data && data.CruiseTrackList && data.CruiseTrackList.CruiseTrack) {
           const tracks = data.CruiseTrackList.CruiseTrack
@@ -335,7 +335,7 @@ export default {
       this.queryLoading = true
       this.ptzStatusError = null
       try {
-        const { data } = await queryPtzPreciseStatus(this.deviceId, this.channelId)
+        const { data } = await queryPtzPreciseStatus(this.deviceId, this.channelId, signal)
         if (signal && signal.aborted) return
         if (data && data.Pan !== undefined) {
           this.ptzStatus = {

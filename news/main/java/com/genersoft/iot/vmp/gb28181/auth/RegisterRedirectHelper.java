@@ -63,13 +63,13 @@ public final class RegisterRedirectHelper {
             logger.warn("[注册重定向] 重定向深度超限({}), 中止", depth);
             return null;
         }
-        String contactUri = handle302Response(response, device);
-        if (contactUri == null) return null;
-
-        // 提取目标主机用于环路检测
+        // 先提取目标主机进行环路检测，再修改Device
+        String contactUri;
         try {
-            String host = ((SipURI) ((ContactHeader) response.getHeader(ContactHeader.NAME))
-                    .getAddress().getURI()).getHost();
+            // 提取Contact用于环路检测（在修改Device之前）
+            ContactHeader contactHeader = (ContactHeader) response.getHeader(ContactHeader.NAME);
+            if (contactHeader == null) return null;
+            String host = ((SipURI) contactHeader.getAddress().getURI()).getHost();
             if (!visitedHosts.add(host)) {
                 logger.warn("[注册重定向] 检测到环路: host={} 已访问过, visited={}", host, visitedHosts);
                 return null;
@@ -77,6 +77,8 @@ public final class RegisterRedirectHelper {
         } catch (Exception e) {
             logger.debug("[注册重定向] 环路检测解析异常: {}", e.getMessage());
         }
+        // 环路检测通过后才修改Device
+        contactUri = handle302Response(response, device);
         return contactUri;
     }
 

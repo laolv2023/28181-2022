@@ -105,6 +105,12 @@ public final class TcpReconnectHelper {
         long startTime = System.currentTimeMillis();
         long totalTimeoutMs = (long) maxRetries * (intervalMs + DEFAULT_CONNECT_TIMEOUT_MS) + DEFAULT_CONNECT_TIMEOUT_MS;
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            // 响应线程中断，允许调用方取消重连
+            if (Thread.currentThread().isInterrupted()) {
+                logger.warn("[TCP重连] 线程被中断, 终止重连");
+                Thread.currentThread().interrupt(); // 恢复中断标志
+                return false;
+            }
             if (System.currentTimeMillis() - startTime > totalTimeoutMs) { logger.warn("[TCP重连] 总体超时, 终止重连"); return false; }
             boolean connected = isPortReachable(ip, port, DEFAULT_CONNECT_TIMEOUT_MS);
             if (connected) {

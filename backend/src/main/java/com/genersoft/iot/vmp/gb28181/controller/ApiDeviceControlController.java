@@ -56,7 +56,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @RestController
 // XXE防御: 确认 wvp/gb28181/utils/XmlUtil 已禁用 DOCTYPE 外部实体
-@CrossOrigin(origins = "${wvp.cors.allowed-origins:}", allowCredentials = "true", maxAge = 3600)
+// CORS安全: allowCredentials=true时禁止使用通配符origin，生产环境请配置具体域名
+@CrossOrigin(origins = "${wvp.cors.allowed-origins:http://localhost:8080}", allowCredentials = "true", maxAge = 3600)
 @PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/api/device/control")
 public class ApiDeviceControlController {
@@ -134,6 +135,26 @@ public class ApiDeviceControlController {
     private final ConcurrentHashMap<String, AtomicInteger> rateLimitCounters = new ConcurrentHashMap<>();
     /** 速率限制：每分钟最大请求数 */
     private static final int RATE_LIMIT_MAX_REQUESTS = 100;
+    /** 并发升级防护：记录正在升级的设备ID及开始时间 */
+    private final ConcurrentHashMap<String, Long> upgradingDevices = new ConcurrentHashMap<>();
+    /** 升级超时时间(ms)：超过此时间自动释放升级锁 */
+    private static final long UPGRADE_TIMEOUT_MS = 300_000L;
+
+    /** 判断主机是否为内网地址 */
+    private static boolean isInternalHost(String host) {
+        if (host == null) return false;
+        return host.equals("localhost") || host.equals("127.0.0.1")
+                || host.startsWith("192.168.") || host.startsWith("10.")
+                || host.startsWith("172.16.") || host.startsWith("172.17.")
+                || host.startsWith("172.18.") || host.startsWith("172.19.")
+                || host.startsWith("172.20.") || host.startsWith("172.21.")
+                || host.startsWith("172.22.") || host.startsWith("172.23.")
+                || host.startsWith("172.24.") || host.startsWith("172.25.")
+                || host.startsWith("172.26.") || host.startsWith("172.27.")
+                || host.startsWith("172.28.") || host.startsWith("172.29.")
+                || host.startsWith("172.30.") || host.startsWith("172.31.")
+                || host.startsWith("0.") || host.equals("[::1]") || host.equals("0:0:0:0:0:0:0:1");
+    }
 
     private boolean checkRateLimit(String clientIp) {
         long now = System.currentTimeMillis();
@@ -387,6 +408,11 @@ public class ApiDeviceControlController {
         if (filename == null || !filename.toLowerCase(java.util.Locale.ENGLISH).matches(".*\.(bin|img|zip)$")) {
             return WVPResult.fail(400, "不支持的固件文件类型, 仅允许 .bin/.img/.zip");
         }
+        // Content-Type 校验：防止攻击者伪造扩展名上传恶意文件
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.matches("application/(octet-stream|zip|x-diskcopy)")) {
+            return WVPResult.fail(400, "固件文件Content-Type非法，仅允许二进制/zip类型");
+        }
         // 审计修复 56_C-01: 路径穿越检测
         if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
             return WVPResult.fail(400, "文件名包含非法字符");
@@ -456,16 +482,30 @@ public class ApiDeviceControlController {
         if (device == null) {
             return WVPResult.fail(404, "设备不存在: " + deviceId);
         }
+        // 并发升级防护：同一设备不允许同时进行多个升级操作
+        Long upgradingSince = upgradingDevices.get(deviceId);
+        if (upgradingSince != null) {
+            if (System.currentTimeMillis() - upgradingSince < UPGRADE_TIMEOUT_MS) {
+                return WVPResult.fail(409, "设备正在升级中，请等待升级完成");
+            }
+            // 超时自动释放旧锁
+            upgradingDevices.remove(deviceId);
+        }
+        upgradingDevices.put(deviceId, System.currentTimeMillis());
+        try {
         // 设备升级前检查: 生产环境应查询设备当前升级状态，防止并发升级冲突
-        // 建议: deviceService.isDeviceUpgrading(deviceId) → 返回"设备正在升级中"
         log.info("[审计] 设备软件升级: deviceId={}, firmware={}", deviceId, firmware);
-        // SSRF防护: 校验fileUrl协议和主机
+        // SSRF防护: 校验fileUrl协议、主机和内网地址过滤
         if (fileUrl != null && !fileUrl.isEmpty()) {
             try {
                 java.net.URI uri = new java.net.URI(fileUrl);
                 String scheme = uri.getScheme();
                 if (scheme == null || (!"http".equals(scheme) && !"https".equals(scheme))) {
                     return WVPResult.fail(400, "fileUrl仅支持http/https协议");
+                }
+                String host = uri.getHost();
+                if (host != null && isInternalHost(host)) {
+                    return WVPResult.fail(400, "fileUrl不允许指向内网地址");
                 }
             } catch (java.net.URISyntaxException ex) {
                 return WVPResult.fail(400, "fileUrl格式无效");
@@ -479,6 +519,9 @@ public class ApiDeviceControlController {
         } catch (Exception e) {
             log.error("[设备升级] 命令下发失败: deviceId={}, channelId={}", deviceId, channelId, e);
             return WVPResult.fail(500, "设备升级命令下发失败: " + e.getClass().getSimpleName());
+        }
+        } finally {
+            upgradingDevices.remove(deviceId);
         }
 
         } finally {

@@ -195,11 +195,12 @@ export function uploadFirmware(deviceId, file) {
  * @param {string} channelId - 通道编码
  * @returns {Promise} 响应包含 HomePosition 对象 { enabled, presetIndex, resetTime }
  */
-export function queryHomePosition(deviceId, channelId) {
+export function queryHomePosition(deviceId, channelId, signal) {
   return request({
     method: 'get',
     url: `/api/device/control/home_position_query/${deviceId}/${channelId}`,
-    timeout: 15000
+    timeout: 15000,
+    signal
   })
 }
 
@@ -213,12 +214,13 @@ export function queryHomePosition(deviceId, channelId) {
  * @param {number} [trackListId] - 巡航轨迹列表 ID（可选，不传则查询所有）
  * @returns {Promise} 响应包含 CruiseTrackList 数组
  */
-export function queryCruiseTrack(deviceId, channelId, trackListId) {
+export function queryCruiseTrack(deviceId, channelId, trackListId, signal) {
   return request({
     method: 'get',
     url: `/api/device/control/cruise_track_query/${deviceId}/${channelId}`,
     params: { trackListId },
-    timeout: 15000
+    timeout: 15000,
+    signal
   })
 }
 
@@ -231,11 +233,12 @@ export function queryCruiseTrack(deviceId, channelId, trackListId) {
  * @param {string} channelId - 通道编码
  * @returns {Promise} 响应包含 { pan, tilt, zoom }
  */
-export function queryPtzPreciseStatus(deviceId, channelId) {
+export function queryPtzPreciseStatus(deviceId, channelId, signal) {
   return request({
     method: 'get',
     url: `/api/device/control/ptz_precise_status_query/${deviceId}/${channelId}`,
-    timeout: 15000
+    timeout: 15000,
+    signal
   })
 }
 
