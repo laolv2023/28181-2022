@@ -118,7 +118,7 @@ public final class SM3DigestHelper {
     /**
      * 检测 SM3 算法是否可用
      *
-     * @return true 表示 SM3 可用；false 表示已不可用时抛异常
+     * @return true 表示 SM3 可用；false 表示不可用
      */
     public static boolean isSm3Available() {
         return SM3_AVAILABLE;
@@ -149,9 +149,6 @@ public final class SM3DigestHelper {
         }
         if (!SM3_AVAILABLE) {
             throw new IllegalStateException("SM3算法不可用, 请引入BouncyCastle依赖");
-        }
-        if (ACTUAL_ALGORITHM == null) {
-            throw new IllegalStateException("SM3算法名称未初始化, 请联系系统管理员");
         }
         try {
             MessageDigest md = MessageDigest.getInstance(ACTUAL_ALGORITHM);

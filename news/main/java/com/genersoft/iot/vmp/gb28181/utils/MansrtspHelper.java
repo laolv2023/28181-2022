@@ -71,7 +71,10 @@ public final class MansrtspHelper {
         if (builder == null) {
             return DEFAULT_SCALE;
         }
-        if (!Boolean.parseBoolean(System.getProperty("wvp.mansrtsp.scale.limit.enabled", "true"))) { builder.append(HEADER_SCALE).append(": ").append(scale).append("\r\n"); return scale; }
+        if (!Boolean.parseBoolean(System.getProperty("wvp.mansrtsp.scale.limit.enabled", "true"))) {
+            builder.append(HEADER_SCALE).append(": ").append(scale).append("\r\n");
+            return scale;
+        }
         // 校验并 snap 到最接近的合法倍速
         double snapped = snapToAllowedScale(scale);
         builder.append(HEADER_SCALE).append(": ").append(formatScale(snapped)).append("\r\n");

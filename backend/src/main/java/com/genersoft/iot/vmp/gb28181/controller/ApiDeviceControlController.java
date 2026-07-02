@@ -428,7 +428,6 @@ public class ApiDeviceControlController {
             // 此处为示例实现：保存到临时目录并返回文件路径
         // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
             String fileUrl = cmder.uploadFirmwareFile(deviceId, file);
-        // 审计修复P2-33: fileUrl需校验协议白名单(http/https)和内网地址
             return WVPResult.success(new FileUploadResult(fileUrl, file.getOriginalFilename()));
         } catch (Exception e) {
             log.error("[固件上传] 上传失败: deviceId={}", deviceId, e);
